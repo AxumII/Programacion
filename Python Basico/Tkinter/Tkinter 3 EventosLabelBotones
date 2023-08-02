@@ -1,0 +1,58 @@
+#Eventos
+import tkinter as tk
+from tkinter import ttk
+from tkinter.ttk import Label
+
+def return_pressed(event):
+    print('Return key pressed.')
+
+
+def log(event):
+    print(event)
+
+
+root = tk.Tk()
+root.geometry('300x200')
+root.resizable(False, False)
+root.title('Label Widget Demo')
+
+btn = ttk.Button(root, text='Save')
+btn.bind('<Return>', return_pressed)#El bind crea el evento, similar a command
+btn.bind('<Return>', log, add='+')
+#los eventos se puede nasociar con teclas especificas
+##################################################3
+
+
+label = Label(root, text='This is a label',font=("Helvetica", 20)) #los label permiten poner texto
+label.pack(ipadx=50, ipady=10) #coordenadas de donde va el texto
+#con los label tambien se muestra imagenes
+"""photo = tk.PhotoImage(file='./assets/python.png')
+image_label = ttk.Label(
+    root,
+    image=photo,
+    padding=5
+)
+image_label.pack()"""
+
+#####################################################
+#Estrucutra de un boton
+exit_button = ttk.Button(
+    root,
+    text='Exit',
+    command=lambda: root.quit()
+)#tienen el objeto, un texto y un comando o evento
+
+exit_button.pack( #da el tamaño
+    ipadx=5,
+    ipady=5,
+    expand=True
+)
+
+
+
+
+
+btn.focus()
+btn.pack(expand=True)
+
+root.mainloop()

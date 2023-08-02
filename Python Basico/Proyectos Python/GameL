@@ -1,0 +1,211 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import time
+
+#Ejecutador de variables
+col = 6
+row = 6
+
+#Definidor de resolucion
+#row = int(input("Seleccione las filas"))
+#col = int(input("Seleccione las columnas"))
+
+Lienzo = np.zeros((row,col))
+#print(Lienzo)
+
+#Generador aleatorio de valores
+def RandGen(arr):
+    for a in range(row):
+        for b in range(col):
+            Ej = np.random.randint(0,2)
+            arr[a,b] = Ej
+    print("Matriz Inicial\n")
+    print(arr,"\n")
+    return arr
+
+#Generar Matriz personalizada
+def PersGen(arr):
+    for a in range(row):
+        for b in range(col):
+            print("Ingrese el valor en:",a," Fila",b,"Columna")
+            Ej = int(input("\n"))
+            arr[a,b] = Ej
+    print(arr)
+    #Lienzo[0,0] = 5
+    return arr
+
+#Generar Matriz nxn Default
+def PruebGen(arr):
+    x = 1
+    Aux = np.arange(0,row*col+1)
+    for a in range(row):
+        for b in range(col):
+            Ej = Aux[x]
+            arr[a,b] = Ej
+            x += 1
+            #print(x)
+    print(arr)
+    #Lienzo[0,0] = 5
+    return arr
+
+def Nave(arr):
+    #fila,columna
+    arr[0,2] = 1
+    arr[1,3] = 1
+    arr[2,1] = 1
+    arr[2,2] = 1
+    arr[2,3] = 1
+    
+    
+    print("Matriz Inicial\n")
+    print(arr,"\n")
+    return arr
+
+def Oscilador(arr):
+    #fila,columna
+    arr[0,1] = 1
+    arr[1,1] = 1
+    arr[1,3] = 1
+    arr[2,0] = 1
+    arr[2,2] = 1
+    arr[3,2] = 1
+    
+    
+    print("Matriz Inicial\n")
+    print(arr,"\n")
+    return arr
+
+def Estatico(arr):
+    #fila,columna
+    arr[1,1] = 1
+    arr[1,2] = 1
+    arr[2,1] = 1
+    arr[2,2] = 1
+    
+    print("Matriz Inicial\n")
+    print(arr,"\n")
+    return arr
+
+   
+def PP(arr): #permite escribir solo los vectores deseados que sean 1
+    Ciclo = int(input("Escriba cuantos vectores va a ingresar"))
+    for x in range(Ciclo):
+        R = int(input("Escriba la fila a ingresar del elemento"))
+        C = int(input("Escriba la columna a ingresar del elemento"))
+        arr[R,C] = 1
+        print(R,C,"del ciclo",Ciclo+1)
+
+    print("Matriz Inicial\n")
+    print(arr,"\n")
+    return arr
+
+def Verdugo(Lienzo,row,col):
+    #Crear Variables
+    Verificador = np.zeros((3,3))
+    Respaldo = np.zeros((row,col))
+
+#Ciclos for para generar las matrices de juicio, tambien ejecuta el juicio
+    for a in range(row):
+        for b in range(col):
+            #print(a,b,"Indice")
+            #print(Lienzo[a,b],"Valor\n")
+            #print("Ejecuta el for que recorre la matriz principal")
+
+            for c in range(3):
+                for d in range(3):
+                    Crow = a+c-1
+                    Ccol = b+d-1
+                    #print("Ejecuta el for interno")
+                    #print(c,d)
+                    #print(Crow,Ccol,"Coordenada a buscar")
+                    try:
+                        if Crow >= 0 and Ccol >= 0:
+                            Verificador[c,d] = Lienzo[Crow,Ccol]
+                        else:
+                            Verificador[c,d] = 0
+
+                    except IndexError:
+                        Verificador[c,d] = 0
+
+            ctr = Verificador[c-1,d-1]
+            #print("El centro es",ctr,"En otras coord")
+            Verificador[c-1,d-1] = 0    
+            #print(Verificador)
+
+
+            #Juicio
+            #Elementos vivos
+            #print(np.sum(Verificador != 0),"Viven cerca")
+            #Vive
+            if (np.sum(Verificador != 0)==2 or np.sum(Verificador != 0)==3 ) and ctr != 0:
+                #print("seguira viviendo")
+                Respaldo[a,b] = 1
+            #Revive
+            elif (np.sum(Verificador != 0)==3 ) and ctr == 0:
+                #print("revive")
+                Respaldo[a,b] = 1
+            else:
+                #print("muere")
+                Respaldo[a,b] = 0
+
+    print("Matriz proxima\n",Respaldo,"......\n")
+    return Respaldo,row,col
+            
+            
+            
+
+
+
+
+
+
+#Ejecutador de Funciones
+a = 1
+while a == 1:
+    Selector = int(input("Pulse /n 1 para generador random\n 2 para generar una a una \n 3 para seleccionar un predeterminado \n 4 para elegir cuantos vectores\n"))
+    if Selector == 1:
+        #Random
+        Lienzo = RandGen(Lienzo) 
+        a +=1
+    elif Selector == 2:
+        Lienzo = PersGen(Lienzo)
+        a +=1
+    elif Selector == 3:
+        Slt = int(input("Pulse \n 1 para nave \n 2 para oscilador \n 3 para vida estatica \n"))
+        if Slt == 1:
+            Lienzo = Nave(Lienzo)
+        if Slt == 2:
+            Lienzo = Oscilador(Lienzo)
+        if Slt == 3:
+            Lienzo = Estatico(Lienzo)
+        a +=1
+
+    elif Selector == 4:
+        Lienzo = PP(Lienzo)
+        a +=1
+
+emerg = 0
+print("XD", Lienzo)
+while ((Lienzo != np.zeros((row,col))).any() and  emerg != 10):
+    #print(np.sum(Lienzo != 0))
+    Sentencia = Verdugo(Lienzo,row,col)
+    Lienzo = Sentencia[0]
+    if (Lienzo != np.zeros((row,col))).any():
+        emerg += 1
+    time.sleep(0.5)
+
+    """window = Tk()
+    window.title("El juego de la vida")
+    window.geometry("400x400")
+
+
+    canvas = Canvas( window, height = 400, width = 400, bg = "#FA2" )
+    canvas.pack()
+
+    juego = JuegoDeLaVida(0.1,100,canvas, 400, 400)
+
+    window.mainloop()"""
+ 
+else:
+    print("No corre ya")
