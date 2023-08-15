@@ -22,6 +22,22 @@ def create_product_table():
     
     conexion.commit()
     
+    cursor.execute('''CREATE TABLE IF NOT EXISTS COMPRA (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        usuarioId INTEGER,
+                        inventarioId INTEGER,
+                        FOREIGN KEY (usuarioId) REFERENCES USUARIO(id),
+                        FOREIGN KEY (inventarioId) REFERENCES INVENTARIO(id)
+                    )''')
+
+    conexion.commit()
+    
+    
+    
+    
+    
+    
+    
     
     conexion.close()
     
