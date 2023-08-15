@@ -62,7 +62,7 @@ def Update(pos, name=None, unitPrice=None):
     cur.execute(query)
     conn.commit()
     
-def Delete(rowId):
+def DeleteSingle(rowId):
     global InventarioDf
 
     # Eliminar la fila del DataFrame
@@ -76,7 +76,8 @@ def Delete(rowId):
     print(f"Fila con ID {rowId} eliminada correctamente.")
 
         
-      
+""" 
+#codigo prueba CRUD     
 ReadAll()           
 Create('primera',3232)
 Create('aa',4444)
@@ -89,7 +90,14 @@ Update(3,'aa',3232)
 ReadAll()
 Delete(2)
 ReadAll()
-ReadSingle(2)
+ReadSingle(2)"""
+"""#Ejemplo funcional de creacion
+ReadAll()
+Create("Proda", 1000)
+Create("Prodb",1500)
+Create("Prodc",1750)
+Create("Prodd",2000)
+Create("Prode",1000)"""
+ReadAll()
 
-# Cerrar la conexión con la base de datos
 conn.close()

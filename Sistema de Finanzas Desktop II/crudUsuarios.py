@@ -59,7 +59,7 @@ def Update(pos, userName, email,accessType):
     cur.execute(query)
     conn.commit()
 
-def Delete(rowId):
+def DeleteSingle(rowId):
     global UsuariosDf
 
     # Eliminar el usuario del DataFrame
@@ -72,7 +72,8 @@ def Delete(rowId):
 
     print(f"Usuario con ID {rowId} eliminado correctamente.")
 
-# Ejemplos de uso
+
+"""# codigo prueba CRUD
 ReadAll()
 Create('usuario1', 'usuario1@example.com',2)
 Create('usuario2', 'usuario2@example.com',1)
@@ -81,7 +82,15 @@ Update(1, 'nuevo_usuario', 'nuevo@example.com',0)
 ReadAll()
 Delete(2)
 ReadAll()
-ReadSingle(2)
+ReadSingle(2)"""
 
-# Cerrar la conexión con la base de datos
+"""#Ejemplo funcional de creacion
+ReadAll()
+Create('usuario1', 'usuario1@example.com',2)
+Create('usuario2', 'usuario2@example.com',1)
+Create('usuario3', 'usuario3@example.com',1)
+Create('usuario4', 'usuario4@example.com',1)"""
+ReadAll()
+
+
 conn.close()

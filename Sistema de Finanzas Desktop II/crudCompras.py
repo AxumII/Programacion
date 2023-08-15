@@ -47,7 +47,7 @@ def Update(usuarioId, inventarioId, newInventarioId):
     cur.execute(query)
     conn.commit()
 
-def Delete(usuarioId, inventarioId):
+def DeleteSingle(usuarioId, inventarioId):
     global ComprasDf
 
     # Eliminar la fila del DataFrame
@@ -60,16 +60,17 @@ def Delete(usuarioId, inventarioId):
 
     print(f"Compra de Usuario ID {usuarioId} e Inventario ID {inventarioId} eliminada correctamente.")
 
-# Ejemplos de uso
+"""# Ejemplo funcional de creacion
 ReadAll()
-Create(1, 1)
-Create(2, 2)
+Create(1,2)
+Create(2,2)
+Create(3,3)
+Create(1,4)
+Create(1,3)
+Create(3,2)
+Create(1,2)"""
 ReadAll()
-ReadSingle(1, 1)
-Update(1, 1, 3)
-ReadAll()
-Delete(1, 1)
-ReadAll()
+
 
 # Cerrar la conexión con la base de datos
 conn.close()
