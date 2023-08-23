@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd 
 import numpy as np
-import scipy as sc
+#import scipy as sc
 
 def funcionBasica():
     #define vectores como las variables
