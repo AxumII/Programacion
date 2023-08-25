@@ -1,9 +1,10 @@
 import matplotlib.pyplot as plt
 import pandas as pd 
 import numpy as np
-#import scipy as sc
+from sympy import *
+from scipy.integrate import solve_ivp
 
-def funcionBasica():
+def grafFuncionBasica():
     #define vectores como las variables
     x = np.linspace(0, 10, 100)#es la independiente
     y = np.sin(2 * x)#es la dependiente
@@ -48,4 +49,130 @@ def funcionBasica():
     ax1.legend(fontsize=10, loc="upper right")
     plt.show()
 
-funcionBasica()
+def opb():
+    a = np.array([1, 2, 3])
+    b = np.array([4, 5, 6])
+    suma = a + b
+    resta = a - b
+    producto = a * b
+    division = a / b
+    print(suma, resta, producto, division)
+
+def deriv():
+    x, y, z = symbols('x y z')#las define como variables
+
+    #derivada basica de primer orden
+    dv1 = diff(cos(x),x)
+    #derivada basica de n orden
+    n = 2
+    dv2 = diff(cos(x),x,n)
+    #derivada en varias variables, se ponen despues de la expresion las variables con las que se desea derivar
+    dv3 = diff((y**4)*cos(x),x,y)
+    #esta forma no la evalua pero no se si esta bien escrita
+    dv4 = Derivative((y**4)*cos(x),x,y)
+    
+    print(dv1)
+    print(dv2)
+    print(dv3)
+    print(dv4)
+    
+def integ():
+    x, y, z = symbols('x y z')#las define como variables   
+    
+    #integral basica indefinida
+    i1 = integrate(x**2,x)
+    #integral basica definida
+    i2 = integrate(x**2,(x,0,50))
+    #integral iterada de varias variables
+    i3 = integrate((x*(y**2)*exp(-x),(y,0,5),(x,1,oo)))
+    
+    print(i1)
+    print(i2)
+    print(i3)
+    
+    
+    
+def EDO():
+    def eom(x, y):
+        y1, y2 = y
+        dy1dx = y2
+        dy2dx = 2 * y2 - y1 + np.cos(x)
+        return [dy1dx, dy2dx]
+
+    # Condiciones iniciales
+    initial_conditions = [1, 0]
+    x_range = (0, 10)  # Rango de valores de x donde se resolverá la EDO
+
+    # Resolver la EDO
+    sol = solve_ivp(eom, x_range, initial_conditions, t_eval=np.linspace(x_range[0], x_range[1], 1000))
+     
+#para laplace, scipy tiene es para SYS, sympy para laplace pura.
+def laplaceSympy():
+    
+    # Definir las variables simbólicas y la variable 's' de la transformada de Laplace
+    t, s = sp.symbols('t s')
+
+    # Definir la función original en el dominio del tiempo
+    f_original = sp.exp(-2 * t)
+
+    # Calcular la transformada de Laplace de la función
+    laplace_transform = sp.laplace_transform(f_original, t, s)
+
+    # Imprimir el resultado de la transformada de Laplace
+    print("Transformada de Laplace de la función:")
+    print(laplace_transform)
+   
+#para escalon e impulso numpy tienen librerias 
+def escalonUnit():
+    def heaviside(x):
+        return np.heaviside(x, 1)
+
+    valor = -1
+    resultado = heaviside(valor)
+    print(f"Heaviside({valor}) = {resultado}")
+      
+"""
+#buscar con numpy, toca ponerlo, luego se me olvida
+def impulsoUnit():
+   print("falta terminar")
+
+   
+def complejos():  
+    # 1. Expresar un número complejo
+    z = 3 + 4j
+    print("Número complejo:", z)
+
+    # 2. Expresar en forma exponencial y trigonométrica
+    magnitude = np.abs(z)
+    angle_rad = np.angle(z)
+    exponential_form = magnitude * np.exp(1j * angle_rad)
+    cos_form = magnitude * np.cos(angle_rad) + 1j * (magnitude * np.sin(angle_rad))
+
+    print("Forma exponencial:", exponential_form)
+    print("Forma sen-cos:", cos_form)
+
+    # 3. Operaciones básicas con números complejos
+    w = 1 - 2j
+
+    # Suma
+    sum_result = z + w
+    print("Suma:", sum_result)
+
+    # Resta
+    sub_result = z - w
+    print("Resta:", sub_result)
+
+    # Multiplicación
+    mul_result = z * w
+    print("Multiplicación:", mul_result)
+
+    # División
+    div_result = z / w
+    print("División:", div_result)
+    
+  """    
+#########################################################################################################
+"""grafFuncionBasica()"""
+
+
+integ()
