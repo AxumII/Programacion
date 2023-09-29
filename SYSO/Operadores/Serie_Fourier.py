@@ -34,34 +34,26 @@ class Serie_Fourier:
         return suma
     
     #Funcion que grafica la serie y la funcion original
-    def graf(self):
-        
-        
-#####################################################################################################       
-
-
+    def graf(self): 
         
         resultado = self.result()
         
-        plt.figure(figsize=(12, 6))
+        fig = plt.figure(figsize=(12, 6))
         
-        plt.subplot(2, 1, 1)
-        plt.plot(self.t, self.funcion, label='Función Original', color = "red")
-        plt.xlabel('Tiempo')
-        plt.ylabel('Amplitud')
+        ax1 = fig.add_subplot(2, 1, 1)
+        ax1.plot(self.t, self.funcion, label='Función Original', color="red")
+        ax1.set_xlabel('Tiempo')
+        ax1.set_ylabel('Amplitud')
+        ax1.grid(True)
+        ax1.legend(fontsize=10, loc="upper right")
         
-        plt.grid(True)
-        
-        plt.legend(fontsize=10, loc="upper right")
-        
-        
-        plt.subplot(2, 1, 2)
-        plt.plot(self.t, resultado, label='Serie de Fourier', color = "purple")
-        plt.xlabel('Variable t')
-        plt.ylabel('Amplitud y')
-        plt.legend(fontsize=10, loc="upper right")
-        
-        plt.grid(True)
+        ax2 = fig.add_subplot(2, 1, 2)
+        ax2.plot(self.t, resultado, label='Serie de Fourier', color="purple")
+        ax2.plot(4, 0.5, marker="o", markersize=4, color="green", label='N = {:.6f}'.format(self.N))
+        ax2.set_xlabel('Variable t')
+        ax2.set_ylabel('Amplitud y')
+        ax2.legend( fontsize=10, loc="upper right")
+        ax2.grid(True)
         
         plt.tight_layout()
         plt.show()

@@ -7,8 +7,8 @@ def codigo():
     
     print("Para usar este codigo es necesario definir l,N,fs")
     l = 7
-    N = 5000 # numero de sumas
-    fs = 10000
+    N = 10000 # numero de sumas
+    fs = 12000
     
     #crea el objeto de la clase generadora
     f = gen(-l,l,fs)
@@ -49,13 +49,13 @@ def codigo():
                          ['Heaviside(t-10)', 4, l]])
     
     f7 = f.new_piece(taller2_2)
-    
-    
-    """
-    
+  
     #Fourier funcion f1
     sff1 = sf(t,l,N,f1)
     sff1.graf()
+    
+    
+    
     
     #Fourier funcion f2
     sff2 = sf(t,l,N,f2)
@@ -72,7 +72,7 @@ def codigo():
     #Fourier funcion f5
     sff5 = sf(t,l,N,f5)
     sff5.graf()
-    """
+    
 
     
     #Fourier funcion f6
