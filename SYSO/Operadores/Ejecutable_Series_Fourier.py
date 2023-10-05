@@ -6,9 +6,9 @@ from Generator import Generator as gen
 def codigo():
     
     print("Para usar este codigo es necesario definir l,N,fs")
-    l = 7
-    N = 10000 # numero de sumas
-    fs = 12000
+    l = 5
+    N = 30000 # numero de sumas
+    fs = 1700
     
     #crea el objeto de la clase generadora
     f = gen(-l,l,fs)
@@ -20,8 +20,8 @@ def codigo():
     #genera funciones 
     f1 = f.sq(5,0.7)
     f2 = f.triang(4,0.5)
-    f3 = f.new('1.5 * exp(1.2 * t)')
-    f4 = f.new('0.5*t**2')
+    f3 = f.saw(3,1)
+    f4  = f.triang(5,0.1)
     
     #Las funciones a trozos requeiren 3 atributos, el primero es la funcion, y luego esta el intervalo de los trozos para definir la entrada
     
@@ -30,14 +30,16 @@ def codigo():
                       ['15*sin(t)', 4, l]])    
     f5 = f.new_piece(trozos1) #aca llama a la funcion y le pasa la matriz que indica los trozos
     
+    
+    
     taller2_1 = np.array([['Heaviside(t-10)',-l,-4],
                          ['Heaviside(t+10)',-4,-3],
                          ['Heaviside(t-10)',-3, 0],
                          ['Heaviside(t+10)', 0, 1],
                          ['Heaviside(t-10)', 1, 4],
-                         ['Heaviside(t+10)', 4, 5],
-                         ['Heaviside(t-10)', 5, l]])
-    f6 = f.new_piece(taller2_1)
+                         ['Heaviside(t+10)', 4, l]])
+    f6 = f.new_piece(taller2_1)    
+    
     
     
     taller2_2 = np.array([['Heaviside(t-10)',-l,-4],
@@ -61,13 +63,16 @@ def codigo():
     sff2 = sf(t,l,N,f2)
     sff2.graf()
     
+    
     #Fourier funcion f3
     sff3 = sf(t,l,N,f3)
     sff3.graf()
     
+    
     #Fourier funcion f4
     sff4 = sf(t,l,N,f4)
     sff4.graf()
+    
     
     #Fourier funcion f5
     sff5 = sf(t,l,N,f5)

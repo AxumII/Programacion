@@ -75,7 +75,7 @@ class DataAnalysis:
 
     def normality_cramer_test(self):
         # Realiza el test de Cramer-Von Mises
-        res = stats.cramervonmises(self.data, 'norm')
+        res = stats.cramervonmises(self.data, 'chi2')
         res.statistic, res.pvalue
         # Comprueba si el valor p es menor que un umbral de significancia (por ejemplo, 0.05)
         alpha = 0.05

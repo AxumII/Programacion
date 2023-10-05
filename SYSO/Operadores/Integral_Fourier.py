@@ -2,14 +2,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class Integral_Fourier:
-    def __init__(self, t, funcion):
+    def __init__(self, t, funcion, numArm = None):
         self.t = t
         self.funcion = funcion
+        self.numArm = numArm
 
     def fft(self):
         N = len(self.funcion)
         transformada = np.fft.fft(self.funcion)
         frecuencias = np.fft.fftfreq(N, self.t[1] - self.t[0])
+        
+        print(transformada)
         return frecuencias, transformada
 
     def result(self):
@@ -19,17 +22,17 @@ class Integral_Fourier:
         integral = np.fft.ifft(transformada) * (frecuencias[1] - frecuencias[0])
         return frecuencias, transformada, integral
 
-    def generate_approximation(self, selected_harmonics):
+    def limitresult(self):
+        coef = self.fft()
+        frecuencias = coef[0][:self.numArm]  # Tomar los primeros n elementos de frecuencias
+        transformada = coef[1][:self.numArm]  # Tomar los primeros n elementos de la transformada
+        N = len(self.t)
+        integral2 = np.fft.ifft(transformada, n=N) * (frecuencias[1] - frecuencias[0])
+        return frecuencias, transformada, integral2
+    
+    def graf(self):
         frecuencias, transformada, integral = self.result()
-        approximation = np.zeros(len(self.t), dtype=np.complex128)
-
-        for i in range(selected_harmonics):
-            approximation += transformada[i] * np.exp(2j * np.pi * frecuencias[i] * self.t)
-
-        return np.real(approximation)
-
-    def graf(self, selected_harmonics=None):
-        frecuencias, transformada, integral = self.result()
+        frecuencias, transformada, integral2 = self.limitresult()
 
         fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(12, 8))
         
@@ -46,11 +49,12 @@ class Integral_Fourier:
         ax3.set_title('Integral de Fourier')
         ax3.grid(True)
 
-        if selected_harmonics is not None:
-            approximation = self.generate_approximation(selected_harmonics)
-            ax4.plot(self.t, approximation)
-            ax4.set_title('Aproximación con {} armónicos'.format(selected_harmonics))
+        if self.numArm != None:
+            ax4.plot(self.t, np.real(integral2), label='Armonicos usados = {:.6f}'.format(self.numArm))
+            ax4.set_title('Integral de Fourier ')
             ax4.grid(True)
-
+        else:
+            pass
+        
         plt.tight_layout()
         plt.show()

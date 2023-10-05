@@ -10,7 +10,7 @@ class Serie_Fourier:
     
     # Función para calcular los coeficientes de la serie de Fourier
     def coeficientes(self):
-        a0 = (1 / self.l) * np.trapz(self.funcion, dx=self.l)
+        a0 = (2 / self.l) * np.trapz(self.funcion, dx=self.l)
         a_coeffs = []
         b_coeffs = []
         for n in range(1, self.N + 1):
