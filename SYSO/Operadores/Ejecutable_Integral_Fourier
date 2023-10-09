@@ -10,7 +10,7 @@ def codigo():
     
     l = 8
     fs = 500
-    arm = 50
+    numArm = 50
     
     #crea el objeto de la clase generadora
     f = gen(-l,l,fs)
@@ -20,10 +20,10 @@ def codigo():
     
     
     #genera funciones 
-    f1 = f.sq(5,0.7)
-    f2 = f.triang(4,0.5)
+    f1 = f.sq(5,3)
+    f2 = f.triang(4,4)
     f3 = f.new('1.5 * exp(1.2 * t)')
-    
+    f6 = f.sen(3, 7)
     
     #Las funciones a trozos requeiren 3 atributos, el primero es la funcion, y luego esta el intervalo de los trozos para definir la entrada
     
@@ -41,25 +41,26 @@ def codigo():
     
     
     
-    # (1/60)*(t**4 - (3*t)**3 - (25*t)**2 - 5*t + 50)
-    #0.2* (t+6)* (t+4) *(t+7)
+   
     ##################################################################################
     
-    iff1 = intf(t,f1,arm)
+    iff1 = intf(t,f1,numArm = numArm, threshold= 0.1)
     iff1.graf()
     
-    iff2 = intf(t,f2,arm)
+    iff2 = intf(t,f2)
     iff2.graf()
     
-    iff3 = intf(t,f3,arm)
+    iff3 = intf(t,f3,numArm = numArm)
     iff3.graf()
     
-    iff4 = intf(t,f4,arm)
+    iff4 = intf(t,f4,numArm = numArm)
     iff4.graf()
     
-    iff5 = intf(t,f5,arm)
+    iff5 = intf(t,f5,numArm = numArm)
     iff5.graf()
 
+    iff6 = intf(t,f6,numArm = numArm, threshold= 0.1)
+    iff6.graf()
     
     
     

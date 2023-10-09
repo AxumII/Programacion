@@ -14,21 +14,25 @@ class Generator:
     def t(self):
         var = np.linspace(self.a,self.b,self.fs)
         return var
+    
+    def n(self):
+        var = np.arange(self.a,self.b)
+        return var
                 
     def sq(self,amp,f):
-        y = signal.square(amp* np.pi * f * self.t())
+        y = amp*signal.square( 2*np.pi * f * self.t())
         return y
     
     def sen(self,amp,f):
-        y = np.sin(amp* np.pi * f * self.t())
+        y = amp * np.sin( 2*np.pi * f * self.t())
         return y
     
     def triang(self,amp,f):
-        y = signal.sawtooth(amp* np.pi * f *self.t(), width=0.5)
+        y = amp*signal.sawtooth(2*np.pi * f *self.t(), width=0.5)
         return y
     
     def saw(self,amp,f):
-        y = signal.sawtooth(amp* np.pi * f * self.t())
+        y = amp*signal.sawtooth(2*np.pi * f * self.t())
         return y
 
     def new(self, formula):
