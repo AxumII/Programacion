@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy.signal as sg
 
 
 class Convolucion:
@@ -10,7 +11,8 @@ class Convolucion:
            
         
     def conv(self):
-        return np.convolve(self.funcion1, self.funcion2, mode='full')
+        return sg.convolve(self.funcion1, self.funcion2, mode='same')
+
     
     
     def tipo(self):
@@ -30,19 +32,19 @@ class Convolucion:
         
         
         if(v == 1):
-            ax1.scatter(self.t, self.funcion1)
+            ax1.scatter(self.t, self.funcion1, color = 'green')
             ax1.set_title('Señal 1')
             ax1.set_xlabel('Tiempo')
             ax1.set_ylabel('Amplitud')
             ax1.grid(True)
 
-            ax2.scatter(self.t, self.funcion2)
+            ax2.scatter(self.t, self.funcion2, color = 'red')
             ax2.set_title('Señal 2')
             ax2.set_xlabel('Tiempo')
             ax2.set_ylabel('Amplitud')
             ax2.grid(True)
 
-            ax3.scatter(np.linspace(0, self.t[-1], len(result)), result)
+            ax3.scatter(self.t, result, color = 'purple')
             ax3.set_title('Convolución')
             ax3.set_xlabel('Tiempo')
             ax3.set_ylabel('Amplitud')
@@ -54,19 +56,19 @@ class Convolucion:
         
         else:       
 
-            ax1.plot(self.t, self.funcion1)
+            ax1.plot(self.t, self.funcion1, color = 'green')
             ax1.set_title('Señal 1')
             ax1.set_xlabel('Tiempo')
             ax1.set_ylabel('Amplitud')
             ax1.grid(True)
 
-            ax2.plot(self.t, self.funcion2)
+            ax2.plot(self.t, self.funcion2, color = 'red')
             ax2.set_title('Señal 2')
             ax2.set_xlabel('Tiempo')
             ax2.set_ylabel('Amplitud')
             ax2.grid(True)
 
-            ax3.plot(np.linspace(0, self.t[-1], len(result)) , result)
+            ax3.plot(self.t , result, color = 'purple')
             ax3.set_title('Convolución')
             ax3.set_xlabel('Tiempo')
             ax3.set_ylabel('Amplitud')

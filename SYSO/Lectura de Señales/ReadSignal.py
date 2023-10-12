@@ -66,5 +66,5 @@ class ReadSignal():
         plt.savefig(data_plot_filename)
         plt.show()
 
-lector = ReadSignal('COM7', 115200, fm = 700, collection_time= 2, title='Prueba')  # Set collection_time to 60 seconds
+lector = ReadSignal('COM7', 115200, fm = 860, collection_time= 3, title='a.csv')  
 lector.collectData()

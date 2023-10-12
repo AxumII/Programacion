@@ -19,12 +19,13 @@ class Generator:
         var = np.arange(self.a,self.b)
         return var
                 
-    def sq(self,amp,f):
-        y = amp*signal.square( 2*np.pi * f * self.t())
+    def sq(self,amp,f, duty = 0.5, offset = 0):
+        y = amp*signal.square(2 * np.pi * f * self.t() + offset, duty)
+        
         return y
     
-    def sen(self,amp,f):
-        y = amp * np.sin( 2*np.pi * f * self.t())
+    def sen(self,amp,f, offset = 0):
+        y = amp * np.sin( 2*np.pi * f * self.t() + offset)
         return y
     
     def triang(self,amp,f):

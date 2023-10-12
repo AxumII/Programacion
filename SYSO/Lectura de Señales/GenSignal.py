@@ -10,7 +10,9 @@ def generar():
     f = gen(0, 5, fs)
     t = f.t()
     
-    f1 = f.new('1.5 * t ** 2')
+    #f1 = f.new('1.5 * t ** 2')
+    f1 = f.sen(5,700)
+    #f1 = f.new('1.5 * exp(2.5*t)')
     
     # Crear un DataFrame con pandas
     df = pd.DataFrame({'t': t, 'f1': f1})

@@ -1,26 +1,27 @@
-import csv
-import math
+import numpy as np
+import matplotlib.pyplot as plt
 
-# Parámetros de la señal sinusoidal
-amplitud = 1.0   # Amplitud de la señal
-frecuencia = 1.0 # Frecuencia de la señal (en Hz)
-muestras = 100   # Número de muestras
+def expon(t, a, b):
+    return np.exp(a * t) + b
 
-# Crear una lista de valores de tiempo
-tiempo = [i / frecuencia / muestras for i in range(muestras*10)]
+# Generar valores de t
+t = np.linspace(0, 5, 100)  # Cambia los valores según tus necesidades
 
-# Calcular los valores de la señal sinusoidal
-valores = [amplitud * math.sin(2 * math.pi * frecuencia * t) for t in tiempo]
+# Parámetros de la función exponencial
+rc = 0.0046389
+rc_inv = rc ** -1 
 
-# Nombre del archivo CSV de salida
-nombre_archivo = "senal_periodica.csv"
+# Calcular los valores de la función exponencial
+y = expon(t, rc_inv, -rc_inv)
 
-# Escribir los valores en el archivo CSV
-with open(nombre_archivo, mode='w', newline='') as archivo_csv:
-    escritor_csv = csv.writer(archivo_csv, delimiter=',')
-    escritor_csv.writerow(["Tiempo", "Valor"])  # Escribir encabezados
-    for t, valor in zip(tiempo, valores):
-        escritor_csv.writerow([t, valor])
+# Crear el gráfico
+plt.figure()
+plt.plot(t, y, label='Función Exponencial')
+plt.xlabel('t')
+plt.ylabel('y')
+plt.title('Gráfico de la Función Exponencial')
+plt.legend()
+plt.grid(True)
 
-print(f"Se ha creado el archivo '{nombre_archivo}' con los valores de la señal.")
-print(valores)
+# Mostrar el gráfico
+plt.show()

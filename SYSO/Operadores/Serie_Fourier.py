@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class Serie_Fourier:
-    def __init__(self,t,l,N,funcion):
+    def __init__(self, t, l, N, funcion):
         self.t = t
         self.l = l
         self.N = N
@@ -20,40 +20,44 @@ class Serie_Fourier:
             b_coeffs.append(b_n)
         return a0, a_coeffs, b_coeffs
     
-    #Funcion que calcula la serie de Fourier dado los coeficientes
+    # Funcion que calcula la serie de Fourier dado los coeficientes
     def result(self):
-        
         metCoef = self.coeficientes()
         a0 = metCoef[0]
         a_coeffs = metCoef[1]
         b_coeffs = metCoef[2]
-        
         suma = a0 / 2
         for n in range(len(a_coeffs)):
             suma += a_coeffs[n] * np.cos(2 * np.pi * (n + 1) * self.t / self.l) + b_coeffs[n] * np.sin(2 * np.pi * (n + 1) * self.t / self.l)
         return suma
     
-    #Funcion que grafica la serie y la funcion original
+    # Funcion que grafica la serie y la funcion original
     def graf(self): 
-        
         resultado = self.result()
+        a_coeffs, b_coeffs = self.coeficientes()[1:]
         
-        fig = plt.figure(figsize=(12, 6))
+        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 6))
         
-        ax1 = fig.add_subplot(2, 1, 1)
         ax1.plot(self.t, self.funcion, label='Función Original', color="red")
         ax1.set_xlabel('Tiempo')
         ax1.set_ylabel('Amplitud')
         ax1.grid(True)
         ax1.legend(fontsize=10, loc="upper right")
         
-        ax2 = fig.add_subplot(2, 1, 2)
         ax2.plot(self.t, resultado, label='Serie de Fourier', color="purple")
         ax2.plot(4, 0.5, marker="o", markersize=4, color="green", label='N = {:.6f}'.format(self.N))
         ax2.set_xlabel('Variable t')
         ax2.set_ylabel('Amplitud y')
-        ax2.legend( fontsize=10, loc="upper right")
+        ax2.legend(fontsize=10, loc="upper right")
         ax2.grid(True)
+        
+        n_values = np.arange(1, self.N + 1)
+        ax3.stem(n_values, a_coeffs, markerfmt='ro', basefmt=' ', linefmt='-r', label='an')
+        ax3.stem(n_values, b_coeffs, markerfmt='bo', basefmt=' ', linefmt='-b', label='bn')
+        ax3.set_xlabel('n')
+        ax3.set_ylabel('Coeficientes')
+        ax3.grid(True)
+        ax3.legend(fontsize=10, loc="upper right")
         
         plt.tight_layout()
         plt.show()
