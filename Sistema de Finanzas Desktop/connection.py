@@ -96,7 +96,6 @@ def insert_product(producto):
         print("Producto insertado correctamente.")
         conexion.close()
 
-# Función para actualizar un producto en la base de datos
 def update_product():
     id = int(input("Ingresa el ID del producto que deseas actualizar: "))
     conexion = connect_to_database()
@@ -157,6 +156,7 @@ def update_product():
             print("Producto actualizado correctamente.")
         else:
             print("No se encontró un producto con el ID proporcionado.")
+        conexion.close()
 
 # Función para eliminar un producto de la base de datos
 def delete_product():
@@ -164,10 +164,17 @@ def delete_product():
     conexion = connect_to_database()
     if conexion:
         cursor = conexion.cursor()
-        cursor.execute("DELETE FROM Product WHERE id = ?", (id,))
-        conexion.commit()
-        print("Producto eliminado correctamente.")
-        conexion.close()
+        try:
+            cursor.execute("DELETE FROM Product WHERE id = ?", (id,))
+            if cursor.rowcount == 0:
+                print("No se encontró un producto con el ID proporcionado.")
+            else:
+                print("Producto eliminado correctamente.")
+            conexion.commit()
+        except sqlite3.OperationalError as error:
+            print(f"Error al eliminar el producto: {error}")
+        finally:
+            conexion.close()
 
 # Función para ejecutar las operaciones según el nombre proporcionado
 def execute_operation(operation_name):

@@ -5,7 +5,7 @@ def create_product_table():
     cursor = conexion.cursor()
 
     cursor.execute('''CREATE TABLE IF NOT EXISTS Product (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                         name TEXT NOT NULL,
                         unitPrice REAL NOT NULL,
                         description TEXT NOT NULL,
