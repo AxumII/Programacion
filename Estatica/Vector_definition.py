@@ -1,5 +1,3 @@
-
-
 import numpy as np
 from Vector_operation import Vector_operation 
 
@@ -31,20 +29,42 @@ class Vector_definition:
         elif tipo == 1:  # 2 componentes cartesianas y la magnitud
             self.coord = self.vop.find_miss(self.coord, self.magnitude)
 
-        elif tipo == 2:  # 2 componentes cartesianas y 1 ángulo o coseno director
-            pass
+        elif tipo == 2:  # 2 componentes cartesianas y 1 ángulo o coseno director, 2 angulos y 1 compoente
+            if self.angle:
+                self.angle_to_cos()
+                angle = False
 
+            itsc = np.where(~np.isnan(self.coord) & ~np.isnan(self.cosdir))[0]
+            if len(itsc) != 1:
+                print("Error: Debe haber exactamente un componente común entre coordenadas y cosenos directores.")
+                return
+            
+            int_i = self.vop.find_inter(self.coord,self.cosdir)
+            
+
+            self.cosdir = [np.nan,np.nan,np.nan]
+            
         elif tipo == 3:  # 1 ángulo o coseno director, la magnitud y una componente
-            pass
+            if self.angle:
+                self.angle_to_cos()
+                angle = False
+
+                
 
         elif tipo == 4:  # 2 ángulos o cosenos directores y la magnitud (coordenadas esféricas)
-            pass
+            if self.angle:
+                self.angle_to_cos()
+                angle = False
 
         elif tipo == 5:  # 3 ángulos o cosenos directores y la magnitud
-            pass
+            if self.angle:
+                self.angle_to_cos()
+                angle = False
 
         elif tipo == 6:  # 3 ángulos o cosenos directores y una componente
-            pass
+            if self.angle:
+                self.angle_to_cos()
+                angle = False
 
 
 

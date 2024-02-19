@@ -50,3 +50,15 @@ class Vector_operation:
         vector[miss_i] = np.sqrt(max(magn**2 - sum_squares, 0))
 
         return vector
+
+    def find_inter(self,vector,cosdir):
+        # Encuentra los índices donde ambos vectores tienen valores numéricos (no NaN)
+        indices_con_valores = np.where(~np.isnan(vector) & ~np.isnan(cosdir))[0]
+        
+        # Verifica si hay intersecciones
+        if len(indices_con_valores) == 0:
+            return None  # "No hay intersección."
+        elif len(indices_con_valores) > 1:
+            return indices_con_valores[0] # "Hay más de una intersección, retornando la primera posición."
+        else:
+            return indices_con_valores[0] # "Hay una intersección."
