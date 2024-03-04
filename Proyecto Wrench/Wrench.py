@@ -375,7 +375,9 @@ class Ventana(Frame):
                 ax.set_xlabel('x')
                 ax.set_ylabel('y')
                 ax.set_zlabel('z')
-                
+                ax.view_init(elev=45, azim=-45)
+
+
                 plt.title('Vectores de posición y fuerza')
                 ventana1=Tk()
                 ventana1.geometry('700x325')

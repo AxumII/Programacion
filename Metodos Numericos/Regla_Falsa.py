@@ -68,17 +68,3 @@ class ReglaFalsa:
         plt.ylabel('f(x)')
         plt.grid(True)
         plt.show()
-
-# Ejemplo de uso
-eq = "exp(-x**2) - cos(x)"
-intervalo = (-1, 1)
-error_tol = 1e-5
-a = ReglaFalsa(eq, intervalo, error_tol)
-a.solve(print_table=True)
-a.graf()
-
-eq = "exp(x) - x**3 + 3*(x**2) - 2*x - 10"
-intervalo = (-10, 10)
-b = ReglaFalsa(eq, intervalo)
-b.solve(print_table=True)
-b.graf()

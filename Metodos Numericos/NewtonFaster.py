@@ -3,12 +3,13 @@ import numpy as np
 import pandas as pd
 import sympy as sp
 
-class Newton:
+class AcceleratedNewton:
 
-    def __init__(self, equation, initial, interv, iterat=100, error=1e-7):
+    def __init__(self, equation, initial, interv, multiplicity=1, iterat=100, error=1e-7):
         self.equation = equation
         self.initial = initial
         self.interv = interv
+        self.multiplicity = multiplicity
         self.iterat = iterat
         self.error = error
         self.x = sp.symbols('x')
@@ -36,7 +37,6 @@ class Newton:
         xn = self.initial
         data = []
         errors = [np.inf]
-        error_ratios = []
 
         for i in range(self.iterat):
             fxn = self.func(xn)
@@ -45,35 +45,27 @@ class Newton:
                 print("Derivative equals zero. The method cannot proceed.")
                 break
 
-            xn_next = xn - fxn / f_prime_xn
+            xn_next = xn - self.multiplicity * fxn / f_prime_xn
             error = abs(xn_next - xn)
-            error_ratio = error / errors[-1] if i > 0 else np.nan
 
             if error < self.error or abs(fxn) < self.error:
                 print(f"Root found within the interval with x approximated to {xn} is with an error less than {self.error}")
                 xn = xn_next
                 break
 
-            data.append([i+1, xn, fxn, f_prime_xn, xn_next, error, error_ratio])
+            data.append([i+1, xn, fxn, f_prime_xn, xn_next, error])
             errors.append(error)
-            error_ratios.append(error_ratio)
             xn = xn_next
 
         if print_table:
-            df = pd.DataFrame(data, columns=['Iteration', 'xn', 'f(xn)', "f'(xn)", 'xn+1', 'Error', '|En|/|En-1|'])
+            df = pd.DataFrame(data, columns=['Iteration', 'xn', 'f(xn)', "f'(xn)", 'xn+1', 'Error'])
             print(df)
             print(f"The symbolic derivative of the function is: {self.symbolic_derivative}")
 
-        # Calculating the order of convergence
-        if len(errors) > 2:
-            p = np.log(errors[-1]/errors[-2])/np.log(errors[-2]/errors[-3])
-        else:
-            p = None
-        
-        return xn, errors, error_ratios, p
+        return xn, errors
 
     def graf(self, print_table=False):
-        root, errors, error_ratios, p = self.solve(print_table=print_table)
+        root, errors = self.solve(print_table=print_table)
         x_values = np.linspace(self.interv[0], self.interv[1], 400)
         y_values = self.func(x_values)
 
@@ -91,20 +83,14 @@ class Newton:
         plt.grid(True)
         plt.title('Function and Approximate Root')
 
-        # Plotting the convergence speed
+        # Plotting the convergence
         plt.subplot(1, 2, 2)
         plt.semilogy(range(1, len(errors)), errors[1:], '-o', label='Error per iteration')
         plt.xlabel('Iteration')
         plt.ylabel('Logarithmic Error')
-        convergence_order = f"Convergence Order: {p:.2f}" if p is not None else "Convergence Order: N/A"
-        plt.title(f'Convergence Speed - {convergence_order}')
+        plt.title('Convergence')
         plt.grid(True)
         plt.legend()
 
         plt.tight_layout()
         plt.show()
-
-        if p is not None:
-            print(f"The calculated convergence order is {p:.2f}.")
-        else:
-            print("Convergence order could not be calculated.")
