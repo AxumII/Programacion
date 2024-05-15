@@ -1,11 +1,12 @@
 import numpy as np
 
 class Vector_Object:
-    def __init__(self, coords=[np.nan, np.nan, np.nan], angles = [np.nan, np.nan, np.nan], magn=np.nan, position=[0, 0, 0]):
+    def __init__(self, coords=[np.nan, np.nan, np.nan], angles=[np.nan, np.nan, np.nan], magn=np.nan, position=[0, 0, 0], next=None):
         self.coords = np.array(coords)
         self.angles = np.array(angles)
         self.magn = float(magn)
         self.position = np.array(position)
+        self.next = next
         self.identifier()
 
 
@@ -70,6 +71,34 @@ class Vector_Object:
             self.position = np.array([np.nan, np.nan, np.nan])
         else:
             self.position[index] = np.nan
+
+    def read_all_asociates(self):         
+        return self.extra_list
+
+    def read_from_extra_list(self, index):
+        if index < len(self.extra_list):
+            return self.extra_list[index]
+        else:
+            raise IndexError("Índice fuera de rango.")
+
+    def create_asociates(self, item):       
+        self.extra_list.append(item)
+
+    def update_asociates(self, index, new_item):
+        if index < len(self.extra_list):
+            self.extra_list[index] = new_item
+        else:
+            raise IndexError("Índice fuera de rango.")
+
+    def delete_asociates(self, index):
+        if index < len(self.extra_list):
+            del self.extra_list[index]
+        else:
+            raise IndexError("Índice fuera de rango.")
+        
+    def clear_list(self):
+        self.asociates.clear()
+
 #############################################################
 
 #Identificador
@@ -93,7 +122,6 @@ class Vector_Object:
                 self.Type3()
 
             elif nan_count_coords == 2 and nan_count_angles == 2:
-                print("estoy en type4")
                 index_coord_nan = np.where(~np.isnan(self.coords))[0][0]
                 index_angle_nan = np.where(~np.isnan(self.angles))[0][0]
                 if index_coord_nan != index_angle_nan:
@@ -137,16 +165,16 @@ class Vector_Object:
 #Casos de acuerdo al diagrama, provisional
     def Type0(self): #Caso completo
         if np.isclose(self.magn, np.sqrt(np.sum(self.coords**2))) and np.isclose(self.coords / self.magn, self.angles).all():
-            print("Ya tiene el vector completo")
-            print("Coordenadas", self.get_coords(), "\nÁngulos en CosDir", self.get_angles(), "\nMagnitud", self.get_magn(), "\n")
+            #print("Ya tiene el vector completo")
+            #print("Coordenadas", self.get_coords(), "\nÁngulos en CosDir", self.get_angles(), "\nMagnitud", self.get_magn(), "\n")
+            pass
         else:
             print("Inconsistencia en los datos, recalculando...")
             self.magn = np.nan
             self.angles = np.array([np.nan, np.nan, np.nan])
             self.Type10()
 
-    def Type1(self): #Solo faltan angulos
-        print("Estoy en tpye1")
+    def Type1(self): #Solo faltan angulos        
         calculated_magn = np.sqrt(np.sum(self.coords**2))
         if not np.isclose(self.magn, calculated_magn):
             print(f"La magnitud actual {self.magn} es incorrecta, recalculando...")
@@ -156,7 +184,6 @@ class Vector_Object:
         self.Type0()
 
     def Type2(self): #Solo faltan coordenadas
-        print("Estoy en type 2")
         self.coords = self.magn * self.angles
         self.Type0()
 
@@ -164,7 +191,7 @@ class Vector_Object:
         sum_squares = np.nansum(self.coords ** 2)
         if self.magn**2 >= sum_squares:
             last = np.sqrt(self.magn**2 - sum_squares)
-            print("El faltante ya se hallo")
+            #print("El faltante ya se hallo")
         else:
             print("No es posible calcular un componente faltante con los datos proporcionados.")
         nan_index = np.where(np.isnan(self.coords))[0][0]        
@@ -178,7 +205,7 @@ class Vector_Object:
 
         # Realizar el cálculo y reemplazar el valor correspondiente en self.coords
         self.coords[angle_index] = self.magn * self.angles[angle_index]
-        print(f"Reemplazo realizado en la posición {angle_index} con el valor {self.coords[angle_index]}")
+        #print(f"Reemplazo realizado en la posición {angle_index} con el valor {self.coords[angle_index]}")
        
         # Configura todos los elementos de self.angles a NaN
         self.angles[:] = np.nan
@@ -260,8 +287,8 @@ v1 = Vector_Object(coords=[3, 4, 7], magn=15)
 print(v1.get_coords, v1.get_angles, v1.get_magn)
 
 
+print("XD")
 
-#v2 = Vector_Object() #Toca aplicar verificador de suma de angulos, si no retornar al tipo 9
 print("Vector 3")
 v3 = Vector_Object(coords=[0.5, 0.14, np.nan], magn=30)
 
@@ -290,8 +317,10 @@ v9 = Vector_Object(angles = [np.nan, 0.2, 0.4], magn= 10)
 print("Vector 10")
 v10 = Vector_Object(coords = [3,4,5])
 
+"""
 
 
+"""
 
 
 print("Prueba fallo 1")
@@ -319,4 +348,5 @@ v12 = Vector_Object(None)
 
 print("Prueba fallo 7")
 v12 = Vector_Object(coords=[3, 4, None], magn=4)
+
 """
