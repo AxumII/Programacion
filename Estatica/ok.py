@@ -1,7 +1,7 @@
 from vectorObject import Vector_Object as vt
 from structures import Structures as st
 from rigidCalculator import Rigid_Static_Calculator as rsc
-from graf import Graphication as graph  # Importar la clase Graphication
+from graf import Graphication as graph  
 
 # Crear instancia de Structures
 structures = st()
@@ -44,7 +44,11 @@ structures.add_force(force9)
 calculator = rsc(structures)
 
 # Ejecutar el método clasif
+print("Ejecutando clasif()")
 calculator.clasif()
+
+print("Calculando totales")
+structures.calculate_totals()
 
 # Verificar resultados
 print("\nDistArray:")
@@ -55,14 +59,22 @@ print("\nForceArray:")
 for force in structures.forceArray:
     print(force.get_coords())
 
+print("\nTotalForceArray:")
+for force in structures.totalforce:
+    print(force.get_coords())
+
 print("\nMomentArray:")
 for moment in structures.momentArray:
     print(moment.get_coords())
 
+print("\nTotalMomentArray:")
+for moment in structures.totalmoment:
+    print(moment.get_coords())
+
 structures.sum_f_m()
 print("\nSumas:")
-print("Total F:", structures.totalforce, "\n")
-print("Total M", structures.totalmoment, "\n")
+print("Total F:", structures.totalSumForce, "\n")
+print("Total M", structures.totalSumMoment, "\n")
 
 # Graficar los resultados
 grapher = graph(structures)

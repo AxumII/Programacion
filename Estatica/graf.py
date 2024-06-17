@@ -24,10 +24,10 @@ class Graphication:
 
         return avg_dist, avg_force, avg_moment
 
-    def graf(self, distMultp=1/3):
+    def graf(self, Multpdf= 1/10, Multpdm = 1/12):
         promD, promF, promM = self.prom()
-        forceMultp = (distMultp * promD) / promF if np.any(promF) else np.zeros(3)
-        momMultp = (distMultp * promD) / promM if np.any(promM) else np.zeros(3)
+        forceMultp = (Multpdf * promD) / promF if np.any(promF) else np.zeros(3)
+        momMultp = ( Multpdm * promD) / promM if np.any(promM) else np.zeros(3)
 
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')

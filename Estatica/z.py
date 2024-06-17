@@ -2,7 +2,7 @@ import numpy as np
 from structures import Structures as st
 from vectorObject import Vector_Object as vt
 from wrench import Wrench as wr
-"""
+
 # Ejemplo de inicialización de Structures con vectores de muestra
 v1 = vt(coords=[[32, 36, 14]])
 v2 = vt(coords=[[17, 0, 18]])
@@ -45,11 +45,10 @@ print(depot.read_all_moments())
 depot.sum_f_m()
 
 print("Sumas")
-print(depot.totalforce, depot.totalmoment)
+print(depot.totalForces, depot.totalMoments)
 
-"""
 
-"""
+
 depot.clear_distances()
 depot.clear_forces()
 depot.clear_moments()
@@ -58,7 +57,7 @@ print(depot.read_all_distances())
 print(depot.read_all_forces())
 print(depot.read_all_moments())
 
-"""
+
 
 examples = [
     (np.array([3, 4, 5]), np.array([0, 12, -16])),

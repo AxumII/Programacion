@@ -6,9 +6,12 @@ class Structures:
         self.distArray = np.array([], dtype=vt)
         self.forceArray = np.array([], dtype=vt)
         self.momentArray = np.array([], dtype=vt)
-        self.totalmoment = 0
-        self.totalforce = 0
+        self.totalSumMoment = 0
+        self.totalSumForce = 0
+        self.totalForces = np.array([], dtype=vt)
+        self.totalMoments = np.array([], dtype=vt)
         self.sum_f_m()
+        self.calculate_totals()
 
     # Distances
     def add_distance(self, vector):
@@ -71,6 +74,55 @@ class Structures:
         return [vector.get_coords() for vector in self.momentArray]
 
     # Sum Forces and Moments
-    def sum_f_m(self):        
-        self.totalforce = np.sum([vector.get_coords() for vector in self.forceArray], axis=0)
-        self.totalmoment = np.sum([vector.get_coords() for vector in self.momentArray], axis=0)
+    def sum_f_m(self):
+        self.totalSumForce = np.sum([vector.get_coords() for vector in self.forceArray], axis=0)
+        self.totalSumMoment = np.sum([vector.get_coords() for vector in self.momentArray], axis=0)
+
+    # Calculate Totals for Forces and Moments by Common Pointers
+            
+    def calculate_totals(self):
+        total_forces = []
+        total_moments = []
+
+        for dist in self.distArray:
+            if dist is not None and hasattr(dist, 'coords'):
+                dist_coords = np.array(dist.coords, dtype=float)
+                if not np.isnan(dist_coords).any():
+                    temp_forces = []
+                    temp_moments = []
+
+                    # Find forces with the same pointer as dist
+                    for force in self.forceArray:
+                        if force.next is dist:
+                            coords = force.get_coords()
+                            if coords is not None:
+                                coords = np.array(coords, dtype=float)
+                                if not np.isnan(coords).any():
+                                    temp_forces.append(coords)
+
+                    # Find moments with the same pointer as dist
+                    for moment in self.momentArray:
+                        if moment.next is dist:
+                            coords = moment.get_coords()
+                            if coords is not None:
+                                coords = np.array(coords, dtype=float)
+                                if not np.isnan(coords).any():
+                                    temp_moments.append(coords)
+
+                    if temp_forces:
+                        total_force = np.sum(temp_forces, axis=0)
+                        if not np.isnan(total_force).any():
+                            dist_float = np.array(dist.coords, dtype=float)
+                            total_forces.append(vt(total_force, dist_float))
+
+                    if temp_moments:
+                        total_moment = np.sum(temp_moments, axis=0)
+                        if not np.isnan(total_moment).any():
+                            dist_float = np.array(dist.coords, dtype=float)
+                            total_moments.append(vt(total_moment, dist_float))
+
+        self.totalforce = np.array(total_forces, dtype=object)
+        self.totalmoment = np.array(total_moments, dtype=object)
+
+        print("Total Forces Calculated:", self.totalforce)
+        print("Total Moments Calculated:", self.totalmoment)
