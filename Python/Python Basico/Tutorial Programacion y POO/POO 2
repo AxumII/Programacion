@@ -1,0 +1,25 @@
+class Padre():
+    def __init__(self):
+        self.atributo1 = 10
+        self.__atributo2 = 20 #encapsulado, inheredable
+    
+    def metodoPadre(self):
+        print(self.atributo1,self.__atributo2,"Atributos del padre")
+
+class Hijo(Padre):
+    def metodoHijo(self):
+        print(self.atributo1,"atributo heredado")
+        #print(self.__atributo2)#No es valido, no se hereda xd
+        self.atributo3 = 30
+        print(self.atributo3,"Atributo propio del hijo")
+
+ObjetoPadre = Padre()
+ObjetoHijo = Hijo()
+ObjetoPadre.metodoPadre()#llama el metodo del padre
+ObjetoHijo.metodoHijo()#llama el propio metodo del hijo, que inclye un atributo heredado
+ObjetoHijo.metodoPadre()#como heredo el metodo del padre, aca si es accesible el atributo no heredado, asi que llama el metodo heredado como si fuera propio
+"es posible heredar entre hermanos, pero si esta en comun en casi todos es mejor que lo herede el padre y lo usen los hijos que lo necesiten, a menos que se quiera ahorrar memoria"
+print(isinstance(ObjetoHijo,Padre))#comprueba si la clase tiene esos objetos, en este casi si por heredad
+
+#super()
+#llama a un metodo de la clase padre no heredado, tal como un init, ejecuta el metodo, usualmente con los datos correspondientes y continua el programa

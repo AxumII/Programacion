@@ -1,0 +1,84 @@
+import serial
+import pandas as pd
+import time
+
+class ReadSignal():
+    def __init__(self, usbPort, baudrate, fm, collection_time, title=None):
+        self.usbPort = usbPort
+        self.baudrate = baudrate
+        self.fm = fm
+        self.pm = 1 / fm
+        self.data_frame = pd.DataFrame()  # Inicializamos el DataFrame sin columnas
+        self.collection_time = collection_time
+        self.title = title
+
+    def connect(self):
+        try:
+            return serial.Serial(self.usbPort, baudrate=self.baudrate)
+        except serial.SerialException as e:
+            print(f"Error al conectar al puerto serial: {e}")
+            return None
+
+    def collectData(self):
+        ser = self.connect()
+        if ser is None:
+            return
+
+        start_time = time.time()
+
+        while True:
+            try:
+                data = ser.readline().decode('utf-8').strip()
+                values = data.split(',')
+
+                # Intentar convertir todos los valores a float para verificar si es una línea válida
+                try:
+                    values = [float(val) for val in values]
+                except ValueError:
+                    # Si falla, continuar con la siguiente línea
+                    continue
+
+                # Creamos un diccionario para la nueva fila
+                new_row = {'Tiempo': time.time() - start_time}
+                # Añadimos los valores de cada señal al diccionario
+                for i, value in enumerate(values):
+                    if i == 0:
+                        new_row['acc X'] = value
+                    elif i == 1:
+                        new_row['acc Y'] = value
+                    elif i == 2:
+                        new_row['acc Z'] = value
+                    elif i == 3:
+                        new_row['giro X'] = value
+                    elif i == 4:
+                        new_row['giro Y'] = value
+                    elif i == 5:
+                        new_row['giro Z'] = value
+                    elif i == 6:
+                        new_row['temperatura'] = value
+
+                # Usamos pd.concat para añadir la nueva fila al DataFrame
+                self.data_frame = pd.concat([self.data_frame, pd.DataFrame([new_row])], ignore_index=True)
+
+                if new_row['Tiempo'] >= self.collection_time:
+                    break
+
+            except KeyboardInterrupt:
+                print("Lectura del puerto serial detenida.")
+                ser.close()
+                break
+
+        ser.close()
+
+        print(self.data_frame)
+
+        if self.title is not None:
+            self.save_data()
+
+    def save_data(self):
+        # Guardar los datos en un archivo CSV
+        self.data_frame.to_csv(self.title + '.csv', index=False)
+
+# Ejemplo de uso
+rs = ReadSignal('COM6', 115200, 10, 200, 'datosMPU6050')
+rs.collectData()

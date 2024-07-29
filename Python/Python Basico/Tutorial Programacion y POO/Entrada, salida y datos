@@ -1,0 +1,32 @@
+#Salida de datos
+
+
+print("Salida")
+#Entrada de datos
+x = input("Aca se meten los datos")
+
+#variables, float, complex, int, str automatico, globales solo fuera de la sintaxis a menos que, booleanos
+#Scope, alcance
+#clousure, usar v globales para funciones que estan niveles inferiores
+global y
+y = 2
+z = 4.5
+
+#Operadores
+
+# Aritmeticos
+# los tradicionales, +-*/
+# % Modulo, ** exponenciacion, // Division exacta
+
+#Asignacion
+# ==, <=, >=, +=, -=, != y combinando
+# Siempre operacion a realizar y luego el igual
+
+
+#Logicos
+# and, or, not
+
+#Tipado de datos
+RR: int = 5
+#define a RR como un int para siempre
+

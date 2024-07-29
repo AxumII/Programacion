@@ -1,0 +1,21 @@
+import tkinter as tk
+
+#Variables
+Width = 600
+Height = 400
+
+
+
+#Ventana
+root = tk.Tk() #Crea una ventana
+
+root.title('Titulo')#Crea un titulo a la ventana
+root.geometry("600x400") #Tamaño
+#root.resizable(Width,Height)
+root.resizable(False, False)#Fija el tamaño
+#root.iconbitmap('./assets/pythontutorial.ico')#Cambia el icono
+root.lower() #la inicia detras de las ventanas existentes, loft es para encima
+
+
+
+root.mainloop() #Ejecuta la ventana como tal, va de ultimas

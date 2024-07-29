@@ -1,0 +1,37 @@
+import tkinter as tk #Da widgets por default
+from tkinter import ttk #Los nuevos, se importan
+
+root = tk.Tk()
+
+tk.Label(root, text='Classic Label').pack()#vieja
+ttk.Label(root, text='Themed Label').pack()#nueva
+
+#en ttk hay botones, cuadros, etiquetas, barra de desplz, 
+#los mencionados reemplazan los viejos
+#los nuevos son:
+#notebook, progressbar, separator, entre otros
+
+#.pack sirve para crear widgets
+
+def button_clicked():#crea la funcion que al ejecutar imprime
+    print('Button clicked')
+
+
+button = ttk.Button(root, text='Click Me', command=button_clicked)
+#requiere 3 parametros, objeto creado, lo que produce el comando y algo adicional, sea un texto del boton
+button.pack() #crea el widget
+
+def select(option):
+    print(option)
+
+
+ttk.Button(root, text='Rock', command=lambda: select('Rock')).pack()
+#sirve con lambdas, funciona igual
+
+#comand enlaza funcion del widget con resultado
+#comando no siempre funciona
+
+
+
+
+root.mainloop()

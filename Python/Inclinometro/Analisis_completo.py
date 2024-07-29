@@ -1,0 +1,313 @@
+import numpy as np
+import pandas as pd
+from scipy import stats
+import matplotlib.pyplot as plt
+from scipy.optimize import minimize
+import os
+
+class Total_analisys:
+    def __init__(self, resolution: float) -> None:
+        self.resolution = resolution
+        self.data = {}
+        self.temp_mean = {}
+        self.uncertainties = {}
+
+    def load_data(self, file_path: str) -> None:
+        with open(file_path, 'r') as file:
+            lines = file.readlines()
+        grouped_data = {}
+        current_group = None
+        for line in lines:
+            if "Muestra" in line:
+                current_group = line.strip()
+                grouped_data[current_group] = []
+            else:
+                grouped_data[current_group].append(line.strip().split(','))
+        for group, rows in grouped_data.items():
+            df = pd.DataFrame(rows)
+            df = df.apply(pd.to_numeric, errors='ignore')
+            df.columns = ['Muestra', 'Acc_X', 'Acc_Y', 'Acc_Z', 'Gyr_X', 'Gyr_Y', 'Gyr_Z', 'Temp']
+            self.data[group] = df
+            self.temp_mean[group] = df['Temp'].mean()
+
+    def calculate_statistics(self, group: str) -> pd.DataFrame:
+        df = self.data[group]
+        columns = df.columns[1:-1]
+        stats_dict = {
+            "Estadísticos": ["Media Muestral", "Desviación Estándar", "Varianza Muestral", 
+                             "Shapiro-Wilk (Normal)", "Normaltest (Normal)", 
+                             "Jarque-Bera (Normal)", "Cramer-Von Mises (Normal)", 
+                             "Chi-Cuadrado (Normal)", "Kolmogorov-Smirnov (Normal)", 
+                             "Chi-Cuadrado (t-Student)", "Kolmogorov-Smirnov (t-Student)", 
+                             "AIC (Normal)", "BIC (Normal)", 
+                             "AIC (t-Student)", "BIC (t-Student)", 
+                             "Student mu", "Student sigma", "Student nu", "Student log-likelihood"]
+        }
+        for col in columns:
+            # Pruebas de normalidad
+            shapiro_test = stats.shapiro(df[col])
+            normaltest = stats.normaltest(df[col])
+            jarque_bera = stats.jarque_bera(df[col])
+            cramer_von_mises = stats.cramervonmises(df[col], 'norm')
+
+            # Pruebas de bondad de ajuste para normal y t de Student
+            observed_freq, bins = np.histogram(df[col], bins='auto')
+            expected_freq_normal = stats.norm.pdf((bins[:-1] + bins[1:]) / 2, loc=df[col].mean(), scale=df[col].std()) * len(df[col])
+            expected_freq_t = stats.t.pdf((bins[:-1] + bins[1:]) / 2, df=10, loc=df[col].mean(), scale=df[col].std()) * len(df[col])
+            expected_freq_normal = expected_freq_normal * (observed_freq.sum() / expected_freq_normal.sum())  # Normalizar las frecuencias esperadas
+            expected_freq_t = expected_freq_t * (observed_freq.sum() / expected_freq_t.sum())  # Normalizar las frecuencias esperadas
+
+            chi2_test_normal = stats.chisquare(observed_freq, f_exp=expected_freq_normal)
+            chi2_test_t = stats.chisquare(observed_freq, f_exp=expected_freq_t)
+            ks_test_normal = stats.kstest(df[col], 'norm', args=(df[col].mean(), df[col].std()))
+            ks_test_t = stats.kstest(df[col], 't', args=(10, df[col].mean(), df[col].std()))
+
+            # Cálculo del MLE para t de Student
+            def neg_log_likelihood(params, data):
+                mu, sigma, nu = params
+                return -np.sum(stats.t.logpdf(data, df=nu, loc=mu, scale=sigma))
+            initial_params = [df[col].mean(), df[col].std(), 10]
+            result = minimize(neg_log_likelihood, initial_params, args=(df[col],), bounds=[(None, None), (1e-5, None), (1e-5, None)])
+            mu_t, sigma_t, nu_t = result.x
+            t_ll = -result.fun
+
+            # Cálculo de AIC y BIC
+            n = len(df[col])
+            k_normal = 2  # Número de parámetros: mu, sigma para normal
+            k_student = 3  # Número de parámetros: mu, sigma, nu para t-Student
+            aic_normal = 2 * k_normal - 2 * np.sum(stats.norm.logpdf(df[col], loc=df[col].mean(), scale=df[col].std()))
+            bic_normal = k_normal * np.log(n) - 2 * np.sum(stats.norm.logpdf(df[col], loc=df[col].mean(), scale=df[col].std()))
+            aic_student = 2 * k_student - 2 * t_ll
+            bic_student = k_student * np.log(n) - 2 * t_ll
+
+            stats_dict[col] = [
+                round(df[col].mean(), 6),
+                round(df[col].std(), 6),
+                round(df[col].var(), 6),
+                f"Passed (p={shapiro_test.pvalue:.6f})" if shapiro_test.pvalue > 0.05 else f"Failed (p={shapiro_test.pvalue:.6f})",
+                f"Passed (p={normaltest.pvalue:.6f})" if normaltest.pvalue > 0.05 else f"Failed (p={normaltest.pvalue:.6f})",
+                f"Passed (p={jarque_bera.pvalue:.6f})" if jarque_bera.pvalue > 0.05 else f"Failed (p={jarque_bera.pvalue:.6f})",
+                f"Passed (p={cramer_von_mises.pvalue:.6f})" if cramer_von_mises.pvalue > 0.05 else f"Failed (p={cramer_von_mises.pvalue:.6f})",
+                f"Passed (p={chi2_test_normal.pvalue:.6f})" if chi2_test_normal.pvalue > 0.05 else f"Failed (p={chi2_test_normal.pvalue:.6f})",
+                f"Passed (p={ks_test_normal.pvalue:.6f})" if ks_test_normal.pvalue > 0.05 else f"Failed (p={ks_test_normal.pvalue:.6f})",
+                f"Passed (p={chi2_test_t.pvalue:.6f})" if chi2_test_t.pvalue > 0.05 else f"Failed (p={chi2_test_t.pvalue:.6f})",
+                f"Passed (p={ks_test_t.pvalue:.6f})" if ks_test_t.pvalue > 0.05 else f"Failed (p={ks_test_t.pvalue:.6f})",
+                round(aic_normal, 6),
+                round(bic_normal, 6),
+                round(aic_student, 6),
+                round(bic_student, 6),
+                round(mu_t, 6), round(sigma_t, 6), round(nu_t, 6), round(t_ll, 6)
+            ]
+        df_stats = pd.DataFrame(stats_dict)
+        return df_stats
+
+    def calculate_student_t_mle(self, data):
+        def neg_log_likelihood(params, data):
+            mu, sigma, nu = params
+            return -np.sum(stats.t.logpdf(data, df=nu, loc=mu, scale=sigma))
+        initial_params = [data.mean(), data.std(), 10]
+        result = minimize(neg_log_likelihood, initial_params, args=(data,), bounds=[(None, None), (1e-5, None), (1e-5, None)])
+        mu_t, sigma_t, nu_t = result.x
+        return round(mu_t, 6), round(sigma_t, 6), round(nu_t, 6)
+
+    def calculate_uncertainties(self) -> pd.DataFrame:
+        columns = list(self.data.values())[0].columns[1:-1]
+        incertidumbre_dict = {
+            "Incertidumbres": ["Incertidumbre Tipo A", "Incertidumbre por Resolución", "Incertidumbre por Temperatura", "Incertidumbre por Calibración", "Incertidumbre Combinada", "Factor de Cobertura", "Incertidumbre Expandida (Tipo B)", "Grados de Libertad"]
+        }
+
+        for col in columns:
+            n = sum([len(df[col]) for df in self.data.values()])
+            std_dev = np.mean([df[col].std() for df in self.data.values()])
+            mean = np.mean([df[col].mean() for df in self.data.values()])
+            
+            # Incertidumbre tipo A
+            incertidumbre_type_A = std_dev / np.sqrt(n)
+            
+            # Incertidumbre por resolución
+            incertidumbre_resolution = self.resolution / np.sqrt(12)
+            
+            # Incertidumbre por temperatura
+            temp_mean = np.mean([self.temp_mean[group] for group in self.data.keys()])
+            incertidumbre_temp = temp_mean * 0.0002
+            
+            # Incertidumbre por calibración
+            incertidumbre_calibration = abs(mean * 0.03)
+            
+            # Incertidumbre combinada
+            incertidumbre_combinada = np.sqrt(
+                incertidumbre_type_A**2 + 
+                incertidumbre_resolution**2 + 
+                incertidumbre_temp**2 + 
+                incertidumbre_calibration**2
+            )
+            
+            # Cálculo de grados de libertad efectivos usando la aproximación de Welch-Satterthwaite
+            degrees_of_freedom = (incertidumbre_combinada**4) / (
+                (incertidumbre_type_A**4 / (n - 1)) + 
+                (incertidumbre_resolution**4 / float('inf')) + 
+                (incertidumbre_temp**4 / float('inf')) + 
+                (incertidumbre_calibration**4 / float('inf'))
+            )
+            
+            # Factor de cobertura (usando k=2 para distribución normal)
+            factor_k = 2
+            
+            # Incertidumbre expandida
+            incertidumbre_expandida = factor_k * incertidumbre_combinada
+
+            self.uncertainties[col] = incertidumbre_expandida
+            
+            incertidumbre_dict[col] = [
+                round(incertidumbre_type_A, 6),
+                round(incertidumbre_resolution, 6),
+                round(incertidumbre_temp, 6),
+                round(incertidumbre_calibration, 6),
+                round(incertidumbre_combinada, 6),
+                factor_k,
+                round(incertidumbre_expandida, 6),
+                round(degrees_of_freedom, 6)
+            ]
+        
+        return pd.DataFrame(incertidumbre_dict)
+
+    def plot_data(self, group: str) -> None:
+        df = self.data[group]
+        columns = df.columns[1:-1]
+        num_plots = len(columns)
+        fig, axs = plt.subplots((num_plots + 1) // 2, 2, figsize=(12, num_plots * 2))
+        axs = axs.flatten()
+        for i, col in enumerate(columns):
+            axs[i].plot(df.index, df[col], label=f'{col} (Media={df[col].mean():.3f})')
+            axs[i].axhline(df[col].mean(), color='r', linestyle='-', linewidth=1, label='Media')
+            axs[i].set_xlabel("Número de Dato")
+            axs[i].set_ylabel(col)
+            axs[i].set_title(f"Datos de {col}")
+            axs[i].legend()
+        for i in range(num_plots, len(axs)):
+            fig.delaxes(axs[i])
+        plt.tight_layout()
+        plt.show()
+
+    def plot_histograms(self, group: str) -> None:
+        df = self.data[group]
+        columns = df.columns[1:-1]
+        num_plots = len(columns)
+        fig, axs = plt.subplots((num_plots + 1) // 2, 2, figsize=(12, num_plots * 2))
+        axs = axs.flatten()
+        for i, col in enumerate(columns):
+            bins = np.histogram_bin_edges(df[col], bins='auto')
+            axs[i].hist(df[col], bins=bins, alpha=0.7, color='b', edgecolor='black', density=True)
+            mean = df[col].mean()
+            std_dev = df[col].std()
+            x = np.linspace(df[col].min(), df[col].max(), 100)
+            p = stats.norm.pdf(x, mean, std_dev)
+            axs[i].plot(x, p, 'k', linewidth=2, label=f'Normal (Media={mean:.3f}, Desv.Est.={std_dev:.3f})')
+            mu_t, sigma_t, nu_t = self.calculate_student_t_mle(df[col])
+            p_t = stats.t.pdf(x, df=nu_t, loc=mu_t, scale=sigma_t)
+            axs[i].plot(x, p_t, 'g', linewidth=2, label=f't-Student (mu={mu_t:.3f}, sigma={sigma_t:.3f}, nu={nu_t:.3f})')
+            lower_bound = mean - 3 * std_dev
+            upper_bound = mean + 3 * std_dev
+            axs[i].axvline(lower_bound, color='r', linestyle='dashed', linewidth=1, label=f'99% límite inferior ({lower_bound:.3f})')
+            axs[i].axvline(upper_bound, color='r', linestyle='dashed', linewidth=1, label=f'99% límite superior ({upper_bound:.3f})')
+            title = f"Histograma de {col}\nMedia = {mean:.3f}, Desviación Estándar = {std_dev:.3f}"
+            axs[i].set_title(title)
+            axs[i].set_xlabel(col)
+            axs[i].set_ylabel("Frecuencia")
+            axs[i].legend()
+        for i in range(num_plots, len(axs)):
+            fig.delaxes(axs[i])
+        plt.tight_layout()
+        plt.show()
+
+    def plot_temperature(self, group: str) -> None:
+        df = self.data[group]
+        plt.figure(figsize=(12, 6))
+        plt.plot(df.index, df['Temp'], label=f'Temp (Media={df["Temp"].mean():.3f})', color='orange')
+        plt.axhline(df['Temp'].mean(), color='r', linestyle='-', linewidth=1, label='Media')
+        plt.xlabel("Número de Dato")
+        plt.ylabel("Temp")
+        plt.title("Datos de Temperatura")
+        plt.legend()
+        plt.show()
+
+    def qq_plot(self, group: str) -> None:
+        df = self.data[group]
+        columns = ['Acc_X', 'Acc_Y', 'Acc_Z']  # Solo datos del acelerómetro
+        num_plots = len(columns)
+        fig, axs = plt.subplots(num_plots, 2, figsize=(12, num_plots * 4))
+        axs = axs.flatten()
+
+        for i, col in enumerate(columns):
+            # Q-Q plot para distribución normal
+            (osm, osr), (slope, intercept, r) = stats.probplot(df[col], dist="norm", plot=None)
+            axs[2*i].plot(osm, osr, 'o', markerfacecolor='none', markeredgecolor='b', label='Datos')
+            axs[2*i].plot(osm, slope*osm + intercept, 'r-', label=f'Línea de referencia (slope={slope:.3f}, intercept={intercept:.3f})')
+            
+            # Bordes teóricos (99% CI)
+            q = np.linspace(0.001, 0.999, 100)
+            z = stats.norm.ppf(q)
+            y = slope * z + intercept
+            ci = 3 * np.std(osr - (slope*osm + intercept))
+            axs[2*i].fill_between(z, y - ci, y + ci, color='grey', alpha=0.2, label='Borde teórico 99%')
+            
+            axs[2*i].set_title(f"Q-Q Plot Normal de {col}")
+            axs[2*i].grid(True, linestyle='--', alpha=0.7, which='both')
+            mean, std = df[col].mean(), df[col].std()
+            axs[2*i].legend()
+
+            # Q-Q plot para distribución t de Student
+            mu_t, sigma_t, nu_t = self.calculate_student_t_mle(df[col])
+            (osm, osr), (slope, intercept, r) = stats.probplot(df[col], dist="t", sparams=(nu_t,), plot=None)
+            axs[2*i+1].plot(osm, osr, 'o', markerfacecolor='none', markeredgecolor='g', label='Datos')
+            axs[2*i+1].plot(osm, slope*osm + intercept, 'r-', label=f'Línea de referencia (slope={slope:.3f}, intercept={intercept:.3f})')
+            
+            # Bordes teóricos (99% CI)
+            y = slope * z + intercept
+            ci = 3 * np.std(osr - (slope*osm + intercept))
+            axs[2*i+1].fill_between(z, y - ci, y + ci, color='grey', alpha=0.2, label='Borde teórico 99%')
+            
+            axs[2*i+1].set_title(f"Q-Q Plot t-Student de {col}")
+            axs[2*i+1].grid(True, linestyle='--', alpha=0.7, which='both')
+            axs[2*i+1].legend()
+
+        plt.tight_layout()
+        plt.show()
+
+    def plot_dataframe(self, df: pd.DataFrame, title: str) -> None:
+        fig, ax = plt.subplots(figsize=(14, 8)) # ajustar el tamaño de la figura según sea necesario
+        ax.axis('tight')
+        ax.axis('off')
+        table = ax.table(cellText=df.values, colLabels=df.columns, cellLoc='center', loc='center')
+        table.auto_set_font_size(False)
+        table.set_fontsize(10)
+        table.scale(1.2, 1.2)  # Ajustar el tamaño de la tabla
+        plt.title(title, fontsize=16)
+        plt.show()
+
+# Uso de la clase
+data_directory = os.path.join(os.getcwd(), 'Inclinometro M1')
+os.makedirs(data_directory, exist_ok=True)
+
+analyzer = Total_analisys(resolution=0.1, data_dir=data_directory)
+analyzer.load_data('DATALOG.CSV')
+
+# Iterar sobre los grupos y realizar análisis
+results = {}
+for group in analyzer.data.keys():
+    print(f"Resultados para {group}:")
+    stats_df = analyzer.calculate_statistics(group)
+    results[group] = stats_df
+
+    # Mostrar DataFrame como gráfico en lugar de guardar en CSV
+    analyzer.plot_dataframe(stats_df, f"Estadísticas para {group}")
+
+    # Generar gráficos
+    analyzer.plot_data(group)
+    analyzer.plot_histograms(group)
+    analyzer.qq_plot(group)
+    analyzer.plot_temperature(group)
+
+# Calcular incertidumbres
+incertidumbres_df = analyzer.calculate_uncertainties()
+analyzer.plot_dataframe(incertidumbres_df, "Análisis de Incertidumbres")
