@@ -323,8 +323,6 @@ print("Posiciones Verificadas", llave.valid_positions)
 #Test graficacion
 
 g = graf(rsc,llave)
-print("promedios", g.avg())
-print("max_min", g.max_min())
 g.graf_dfm()
 g.graf_wr()
 
