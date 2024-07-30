@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 class Graphication:
-    def __init__(self, RSC_instance, Wrench_instance):
+    def __init__(self, RSC_instance, Wrench_instance, FSf = 1, FSm = 1):
         # Cargar los arrays desde las instancias
         self.distArray = RSC_instance.distArray
         self.forceArray = RSC_instance.forceArray
@@ -18,6 +18,8 @@ class Graphication:
         self.IIMoment = Wrench_instance.IIMoment
         self.TMoment = Wrench_instance.TMoment
         self.valid_positions = Wrench_instance.valid_positions
+        self.FSf = FSf
+        self.FSm = FSm
 
     def graf_dfm(self):
         fig = plt.figure()
@@ -31,22 +33,25 @@ class Graphication:
         ax.plot([0, 0], [min_coords[1], max_coords[1]], [0, 0], '--', color=(0.35, 0, 0.35), linewidth=3, label='Eje Y')
         ax.plot([0, 0], [0, 0], [min_coords[2] - 2, max_coords[2]], '--', color=(0.4, 0.1, 0.1), linewidth=3, label='Eje Z')
 
-        ForceScale = 1
-        MomentScale = 1
+        FactorForceScale = 1
+        FactorMomentScale = 1
 
         if np.linalg.norm(avg_force) / np.linalg.norm(avg_dist) >= 1:
             print("Fuerza es mayor")
-            ForceScale = np.linalg.norm(avg_dist) / np.linalg.norm(avg_force) * 0.1
+            FactorForceScale = np.linalg.norm(avg_dist) / np.linalg.norm(avg_force) * self.FSf
         else:
             print("Fuerza es menor")
-            ForceScale = np.linalg.norm(avg_force) / np.linalg.norm(avg_dist) * 0.1
+            FactorForceScale = np.linalg.norm(avg_force) / np.linalg.norm(avg_dist) * self.FSf
 
         if np.linalg.norm(avg_moment) / np.linalg.norm(avg_dist) >= 1:
             print("Momento es mayor")
-            MomentScale = np.linalg.norm(avg_dist) / np.linalg.norm(avg_moment) * 0.1
+            FactorMomentScale = np.linalg.norm(avg_dist) / np.linalg.norm(avg_moment) * self.FSm
         else:
             print("Momento es menor")
-            MomentScale = np.linalg.norm(avg_moment) / np.linalg.norm(avg_dist) * 0.1
+            FactorMomentScale = np.linalg.norm(avg_moment) / np.linalg.norm(avg_dist) * self.FSm
+
+        FactorForceScale = round(FactorForceScale, 4)
+        FactorMomentScale = round(FactorMomentScale, 4)
 
         arrow_params = {
             'arrow_length_ratio': 0.05,  # proporción cabeza flecha
@@ -60,23 +65,42 @@ class Graphication:
 
         # Graficar forceArray con posición escalada
         for vec in self.forceArray:
-            position = vec.next.get_coords()
-            scaled_force = vec.get_coords() * ForceScale
-            ax.quiver(position[0], position[1], position[2], scaled_force[0], scaled_force[1], scaled_force[2], color='g', **arrow_params)
+            pos = vec.next.get_coords()
+            Force_scaled = vec.get_coords() * FactorForceScale
+            # Añadir prints de depuración
+            print(f"Posición, pos")
+            print("Force_scaled",Force_scaled )
+            print("Tamaño Force_scaled", Force_scaled.shape)
+            
+            """if Force_scaled.shape[0] == 1:
+                ax.quiver(pos[0], pos[1], pos[2], Force_scaled[0, 0], Force_scaled[0, 1], Force_scaled[0, 2], color='g', **arrow_params)
+            else:
+                ax.quiver(pos[0], pos[1], pos[2], Force_scaled[0], Force_scaled[1], Force_scaled[2], color='g', **arrow_params)
+           """
+            ax.quiver(pos[0], pos[1], pos[2], Force_scaled[0], Force_scaled[1], Force_scaled[2], color='g', **arrow_params)
+
+
+            
 
         # Graficar momentArray con posición escalada
         for vec in self.momentArray:
             if vec.next is not None:
-                position = vec.next.get_coords()
+                pos = vec.next.get_coords()
             else:
-                position = np.array([0, 0, 0])
-            scaled_moment = vec.get_coords() * MomentScale
-            ax.quiver(position[0], position[1], position[2], scaled_moment[0], scaled_moment[1], scaled_moment[2], color='b', **arrow_params)
+                pos = np.array([0, 0, 0])
+            Moment_scaled = vec.get_coords() * FactorMomentScale
+            ax.quiver(pos[0], pos[1], pos[2], Moment_scaled[0], Moment_scaled[1], Moment_scaled[2], color='b', **arrow_params)
+
+            """if Moment_scaled.shape[0] == 1:
+                ax.quiver(pos[0], pos[1], pos[2], Force_scaled[0, 0], Force_scaled[0, 1], Force_scaled[0, 2], color='g', **arrow_params)
+            else:
+                ax.quiver(pos[0], pos[1], pos[2], Force_scaled[0], Force_scaled[1], Force_scaled[2], color='g', **arrow_params)
+            """
 
         # Añadir leyendas
         ax.scatter([], [], [], color='r', label='Distancias')
-        ax.scatter([], [], [], color='g', label=f'Fuerzas (escala: {ForceScale})')
-        ax.scatter([], [], [], color='b', label=f'Momentos (escala: {MomentScale})')
+        ax.scatter([], [], [], color='g', label=f'Fuerzas (escala: {FactorForceScale})')
+        ax.scatter([], [], [], color='b', label=f'Momentos (escala: {FactorMomentScale})')
 
         ax.set_xlabel('X')
         ax.set_ylabel('Y')

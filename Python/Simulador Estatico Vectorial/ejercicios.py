@@ -24,14 +24,15 @@ rsc.add_distance(C)
 rsc.add_distance(E)
 
 
-dir1 =  vt(coords=[np.subtract(A.get_coords(), B.get_coords())]) #A-B
-dir2 =  vt(coords=[np.subtract(C.get_coords(), D.get_coords())]) #C-D
-dir3 =  vt(coords=[np.subtract(E.get_coords(), D.get_coords())]) #E-D
+dir1 = vt(coords=np.subtract(A.get_coords(), B.get_coords()))  # A-B
+dir2 = vt(coords=np.subtract(C.get_coords(), D.get_coords()))  # C-D
+dir3 = vt(coords=np.subtract(E.get_coords(), D.get_coords()))  # E-D
 
 
-f1 = vt(coords= dir1.get_angles()*P, next = A )
-f2 = vt(coords= dir2.get_angles()*P, next = C )
-f3 = vt(coords= dir3.get_angles()*P, next = E )
+
+f1 = vt(coords= np.array(dir1.get_angles()*P), next = A )
+f2 = vt(coords= np.array(dir2.get_angles()*P), next = C )
+f3 = vt(coords= np.array(dir3.get_angles()*P), next = E )
 
 rsc.add_force(f1)
 rsc.add_force(f2)
@@ -55,5 +56,7 @@ print("T momento", llave.TMoment)
 print("Posiciones",llave.positions)
 print("Posiciones Verificadas", llave.valid_positions)
 
-g = graf(rsc,llave)
+g = graf(rsc,llave,FSf = 1.5, FSm = 0.5)
+g.graf_dfm()
+g.graf_wr()
 
