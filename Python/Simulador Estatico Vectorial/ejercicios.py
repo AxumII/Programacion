@@ -56,7 +56,7 @@ print("T momento", llave.TMoment)
 print("Posiciones",llave.positions)
 print("Posiciones Verificadas", llave.valid_positions)
 
-g = graf(rsc,llave,FSf = 1.5, FSm = 0.5)
+g = graf(rsc,llave,Ffs = 1.5, Fms = 0.5)
 g.graf_dfm()
 g.graf_wr()
 
