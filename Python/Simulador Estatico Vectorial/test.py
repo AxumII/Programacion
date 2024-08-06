@@ -5,7 +5,7 @@ from wrench import Wrench as wr
 from graphication import Graphication as graf
 
 # Test VectorObject de casos
-"""
+
 # Caso 0: Completo
 coords0 = [1, 1, 1]
 angles0 = [np.sqrt(1/3), np.sqrt(1/3), np.sqrt(1/3)]
@@ -20,7 +20,7 @@ print("Angles:", vector0.get_angles())
 print("Magnitude:", vector0.get_magn())
 print("Position:", vector0.get_position())
 print()
-
+"""
 # Caso 1: Solo faltan ángulos
 coords1 = [1, 1, 1]
 angles1 = [np.nan, np.nan, np.nan]
@@ -35,7 +35,7 @@ print("Angles:", vector1.get_angles())
 print("Magnitude:", vector1.get_magn())
 print("Position:", vector1.get_position())
 print()
-
+"""
 # Caso 2: Solo faltan coordenadas
 coords2 = [np.nan, np.nan, np.nan]
 angles2 = [0.1, 0.5, 0.4]
@@ -146,7 +146,7 @@ print()
 
 """
 
-
+"""
 
 #Indet Type 8 (2 angulos y 1 coord no intersecantes)
 coords_indet = [3, np.nan, np.nan]
@@ -223,8 +223,8 @@ print("Angles:", vector_conv2.get_angles())
 print("Magnitude:", vector_conv2.get_magn())
 print("Position:", vector_conv2.get_position())
 print()
-"""
 
+"""
 
 # Test RSC
 
@@ -283,7 +283,7 @@ rsc.add_moment(m1)
 print("Mostrar Distancias",rsc.read_all_distances())
 print("Mostrar Fuerzas",rsc.read_all_forces())
 print("Mostrar Momentoss",rsc.read_all_moments())
-"""
+
 rsc.add_distance(xd)
 rsc.add_force(xd)
 rsc.add_moment(xd)
@@ -299,7 +299,7 @@ rsc.delete_moment(1)
 print("Mostrar Distancias",rsc.read_all_distances())
 print("Mostrar Fuerzas",rsc.read_all_forces())
 print("Mostrar Momentoss",rsc.read_all_moments())
-"""
+
 
 rsc.calculate_moments()
 
