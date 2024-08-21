@@ -12,6 +12,8 @@ def ej3140():
 
     var = 1
     P = 1
+    
+    
     A = vt(coords=[0 , 18*var, 0])
     B = vt(coords=[0 , 0 , 24*var])
     C = vt(coords=[15*var, 0, 0])
@@ -56,8 +58,9 @@ def ej3140():
     print("Posiciones",llave.positions)
     print("Posiciones Verificadas", llave.valid_positions)
 
-    g = graf(rsc,llave,Ffs = 1.5, Fms = 0.5)
+    g = graf(rsc,llave,Ffs = 20, Fms = 0.5)
     g.graf_dfm()
     g.graf_wr()
 
 ej3140()
+
