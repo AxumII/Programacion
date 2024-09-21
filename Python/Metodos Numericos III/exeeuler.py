@@ -12,7 +12,7 @@ def ej1vd():
         return (x**2 -1)/y**2  # Ejemplo: dy/dx = x + y
 
     # Definir valores iniciales y pasos
-    x = np.arange(0, 2, 0.2)  # 11 puntos de 0 a 1
+    x = np.arange(0, 2, 0.1)  # 11 puntos de 0 a 1
     y_init = 2  # Valor inicial de y
 
     # Crear una instancia de la clase Euler y resolver la EDO
@@ -28,7 +28,7 @@ def ejcl1_h1():
     def dydx(x,y):
         return (y*(x**2) - 1.2*y)
 
-    x = np.arange(0, 2.5, 0.5)
+    x = np.arange(0, 2.5, 0.001)
     y_init = 1
 
     y = euler(y_init, x, dydx)
@@ -52,6 +52,6 @@ def ejcl1_h2():
     graf(x = x,yn = yn, title = "(x**2 -1)/y**2 con y(0) = 2", function_at = [{"label":"Solucion Euler"},{"label":"Solucion Analitica"}])
 
 
-#ej1vd()
-ejcl1_h1()
-ejcl1_h2()
+ej1vd()
+#ejcl1_h1()
+#ejcl1_h2()

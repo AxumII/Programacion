@@ -1,4 +1,6 @@
 import numpy as np
+from graf import graf as graf
+
 
 class RK4:
     def __init__(self, y_init, x, dydx):
@@ -30,20 +32,34 @@ class RK4:
         # Devuelve los valores de x e y
         return  self.y
 
+
+
+
+
+
+
+
+
+
+
 # Ejemplo de uso:
 # Definir la función dydx
 def dydx(x, y):
-    return x + y  # Ejemplo: dy/dx = x + y
+    return (y*(x**2) - 1.2*y)
 
 # Definir valores iniciales y pasos
-x = np.arange(0, 1.1, 0.1)  # Puntos de 0 a 1 con un espaciado de 0.1
-y_init = 1  # Valor inicial de y
+x = np.arange(0, 2.5, 0.1)
+y_init = 1
 
 # Crear una instancia de la clase RK4 y resolver la EDO
 solver = RK4(y_init, x, dydx)
 
 # Obtener la solución
-x_vals, y_vals = solver.get_solution()
+y_vals = solver.get_solution()
 
-print("x:", x_vals)
-print("y:", y_vals)
+yn = np.array([y_vals, (np.exp(((x**3)/3) - 1.2*x   ))])
+graf(x = x,yn = yn, title = "(x**2 -1)/y**2 con y(0) = 2", function_at = [{"label":"Solucion RK4"},{"label":"Solucion Analitica"}])
+
+
+
+
