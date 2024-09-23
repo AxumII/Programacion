@@ -3,8 +3,6 @@ from rk4 import RK4 as RK4
 from rk4_2s import rk42s as rk4_2s
 from df import df as df
 from euler_2s import euler2s as euler2s
-
-
 import numpy as np
 import matplotlib.pyplot as plt
 def ej2():
@@ -41,10 +39,17 @@ def ej3():
     
     sole = euler2s(x = x, u1_init= u1_init, u2_init= u2_init, du1dx= du1dx, du2dx= du2dx)
     sol4 = rk4_2s(x = x, u1_init= u1_init, u2_init= u2_init, du1dx= du1dx, du2dx= du2dx)
-    print("comparacion euler y rk4 S1""\n", sole.u1,"\n" "\n", sol4.u1)
-    
+    print("comparacion euler y rk4 S1""\n", "Euler", sole.u1,"\n" ,"Rk4", sol4.u1)
+    plt.plot(x,sole.u1)
+    plt.plot(x,sol4.u1)
+    plt.grid()
+    plt.show()
 
-    print("comparacion euler y rk4 S2""\n",sole.u2,"\n" "\n", sol4.u2)
+    print("comparacion euler y rk4 S2""\n", "Euler", sole.u2, "\n","Rk4", sol4.u2)
+    plt.plot(x,sole.u2)
+    plt.plot(x,sol4.u2)
+    plt.grid()
+    plt.show()
     
 def ejshoot():
     h = 0.2  # Tamaño de paso según el ejemplo
@@ -83,18 +88,50 @@ def ejshoot():
     print("Valor de c:", c)
     print("Solución final para x(t):", u1 + c * v1)
 
-# Ejecutar la función ajustada
-ejshoot()   
+def ejrk4single():
+    def dydx(x, y):
+        return (y*(x**2) - 1.2*y)
 
+    # Definir valores iniciales y pasos
+    x = np.arange(0, 2.5, 0.1)
+    y_init = 1
 
+    # Crear una instancia de la clase RK4 y resolver la EDO
+    solver = RK4(y_init, x, dydx)
 
+    print("Solucion RK4",solver.y)
+
+    def realSol(x):
+        return (np.exp(((x**3)/3) - 1.2*x   ))
     
+    plt.plot(x, solver.y)
+    plt.plot(x, realSol(x))
+    plt.grid()
+    plt.show()
+    
+def ejeulersingle():
+    def dydx(x, y):
+        return (y*(x**2) - 1.2*y)
+
+    # Definir valores iniciales y pasos
+    x = np.arange(0, 2.5, 0.1)
+    y_init = 1
+
+    # Crear una instancia de la clase RK4 y resolver la EDO
+    solver = Eu(y_init, x, dydx)
+
+    print("Solucion Euler",solver.y)
+
+    def realSol(x):
+        return (np.exp(((x**3)/3) - 1.2*x   ))
+    
+    plt.plot(x, solver.y)
+    plt.plot(x, realSol(x))
+    plt.grid()
+    plt.show()
 
 
-# Ejecutar la función ajustada
-ejshoot()
-    
-    
+
     
     
 
@@ -107,4 +144,6 @@ ejshoot()
 
 #ej2()
 #ej3()
-ejshoot()
+#ejshoot()
+#ejrk4single()
+#ejeulersingle()

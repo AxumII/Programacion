@@ -28,11 +28,7 @@ class RK4:
             # Añadir el nuevo valor de y al array
             self.y = np.append(self.y, y_next)
 
-    def get_solution(self):
-        # Devuelve los valores de x e y
-        return  self.y
-
-
+    
 
 
 
