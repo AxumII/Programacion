@@ -1,5 +1,7 @@
 import numpy as np
 
+import numpy as np
+
 class Euler:
     def __init__(self, y_init, x, dydx):
         self.y_init = y_init  # Valor inicial de y
@@ -21,3 +23,4 @@ class Euler:
     def __call__(self):
         # Permite usar la instancia directamente como si fuera el array y
         return self.y
+
