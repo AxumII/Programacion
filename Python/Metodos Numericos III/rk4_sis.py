@@ -55,7 +55,7 @@ class RK4:
         """
         return self.U
     
-
+"""
 # Definir la matriz del sistema lineal
 A = np.array([[1, 2], [3, 4]])
 
@@ -154,4 +154,4 @@ plt.xlabel('x')
 plt.ylabel('y(x)')
 plt.title('Comparación de la solución RK4 y la solución analítica')
 plt.grid()
-plt.show()
+plt.show()"""

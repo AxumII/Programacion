@@ -130,6 +130,29 @@ def ejeulersingle():
     plt.grid()
     plt.show()
 
+def rk4sng_ayuda():
+    def dydx(x, y):
+        return ((x**2) - y)
+
+    # Definir valores iniciales y pasos
+    h = 0.2
+    x = np.arange(0, 0.8+h, h)
+    y_init = 1
+
+    # Crear una instancia de la clase RK4 y resolver la EDO
+    solver = RK4(y_init, x, dydx)
+
+    print("Solucion RK4",solver.y)
+
+    def realSol(x):
+        return (-1*np.exp(-x)  + (x**2) - (2*x) + 2)
+    
+    print("solucion real en ultimo punto", realSol(0.8))
+    
+    plt.plot(x, solver.y, color = 'blue')
+    plt.plot(x, realSol(x), color = 'orange')
+    plt.grid()
+    plt.show()
 
 
     
@@ -147,3 +170,4 @@ def ejeulersingle():
 #ejshoot()
 #ejrk4single()
 #ejeulersingle()
+rk4sng_ayuda()
