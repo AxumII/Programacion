@@ -103,7 +103,7 @@ def A():
 
 # Ejemplo de uso de la función A
 Rf = 20
-R = 4000
+R = 2200
 B = 70
 Rl = 8
 Vcc = 12  # Voltaje de la fuente
