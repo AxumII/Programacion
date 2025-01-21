@@ -1,65 +1,100 @@
 import sympy as sp
 
-def Punto2():
-    # Definir símbolos
-    d, G, Tao_max, L1, L2, T, rEng1, rEng2, a = sp.symbols('d G Tao_max L1 L2 T rEng1 rEng2 a', real=True, positive=True)
+class P2:
+    def __init__(self, d=None, G=None, Tao_max=None, L1=None, L2=None, T=None, rEng1=None, rEng2=None):
+        # Asignar variables iniciales con valores simbólicos si no se proporcionan
+        self.d = d if d is not None else sp.Symbol('d')
+        self.G = G if G is not None else sp.Symbol('G')
+        self.Tao_max = Tao_max if Tao_max is not None else sp.Symbol('Tao_max')
+        self.L1 = L1 if L1 is not None else sp.Symbol('L1')
+        self.L2 = L2 if L2 is not None else sp.Symbol('L2')
+        self.T = T if T is not None else sp.Symbol('T')
+        self.rEng1 = rEng1 if rEng1 is not None else sp.Symbol('rEng1')
+        self.rEng2 = rEng2 if rEng2 is not None else sp.Symbol('rEng2')
 
-    # Elementos geométricos
-    rab = 2 * d / 2  # Radio externo de la sección AB
-    rbc = d / 2      # Radio externo de la sección BC
-    b = 2.5 * d      # Lado del área cuadrada
+    def calcular_simbolico(self):
+        # Definir símbolos
+        d, G, Tao_max, L1, L2, T, rEng1, rEng2 = sp.symbols('d G Tao_max L1 L2 T rEng1 rEng2')
+        
+        # Definir constantes geométricas
+        b = 2.5 * d
+        c1, c2 = 0.208, 0.1406
+        rab = 2 * d / 2
+        rbc = d / 2
 
-    # Momento polar de inercia (J) para secciones circulares
-    Jab = (1 / 2) * sp.pi * rab**4
-    Jbc = (1 / 2) * sp.pi * rbc**4
+        # Momentos de inercia
+        Jab = (1 / 2) * sp.pi * rab**4
+        Jbc = (1 / 2) * sp.pi * rbc**4
 
-    # Momento polar de inercia (J) para sección cuadrada
-    Jde = (1 / 6) * b**4
+        # Torsión resultante
+        T2 = T * (rEng2 / rEng1)
 
-    # T resultante por engranajes
-    T2 = T * (rEng2 / rEng1)
+        # Esfuerzos cortantes
+        tao_ab = (T * rab) / Jab
+        tao_bc = (T * rbc) / Jbc
+        tao_de = (T2 /(c1*b**3) )
 
-    # Esfuerzo cortante en áreas circulares del eje 1 en función de T
-    tao_ab = (T * rab) / Jab  # Esfuerzo cortante en AB
-    tao_bc = (T * rbc) / Jbc  # Esfuerzo cortante en BC
+        # Factores de seguridad
+        FS_ab = Tao_max / tao_ab
+        FS_bc = Tao_max / tao_bc
+        FS_de = Tao_max / tao_de
 
-    # Esfuerzo cortante en área cuadrada del eje 2
-    tao_de = (T2 * (b / 2)) / Jde
+        # Ángulos de torsión
+        theta_ab = (T * L1) / (Jab * G)
+        theta_bc = (T * L2) / (Jbc * G)
+        theta_de = (T2 * L2) / (c2 * b**4 * G)
 
-    # Calcular factor de seguridad (FS) dado un material y T aplicado
-    FS_ab = Tao_max / tao_ab  # Factor de seguridad en AB
-    FS_bc = Tao_max / tao_bc  # Factor de seguridad en BC
-    FS_de = Tao_max / tao_de  # Factor de seguridad en DE
+        # Ángulo total
+        theta_a = theta_de * (rEng2 / rEng1) + theta_ab
 
-    # Ángulo de torsión en cada segmento circular
-    theta_ab = (T * L1) / (Jab * G)  # Ángulo de torsión en AB
-    theta_bc = (T * L2) / (Jbc * G)  # Ángulo de torsión en BC
+        # Resultados simbólicos
+        results = {
+            'Momento polar de inercia AB (Jab)': Jab,
+            'Momento polar de inercia BC (Jbc)': Jbc,            
+            'Factor de seguridad en AB (FS_ab)': FS_ab,
+            'Factor de seguridad en BC (FS_bc)': FS_bc,
+            'Factor de seguridad en DE (FS_de)': FS_de,
+            'Esfuerzo cortante en AB (tao_ab)': tao_ab,
+            'Esfuerzo cortante en BC (tao_bc)': tao_bc,
+            'Esfuerzo cortante en DE (tao_de)': tao_de,
+            'Ángulo de torsión en A (theta_a)': theta_a
+        }
 
-    # Ángulo de torsión en segmento cuadrado
-    theta_de = (T2 * a) / (Jde * G)  # Ángulo de torsión en DE
+        return results
 
-    #Angulo de torsion relacionando engranajes
-    theta_c = theta_de* (rEng2 / rEng1)
+    def calcular_numerico(self):
+        # Obtener resultados simbólicos
+        resultados_simbolicos = self.calcular_simbolico()
 
-    #Angulo de torsion
+        # Crear sustituciones
+        sustituciones = {
+            sp.Symbol('d'): self.d,
+            sp.Symbol('G'): self.G,
+            sp.Symbol('Tao_max'): self.Tao_max,
+            sp.Symbol('L1'): self.L1,
+            sp.Symbol('L2'): self.L2,
+            sp.Symbol('T'): self.T,
+            sp.Symbol('rEng1'): self.rEng1,
+            sp.Symbol('rEng2'): self.rEng2,
+            sp.pi: 3.141592653589793  # Sustituir pi por su valor numérico
+        }
 
-    # Resultados
-    results = {
-        'Momento polar de inercia AB (Jab)': Jab,
-        'Momento polar de inercia BC (Jbc)': Jbc,
-        'Momento polar de inercia DE (Jde)': Jde,
-        'Factor de seguridad en AB (FS_ab)': FS_ab,
-        'Factor de seguridad en BC (FS_bc)': FS_bc,
-        'Factor de seguridad en DE (FS_de)': FS_de,
-        'Esfuerzo cortante en AB (tao_ab)': tao_ab,
-        'Esfuerzo cortante en BC (tao_bc)': tao_bc,
-        'Esfuerzo cortante en DE (tao_de)': tao_de,
-        'Ángulo total de torsión (theta_total)': theta_total
-    }
+        # Evaluar resultados numéricos
+        resultados_numericos = {}
+        for key, expr in resultados_simbolicos.items():
+            valor = expr.subs(sustituciones)
+            resultados_numericos[key] = valor.evalf() if valor.free_symbols == set() else valor
 
-    return results
+        return resultados_numericos
 
-# Ejecutar la función y mostrar los resultados
-resultados = Punto2()
-for key, value in resultados.items():
+# Crear instancia de la clase y calcular resultados
+modelo = P2(d=0.05, G=206e9, Tao_max=82e6, L1=1, L2=2, rEng1=0.1, rEng2=0.1)
+resultados_simbolicos = modelo.calcular_simbolico()
+print("Resultados Simbólicos:")
+for key, value in resultados_simbolicos.items():
+    print(f"{key}: {value}")
+
+resultados_numericos = modelo.calcular_numerico()
+print("\nResultados Numéricos:")
+for key, value in resultados_numericos.items():
     print(f"{key}: {value}")
