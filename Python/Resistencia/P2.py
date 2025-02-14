@@ -14,7 +14,7 @@ class P2:
 
     def calcular_simbolico(self):
         # Definir símbolos
-        d, G, Tao_max, L1, L2, T, rEng1, rEng2 = sp.symbols('d G Tao_max L1 L2 T rEng1 rEng2')
+        d, G, Tao_max, L1, L2, T, Tc, Te, rEng1, rEng2 = sp.symbols('d G Tao_max L1 L2 T Tc Te rEng1 rEng2')
         
         # Definir constantes geométricas
         b = 2.5 * d
@@ -26,29 +26,42 @@ class P2:
         Jab = (1 / 2) * sp.pi * rab**4
         Jbc = (1 / 2) * sp.pi * rbc**4
 
-        # Torsión resultante
-        T2 = T * (rEng2 / rEng1)
+        # Ángulos de torsión
+        theta_ab = (T * L1) / (Jab * G)
+        theta_bc = (Tc * L2) / (Jbc * G)
+        theta_de = (Te * L2) / (c2 * b**4 * G)
+        
+        
+        #Hiperestaticidad
+        Solucion = sp.linsolve([T - Te*(rEng1 / rEng2) - Tc , theta_bc*rEng1 - theta_de*rEng2 ],(Tc, Te))
+        S1,S2 = Solucion
+        
+       #Falta abstraer terminos y ya resolver ya que eso resuelve la hiperestaticidad y lo demas ya es solo reemplazar
+        
+        # Ángulo total
+         
+        theta_a = theta_de * (rEng1 / rEng2) + theta_ab 
+        theta_a2 = theta_bc + theta_ab
 
         # Esfuerzos cortantes
         tao_ab = (T * rab) / Jab
-        tao_bc = (T * rbc) / Jbc
-        tao_de = (T2 /(c1*b**3) )
+        tao_bc = (Tc * rbc) / Jbc
+        tao_de = (Te /(c1*b**3) )
 
         # Factores de seguridad
         FS_ab = Tao_max / tao_ab
         FS_bc = Tao_max / tao_bc
         FS_de = Tao_max / tao_de
 
-        # Ángulos de torsión
-        theta_ab = (T * L1) / (Jab * G)
-        theta_bc = (T * L2) / (Jbc * G)
-        theta_de = (T2 * L2) / (c2 * b**4 * G)
+        
 
-        # Ángulo total
-        theta_a = theta_de * (rEng2 / rEng1) + theta_ab
+        
+        
 
         # Resultados simbólicos
-        results = {
+        
+
+        return {
             'Momento polar de inercia AB (Jab)': Jab,
             'Momento polar de inercia BC (Jbc)': Jbc,            
             'Factor de seguridad en AB (FS_ab)': FS_ab,
@@ -57,10 +70,9 @@ class P2:
             'Esfuerzo cortante en AB (tao_ab)': tao_ab,
             'Esfuerzo cortante en BC (tao_bc)': tao_bc,
             'Esfuerzo cortante en DE (tao_de)': tao_de,
-            'Ángulo de torsión en A (theta_a)': theta_a
+            'Ángulo de torsión en A camino 1(theta_a)': theta_a,
+            'Ángulo de torsión en A camino 2(theta_a)': theta_a2
         }
-
-        return results
 
     def calcular_numerico(self):
         # Obtener resultados simbólicos
@@ -88,7 +100,7 @@ class P2:
         return resultados_numericos
 
 # Crear instancia de la clase y calcular resultados
-modelo = P2(d=0.05, G=206e9, Tao_max=82e6, L1=1, L2=2, rEng1=0.1, rEng2=0.1)
+modelo = P2(d=0.05, G=206e9, Tao_max=82e6, T = 2000, L1=1, L2=2, rEng1=0.3, rEng2=0.3)
 resultados_simbolicos = modelo.calcular_simbolico()
 print("Resultados Simbólicos:")
 for key, value in resultados_simbolicos.items():
@@ -97,4 +109,5 @@ for key, value in resultados_simbolicos.items():
 resultados_numericos = modelo.calcular_numerico()
 print("\nResultados Numéricos:")
 for key, value in resultados_numericos.items():
+    
     print(f"{key}: {value}")
