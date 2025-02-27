@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def ej():
+def ej4_115():
     #Valores
     P = 15000
     Cy = 1.429
@@ -29,7 +29,9 @@ def ej():
     print(Esf_exc_B)
     return Esf_A,Esf_B
 
-print(ej())
+print(ej4_115())
+
+
     
     
     
