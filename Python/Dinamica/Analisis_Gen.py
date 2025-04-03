@@ -10,11 +10,11 @@ class General:
     def __init__(self):
         g = -9.81
         m_tornillo = 8/1000 #Gramos
-        self.masa_t = (3*(36)) + (0.18) + ((15) + (15)) +((6)* (m_tornillo))  #3discos + Eje + 2 rodamientos + n Masas  EN GRAMOS
+        self.masa_t = 500 # (3*(36)) + (0.18) + ((15) + (15)) +((6)* (m_tornillo))  #3discos + Eje + 2 rodamientos + n Masas  EN GRAMOS 
         self.W_peso_t = (self.masa_t*g)/1000
-        self.k_h = 1500
-        self.k_v = 1500
-        self.w_t  = (1500)*(np.pi/30) #rpm a rad/s
+        self.k_h = 125
+        self.k_v = 125
+        self.w_t  = (500)*(np.pi/30) #rpm a rad/s
         self.alpha = 0
         self.r_ctr_d = 0.035
         self.L = 0.31
@@ -71,7 +71,7 @@ class General:
         print(f"X_a: {X_a}, Y_a: {Y_a}")
         print(f"X_b: {X_b}, Y_b: {Y_b}") 
 
-        print("Elongacion del resorte dado un K y una masa de 200g", rotor.cal_k())     
+        print("Elongacion del resorte dado un K y una masa de 250g", rotor.cal_k())     
 
     def graf_db_tot(self, n=180):
         theta = np.linspace(0, 361 ,n ) + 33.5

@@ -111,7 +111,7 @@ class Desbalance:
     def solver_reacciones_est(self):
         
         M = np.array([[1,1], [0,self.L]])
-        S = np.array([-self.W_peso,-self.W_peso*self.L_ctr ])
+        S = np.array([self.W_peso,self.W_peso*self.L_ctr ])
         return  np.linalg.solve(M,S)
 
     def distancias_desbalance(self):
@@ -131,6 +131,7 @@ class Desbalance:
         Ay = Ay_D + Ay_E
         Bx = Bx_D
         By = By_D + By_E
+        
 
         X_a = 2 * Ax / self.k_h
         Y_a = 2 * Ay / self.k_v
@@ -143,7 +144,7 @@ class Desbalance:
         #se usa para saber cuanto se debe elongar el resorte con un K dado con una masa en mm
         #W = k*y
         #y = w/k
-        m = 0.20
+        m = 0.25
         return 9.81*m /self.k_h  *1000  , 9.81*m /self.k_v  *1000 
 
 
@@ -204,5 +205,5 @@ elongacion = rotor.cal_k()
 print("La elongacion en mm es", elongacion)
 
 
-
-      """
+"""
+      
