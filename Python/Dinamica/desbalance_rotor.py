@@ -79,9 +79,15 @@ class desb:
 
         #Sistema de Referencia en B
         
+<<<<<<< HEAD
         Ixz_B, Iyz_B = In_B 
         Ay =    (((-1*Ixz_B * self.alpha ) + (Iyz_B * self.w_t**2 )) / self.L)
         Ax =    -1*(((-1*Iyz_B * self.alpha ) + (-1*Ixz_B * self.w_t**2 )) / self.L)
+=======
+        M = np.array([[1,1], [0,self.L]])
+        S = np.array([self.W_peso,self.W_peso*self.L_ctr ])
+        return  np.linalg.solve(M,S)
+>>>>>>> 4deb2acecce37bfc164f5670703a8c371ed9e553
 
         B = [Bx,By]
         A = [Ax,Ay]
@@ -103,3 +109,85 @@ class desb:
         Y_b = 2*By / self.k
         X_a = 2*Ax / self.k
         Y_a = 2*Ay / self.k
+        [Ax_D, Ay_D], [Bx_D, By_D] = self.solve_reacciones_din()
+        Ay_E, By_E = self.solver_reacciones_est()
+        Ax = Ax_D 
+        Ay = Ay_D + Ay_E
+        Bx = Bx_D
+        By = By_D + By_E
+        
+
+        X_a = 2 * Ax / self.k_h
+        Y_a = 2 * Ay / self.k_v
+        X_b = 2 * Bx / self.k_h
+        Y_b = 2 * By / self.k_v
+        
+        return [X_a, Y_a], [X_b, Y_b]
+
+    def cal_k(self):
+        #se usa para saber cuanto se debe elongar el resorte con un K dado con una masa en mm
+        #W = k*y
+        #y = w/k
+        m = 0.25
+        return 9.81*m /self.k_h  *1000  , 9.81*m /self.k_v  *1000 
+
+
+"""
+
+#Ejemplos
+default = Desbalance()
+print(default.Inercia())
+print(default.solve_reacciones_din())
+#################################################################################################################
+libro = Desbalance( w_t=125.7, alpha=3000, r_ctr_d=0.05, L_n=[0.15, 0.3, 0.45], L=0.6, theta_init=0, 
+                 D1_ex=[0, 0, 0, 1], D1_m=[0, 0, 0, 0.3], 
+                 D2_ex=[0, 1, 0, 0], D2_m=[0, 0.3, 0, 0], 
+                 D3_ex=[0, 0, 0, 0], D3_m=[0, 0, 0, 0])
+print("\nInercia en A y B (custom):", libro.Inercia())
+print("Reacciones dinámicas en A y B (custom):", libro.solve_reacciones_din())
+"""
+
+"""
+k_h = 500
+k_v = 700
+m_tornillo = 8/1000 #Gramos
+L_t = 0.31
+masa_t = (3*(36)) + (0.18) + ((15) + (15)) +((6)* (m_tornillo))  #3discos + Eje + 2 rodamientos + n Masas  EN GRAMOS
+g = -9.81
+W_peso_t = (masa_t*g)/1000
+w_t  = (500)*(np.pi/30) #rpm
+
+
+print("masa total gramos", masa_t)
+print("peso total N", W_peso_t)
+rotor = Desbalance(k_h=k_h, k_v=k_v ,w_t=w_t, alpha=0, r_ctr_d=0.035, L_n=[0.0739, 0.1546, 0.235], L= L_t, theta_init=0, L_ctr= L_t / 2, W_peso = W_peso_t,
+                    D1_ex=[0, 1, 1, 1], D1_m=[0, m_tornillo, m_tornillo, m_tornillo], 
+                    D2_ex=[0, 1, 0, 0], D2_m=[0, m_tornillo, 0, 0], 
+                    D3_ex=[1, 0, 1, 0], D3_m=[m_tornillo, 0, m_tornillo, 0])
+
+    # Calcular la inercia en A y B
+inercia_rotor = rotor.Inercia()
+print("\nInercia en A y B (rotor):", inercia_rotor)
+
+    # Calcular las reacciones dinámicas en A y B
+reacciones_din_rotor = rotor.solve_reacciones_din()
+print("Reacciones dinámicas en A y B (rotor):", reacciones_din_rotor)
+
+    # Calcular las reacciones Estaticas en A y B
+reacciones_est_rotor = rotor.solver_reacciones_est()
+print("Reacciones Estaticas en A y B (rotor):", reacciones_est_rotor)
+
+    # Calcular las distancias de desbalance
+desbalance_rotor = rotor.distancias_desbalance()
+print("Distancias de desbalance en A y B (rotor): (x,y), Metros", desbalance_rotor)
+desbalance_rotor * 1000
+print("Distancias de desbalance en A y B (rotor): (x,y), Milímetros", [[x * 1000 for x in desbalance_rotor[0]], [y * 1000 for y in desbalance_rotor[1]]])
+
+
+    #Distancia de elongacion de resorte para fabricacion
+elongacion = rotor.cal_k()
+print("La elongacion en mm es", elongacion)
+
+
+"""
+      
