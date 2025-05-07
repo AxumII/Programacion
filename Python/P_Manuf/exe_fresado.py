@@ -5,16 +5,16 @@ from Fresado import Fresado_circular
 # EJEMPLO 1: Fresado de dientes rectos
 # ---------------------
 fresado_recto = Fresado_d_rectos(
-    Dc=35,
-    Zn=7,
-    Kr=15,
+    Dc=8,
+    Zn=4,
+    Kr=90,
     ang_desp=10,
-    Vc=200,
-    ac_max=0.1,
-    ap=6
+    Vc=80,
+    ac_max=90,
+    ap=1
 )
-Kc1 = 750
-mc = 0.41
+Kc1 = 1
+mc = 1
 
 print("→ Ejemplo 1: Fresado de dientes rectos")
 print(f"Diametro efectivo de fresado: {fresado_recto.diam_ef_fres():.6f} mm")

@@ -2,7 +2,7 @@ import numpy as np
 import scipy.stats as st
 import pandas as pd
 import inspect
-
+#######MODIFICAR LECTURA DE DATOS; LO MODIFIQUE PARA LA COMBINADA
 class Uncertainty:  # Cambié a Uncertainty (tenías Uncertainly)
     def __init__(self, unc_array):
         self.unc_array = unc_array

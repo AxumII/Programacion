@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import inspect
-
+import sympy as sp
 class Type_A:
     def __init__(self, muestra: np.ndarray, name=None):
         self.muestra = muestra
@@ -36,10 +36,17 @@ class Type_B:
             label = "Resolution" if not self.name else f"Resolution of {self.name}"
             return label, (self.resol / np.sqrt(12)), 1, 1
 
-    def unc_calib(self, name=None):
+    def unc_calib(self, sensitivity=None):
+        sensitivity = sensitivity if sensitivity is not None else 1
         if self.calib is not None:
             label = "Calibration" if not self.name else f"Calibration of {self.name}"
-            return label, (self.calib / self.f_c_calib), 1, 1
+            uncertainty = self.calib / self.f_c_calib
+            return label, uncertainty, sensitivity, 1
+
+    
+    def coef_sens(i_var, equation, num_values):
+        diff_equation = sp.diff(equation, i_var)
+        return diff_equation.evalf(subs = num_values)
 
     def add(self):
         for nombre, metodo in inspect.getmembers(self, predicate=inspect.ismethod):
