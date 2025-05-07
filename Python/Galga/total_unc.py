@@ -1,25 +1,44 @@
 import numpy as np
-import scipy.stats as st
 import pandas as pd
-import inspect
-#######MODIFICAR LECTURA DE DATOS; LO MODIFIQUE PARA LA COMBINADA
-class Uncertainty:  # Cambié a Uncertainty (tenías Uncertainly)
-    def __init__(self, unc_array):
-        self.unc_array = unc_array
+import sympy as sp
 
-    def U_comb(self):
-        # Multiplicar incertidumbre por coeficiente de sensibilidad
-        productos = self.unc_array[:, 0] * self.unc_array[:, 1]
-        # Elevar al cuadrado y sumar
-        Sn2_comb = np.sum(productos**2)
-        # Retornar raíz cuadrada de la suma
-        return np.sqrt(Sn2_comb)
+from unc import Type_A as T_A
+from unc import Type_B as T_B
+
+
+class Total_unc:
+    def __init__(self,datos_delta_V):
+        self.datos_delta_V = datos_delta_V
+        self.resol_delta_V
+
+    def calculate():
+        #Dado a que estoy calculando la deformacion , implica que calculo la
+        #incertidumbre tanto de la formula general como los errores, teniend
+        #cada factor fisico su propia incertidumbre
+        
+        #Formula general
+        delta_V, Vi, GF, RL, RG = sp.symbols('delta_V Vi GF RL RG')    
+        epsilon = (-4 * (delta_V / Vi)) / (GF * (1 + 2 * (delta_V / Vi))) * (1 + RL / RG)
+
+        #Delta_V
+        #Tipo A
+        t_a_delta_V = T_A(muestra = self.datos_delta_V, name="Voltage Difference")
+        u_a_delta_V = t_a_delta_V.des_est()
+        #Tipo B
+        #Resolucion (EL adc no tiene calibracion)
+        
+        t_b_delta_V = T_B(resol = self.resol_delta_V, name= "Voltage Difference", sensitivity =  )
+        sens_delta_V = t_b_delta_V.coef_sens(i_var = delta_V, equation=epsilon, num_values= num_values_gen)
+        t_b_delta_V.unc_resol()
+        t_b_delta_V.add()
+        u_b_delta_V = t_b_delta_V.df_unc
+        
+        #Vi
+        u_a_vi = T_A()
+        
+        
+        
+        
+        
+        pass
     
-    def U_exp(self, f_cob=3):
-        # Sumar todos los grados de libertad
-        n_freedom = np.sum(self.unc_array[:, 2])
-        if n_freedom > 30:
-            return self.U_comb() * f_cob
-        else:
-            # Aquí podrías agregar manejo para casos donde n_freedom <= 30
-            return None
