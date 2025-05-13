@@ -3,10 +3,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from model_gauge_gpu import Model
-from pb import N_fit as N_fit
 import time
-
-
 
 
 class MontecarloUncTestGauge:
@@ -14,77 +11,34 @@ class MontecarloUncTestGauge:
         self.n = n
         self.results = cp.zeros(n)
         self.df_resumen = None
+        self.distribuciones = distribuciones or {}
+        self.muestras = {}
 
-        # Diccionario con la especificación de las distribuciones por variable
-        self.distribuciones = distribuciones if distribuciones else {}
-
-    def generar_valores(self, nombre):
-        dist = self.distribuciones[nombre]
-        tipo = dist["tipo"]
-        params = dist["params"]
-
-        if tipo == "normal":
-            return cp.random.normal(params["media"], params["desv"], self.n)
-        elif tipo == "uniform":
-            return cp.random.uniform(params["min"], params["max"], self.n)
-        elif tipo == "const":
-            return cp.full(self.n, params["valor"])
-        else:
-            raise ValueError(f"Distribución '{tipo}' no soportada para '{nombre}'")
+    def generar_muestras(self):
+        for nombre, dist in self.distribuciones.items():
+            tipo = dist["tipo"]
+            params = dist["params"]
+            if tipo == "normal":
+                self.muestras[nombre] = cp.random.normal(params["media"], params["desv"], self.n)
+            elif tipo == "uniform":
+                self.muestras[nombre] = cp.random.uniform(params["min"], params["max"], self.n)
+            elif tipo == "const":
+                self.muestras[nombre] = cp.full(self.n, params["valor"])
+            else:
+                raise ValueError(f"Distribución '{tipo}' no soportada para '{nombre}'")
 
     def simulation(self):
-        n = self.n
+        self.generar_muestras()
+        nombres = list(self.muestras.keys())
+        # Convertir todas las muestras a NumPy para operar con `Model` que espera float normales
+        muestras_np = {k: cp.asnumpy(v) for k, v in self.muestras.items()}
 
-        # === Generación dinámica según distribuciones definidas ===
-        Vlect = self.generar_valores("Vlect")
-        R1 = self.generar_valores("R1")
-        R2 = self.generar_valores("R2")
-        R3 = self.generar_valores("R3")
-        RG = self.generar_valores("RG")
-        RL = self.generar_valores("RL")
-        Vi = self.generar_valores("Vi")
-        GF = self.generar_valores("GF")
-        v = self.generar_valores("v")
-        phi = self.generar_valores("phi")
-        hg = self.generar_valores("hg")
-        m = self.generar_valores("m")
-        g = self.generar_valores("g")
-        L = self.generar_valores("L")
-        x = self.generar_valores("x")
-        E = self.generar_valores("E")
-        b = self.generar_valores("b")
-        h = self.generar_valores("h")
-        lg = self.generar_valores("lg")
-        K = self.generar_valores("K")
-
-        # === Simulación Monte Carlo ===
-        for i in range(n):
-            modelo = Model(
-                Vlect=float(Vlect[i]),
-                R1=float(R1[i]),
-                R2=float(R2[i]),
-                R3=float(R3[i]),
-                RG=float(RG[i]),
-                RL=float(RL[i]),
-                Vi=float(Vi[i]),
-                GF=float(GF[i]),
-                v=float(v[i]),
-                phi=float(phi[i]),
-                hg=float(hg[i]),
-                m=float(m[i]),
-                g=float(g[i]),
-                L=float(L[i]),
-                x=float(x[i]),
-                E=float(E[i]),
-                b=float(b[i]),
-                h=float(h[i]),
-                lg=float(lg[i]),
-                K=float(K[i])
-            )
+        # Procesar cada muestra con el modelo
+        for i in range(self.n):
+            modelo = Model(**{k: float(muestras_np[k][i]) for k in nombres})
             self.results[i] = modelo.calculate()
 
         return self.results
-
 
     def resumen_estadistico(self):
         media = float(cp.mean(self.results))
@@ -99,7 +53,6 @@ class MontecarloUncTestGauge:
             "Límite superior (95%)": high
         }])
 
-        print(self.df_resumen)
         return self.df_resumen
 
     def graficar_resultados(self):
@@ -113,9 +66,7 @@ class MontecarloUncTestGauge:
         plt.tight_layout()
         plt.show()
 
-    
-
-# === Ejemplo de uso ===
+"""    
 if __name__ == "__main__":
     distribuciones = {
         "Vlect": {"tipo": "normal", "params": {"media": 0.003, "desv": 1e-1}},
@@ -140,11 +91,28 @@ if __name__ == "__main__":
         "K":     {"tipo": "uniform", "params": {"min": 101, "max": 105}}
     }
 
-    simulador = MontecarloUncTestGauge(n=10**6, distribuciones=distribuciones)
-    inicio = time.time()
+    # Crear instancia del simulador
+    simulador = MontecarloUncTestGauge(n=10**2, distribuciones=distribuciones)
+
+    # === Medición de tiempo por fases ===
+    total_inicio = time.time()
+
+    print("🔧 Generando muestras...")
+    t0 = time.time()
+    simulador.generar_muestras()
+    print(f"✅ Muestras generadas en {time.time() - t0:.2f} s\n")
+
+    print("⚙️ Ejecutando simulación...")
+    t1 = time.time()
     simulador.simulation()
-    fin = time.time()
-    
-    print(f"Tiempo de simulación: {fin - inicio:.2f} segundos")
+    print(f"✅ Simulación completada en {time.time() - t1:.2f} s\n")
+
+    print("📊 Resumen estadístico:")
     simulador.resumen_estadistico()
+
+    print("📈 Graficando resultados...")
     simulador.graficar_resultados()
+
+    total_fin = time.time()
+    print(f"\n⏱️ Tiempo total: {total_fin - total_inicio:.2f} segundos")
+"""

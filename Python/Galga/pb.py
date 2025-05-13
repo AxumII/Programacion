@@ -49,7 +49,7 @@ class N_fit:
         return "No" if p_value < self.alpha else "Si"
     
     def normality_lilliefors_test(self, data):
-        statistic, p_value = lilliefors(data)
+        statistic, p_value = st.lilliefors(data)
         return ("No" if p_value < self.alpha else "Si", p_value)
     
     #poner tambien las del libro, los test de comparacion

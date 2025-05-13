@@ -2,17 +2,24 @@ import cupy as cp
 import pandas as pd
 
 class TypeA:
-    def __init__(self, muestra , name=None, sensitivity=1):
+    def __init__(self, muestra = None , name=None, sensitivity=1, desvest = None):
         self.muestra = muestra
         self.name = name
         self.sensitivity = sensitivity
+        self.desvest = desvest
         self.columns = ["Name", "Uncertainty", "Sensitivity"]
         self.df_unc =  pd.DataFrame(columns=self.columns, dtype=float)
 
     def unc_est(self):
         label = "Statical" if not self.name else f"Statical of {self.name}"
-        uncertainly = cp.std(self.muestra, ddof=1)
-        self.df_unc.loc[len(self.df_unc)] = [label, uncertainly.get(), self.sensitivity]
+        if self.desvest is not None and self.muestra is None:
+            uncertainly = self.desvest  # ← ya es float
+        elif self.desvest is None and self.muestra is not None:
+            uncertainly = cp.std(self.muestra, ddof=1).get()  # ← CuPy → float
+        else:
+            uncertainly = 0
+        self.df_unc.loc[len(self.df_unc)] = [label, uncertainly, self.sensitivity]
+
 
 
 class TypeB:
