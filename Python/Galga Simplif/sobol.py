@@ -4,7 +4,7 @@ from scipy.stats import norm
 from SALib.sample import sobol as sobol_sampler
 from SALib.analyze import sobol as sobol_analyzer
 import matplotlib.pyplot as plt
-from model_gauge_gpu import Model
+from model_gauge_s import Model
 
 
 class SobolAnalysis:
@@ -64,14 +64,8 @@ class SobolAnalysis:
                 GF=entrada["GF"],
                 v=entrada["v"],
                 phi=entrada["phi"],
-                hg=entrada["hg"],
-                m=entrada["m"],
-                g=entrada["g"],
                 L=entrada["L"],
-                x=entrada["x"],
                 E=entrada["E"],
-                b=entrada["b"],
-                h=entrada["h"],
                 lg=entrada["lg"]
             )
             resultados[i] = modelo.calculate()

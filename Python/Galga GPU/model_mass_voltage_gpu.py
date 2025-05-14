@@ -36,4 +36,10 @@ class Model:
         error_misalignment = ((1 - self.v + (1 + self.v) * self._cos(2 * self.phi)) / 2) - 1
         error_curvature = (12 * self.hg * self.m * self.g * (self.L - self.x)) / (self.E * self.b * self.h**3) - 1
         error_bridge = (1 + self.RL / self.RG)
-        return epsilon * error_bridge * error_misalignment * error_curvature
+        Eq_def = epsilon * error_bridge * error_misalignment * error_curvature
+        Eq_Hooke = (self.m * self.g)/ (2*self.E*self.b*self.h)
+        solve = sp.solve([Eq_def,Eq_Hooke],self.m )
+        return solve
+    
+
+        

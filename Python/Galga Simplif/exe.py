@@ -1,25 +1,24 @@
 import pandas as pd
 import numpy as np
-
 import os
+import matplotlib.pyplot as plt
+
+from pandas.plotting import table
+
 from pb import NFit as Nf
 from ie_one_s import Estimator as Est
 from ie_reg import Estimador as EstReg
 
-from unc_gauge_gpu import UncGauge
-from unc_dist_gpu import UncDistance as UncD
+from unc_gauge_s import UncGauge
 
-from montecarlo_sens_unc import Monteca
-
-from model_gauge_gpu import Model
-
+from model_gauge_s import Model
 from derivation import Derivation
-import matplotlib.pyplot as plt
-from pandas.plotting import table
 
+from montecarlo_sens_unc import MontecarloUncTestGauge as Mcg
+from sobol import SobolAnalysis as Sb
 
-class Executable:
-    def __init__(self, file_names, datasheet_values, datasheet_values_d,instrument_values):
+class Executable: 
+    def __init__(self, file_names, datasheet_values,instrument_values):
         self.file_names = file_names
         self.dataframes = {}
         self.load_status = {}
@@ -30,7 +29,6 @@ class Executable:
         self.df_homsk_resultados = None
         self.df_normalidad_errores = None
         self.datasheet_values = datasheet_values
-        self.datasheet_values_d = datasheet_values_d
         self.instrument_values = instrument_values
         self.unc_df = None
         self.unc_df_deriv = None
@@ -102,44 +100,28 @@ class Executable:
     def adjust_input_unc_gauge(self):
         inputs_tipo_a_b = {}
         inputs_tipo_b = {}
-        inputs_tipo_a_b_dist = {}
-        inputs_tipo_b_dist = {}
         num_values = {}
-        inputs_distance = ["hg","b","h","L", "x"]
         datasheet_dict = self.datasheet_values.set_index("Variable").to_dict("index")
-        datasheet_d_dict = self.datasheet_values_d.set_index("Variable").to_dict("index")
         instrument_dict = self.instrument_values.set_index("Variable").to_dict("index")
         desvest_dict = self.df_ic_estimadores.set_index("Variable")["Sn² (Varianza)"].apply(np.sqrt).to_dict()
         mean_dict = self.df_ic_estimadores.set_index("Variable")["X̄ (Media)"].to_dict()
         map_var_to_name = {
             "voltage_measurement": "Vlect",
             "voltage_input": "Vi",
-            "mass": "m",
             "phi": "phi",
-            "T": "T",
-            "theta": "theta"
-        }
-
-        map_var_sub = {
-            "high_grid": "hg",
-            "base_cell": "b",
-            "high_cell": "h",
-            "L_force": "L",
-            "L_def": "x"
+            "L":"L"
         }
 
         map_var_to_instr = {
             "Vlect": "ADC",
             "Vi": "Voltimeter",
-            "m": "Scales",
             "phi": "Angle Sensor",
-            "T": "Thermometer"
+            "L": "Vernier"         # <--- Esto asocia la variable `L` con el instrumento Vernier
         }
+
         # tipo A+B principal (excluye submodelo)
         for raw_name, std in desvest_dict.items():
             raw_clean = raw_name.replace("data_", "")
-            if raw_clean in map_var_sub:
-                continue
             name = map_var_to_name.get(raw_clean, raw_clean)
             mean = mean_dict[raw_name]
             num_values[name] = mean
@@ -158,65 +140,17 @@ class Executable:
             num_values[var] = nominal
             inputs_tipo_b[var] = (var, None, (nominal * tol) / np.sqrt(3))
 
-      
 
-        # tipo B submodelo
-        for var, props in datasheet_d_dict.items():
-            nominal = props["Nominal Value"]
-            tol = props["+-%"]
-            num_values[var] = nominal
-            inputs_tipo_b_dist[var] = (var, None, nominal * tol)
-
-    
-
-        # tipo A submodelo
-        for raw_name, std in desvest_dict.items():
-            raw_clean = raw_name.replace("data_", "")
-            if raw_clean in ["T", "theta"]:
-                name = map_var_to_name.get(raw_clean, raw_clean)
-                mean = mean_dict[raw_name]
-                inputs_tipo_a_b_dist[name] = (None, name, None, None, std)
-                num_values[name] = mean
-
- 
-
-        # calcular submodelo por cada distancia
-        for var in inputs_distance:
-            val = num_values[var]
-            instr_name = "Vernier"
-            resol = instrument_dict.get(instr_name, {}).get("Resolution", None)
-            calib = instrument_dict.get(instr_name, {}).get("Calibration", None)
-            inputs_tipo_a_b_dist_local = {
-                "d_mean": (None, "d_mean", resol, calib, None),
-                "T": inputs_tipo_a_b_dist["T"],
-                "theta": inputs_tipo_a_b_dist["theta"]
-            }
-            num_values_local = {**num_values, "d_mean": val}
-
-            unc_sub = UncD(
-                num_values=num_values_local,
-                inputs_tipo_a_b_dist=inputs_tipo_a_b_dist_local,
-                inputs_tipo_b_dist=inputs_tipo_b_dist,
-                sensitivity_dict=None
-            )
-            unc_sub.calculate()
-            u_exp = unc_sub.unc_expanded(k=3)
-            inputs_tipo_b[var] = (var, None, float(u_exp))
-            inputs_tipo_a_b[var] = (None, var, None, None, float(u_exp))
-
-        return inputs_tipo_a_b, inputs_tipo_b, inputs_tipo_a_b_dist,inputs_tipo_b_dist, inputs_distance, num_values
+        return inputs_tipo_a_b, inputs_tipo_b, num_values
 
     def uncertainly_gauge_default(self, sensitivity_dict = None):
         
-        inputs_tipo_a_b, inputs_tipo_b, inputs_tipo_a_b_dist,inputs_tipo_b_dist, inputs_distance, num_values = self.adjust_input_unc_gauge()
+        inputs_tipo_a_b, inputs_tipo_b, num_values = self.adjust_input_unc_gauge()
         
         self.unc = UncGauge(
         num_values=num_values,
         inputs_tipo_a_b=inputs_tipo_a_b,
         inputs_tipo_b=inputs_tipo_b,
-        inputs_tipo_a_b_dist=inputs_tipo_a_b_dist,
-        inputs_tipo_b_dist=inputs_tipo_b_dist,
-        inputs_distance=inputs_distance,
         sensitivity_dict= sensitivity_dict
         )
         self.unc.calculate()
@@ -265,7 +199,7 @@ class Executable:
         # === solo usar las variables que están en el modelo ===
         vars_modelo = {
             "Vlect", "K", "R1", "R2", "R3", "RG", "RL", "Vi", "GF", "v", "phi",
-            "hg", "m", "g", "L", "x", "E", "b", "h", "lg"
+             "L", "E","lg"
         }
 
         # === 1. Combinar incertidumbres por variable ===
@@ -311,7 +245,7 @@ class Executable:
                 }
 
         return distribuciones
-
+    
     def uncertainly_with_sens(self):
         #Sobol
         sensitivity_dict_sobol = dict(zip(self.df_sobol["Variable"], self.df_sobol["S1 (Primer Orden)"]))
@@ -326,16 +260,15 @@ class Executable:
         
         
         #Derivacion
-        __, __ , __ , __ , __ , num_values =self.adjust_input_unc_gauge()
+        __, __ ,  num_values =self.adjust_input_unc_gauge()
 
         deriv = Derivation(model_class=Model, input_values=num_values)
         # Derivar y evaluar
         deriv.build_symbolic_model()
         self.sensitivity_dict_deriv = deriv.evaluate_derivatives()
         self.df_unc_deriv, self.u_exp_deriv = self.uncertainly_gauge_default(sensitivity_dict = self.sensitivity_dict_deriv)
-        
 
-    def comparar_sensibilidades(self, plot=True):
+    def sensitivity_comparision(self, plot=True):
         if self.df_sobol is None or self.sensitivity_dict_deriv is None:
             raise ValueError("Faltan datos de sensibilidad. Asegúrate de haber ejecutado 'uncertainly_with_sens()' primero.")
 
@@ -363,7 +296,7 @@ class Executable:
             plt.show()
 
             self.df_comparacion = df_comparacion
-  
+         
     def regression_analysis_def_v(self):
         # Cargar archivo CSV
         try:
@@ -382,7 +315,7 @@ class Executable:
         voltajes = df_voltage[colname].to_numpy()
 
         # Obtener valores base del modelo
-        _, _, _, _, _, num_values = self.adjust_input_unc_gauge()
+        _, _, num_values = self.adjust_input_unc_gauge()
 
         # Evaluar modelo para cada voltaje
         model_outputs = []
@@ -400,14 +333,8 @@ class Executable:
                     GF=num_values["GF"],
                     v=num_values["v"],
                     phi=num_values["phi"],
-                    hg=num_values["hg"],
-                    m=num_values["m"],
-                    g=num_values["g"],
                     L=num_values["L"],
-                    x=num_values["x"],
                     E=num_values["E"],
-                    b=num_values["b"],
-                    h=num_values["h"],
                     lg=num_values["lg"]
                 )
                 output = model.calculate()
@@ -433,94 +360,7 @@ class Executable:
         # Mostrar comparación gráfica OLS vs WLS + tabla homocedasticidad
         est.plot_comparacion_OLS_WLS()
 
-        print("✅ Regresión completada. Datos disponibles en:")
-        print("- self.df_voltage_regression")
-        print("- self.df_summary_ols")
-        print("- self.df_pvalores_homsk")
-        print("- self.df_resultados_homsk")
-        print("- self.df_norm_errores")
-
-    def regression_analysis_m_v(self):
-
-
-        # Cargar archivo CSV
-        try:
-            df_voltage = pd.read_csv("voltage_complete.csv")
-        except FileNotFoundError:
-            print("❌ Error: No se encontró el archivo 'voltage_complete.csv'.")
-            return
-        except Exception as e:
-            print(f"❌ Error al leer el archivo: {e}")
-            return
-        if df_voltage.shape[1] == 0:
-            print("❌ El archivo está vacío o no tiene columnas válidas.")
-            return
-
-        colname = df_voltage.columns[0]
-        voltajes = df_voltage[colname].to_numpy()
-
-        # Obtener valores base del modelo
-        _, _, _, _, _, num_values = self.adjust_input_unc_gauge()
-
-        # Evaluar modelo para cada voltaje
-        model_outputs = []
-        for v in voltajes:
-            try:
-                model = MassModel(
-                    Vlect=v,
-                    K=num_values["K"],
-                    R1=num_values["R1"],
-                    R2=num_values["R2"],
-                    R3=num_values["R3"],
-                    RG=num_values["RG"],
-                    RL=num_values["RL"],
-                    Vi=num_values["Vi"],
-                    GF=num_values["GF"],
-                    v=num_values["v"],
-                    phi=num_values["phi"],
-                    hg=num_values["hg"],
-                    g=num_values["g"],
-                    L=num_values["L"],
-                    x=num_values["x"],
-                    E=num_values["E"],
-                    b=num_values["b"],
-                    h=num_values["h"],
-                    lg=num_values["lg"]
-                )
-                result = model.calculate()
-                if isinstance(result, list) and len(result) > 0:
-                    model_outputs.append(float(result[0]))  # toma la solución válida
-                else:
-                    model_outputs.append(np.nan)
-            except Exception as e:
-                print(f"⚠️ Error al evaluar el modelo con Vlect={v}: {e}")
-                model_outputs.append(np.nan)
-
-        df_reg = pd.DataFrame({
-            "X": voltajes,
-            "Y": model_outputs
-        }).dropna()
-
-        self.df_mass_regression = df_reg
-
-        # Ajustar regresión
-        est = EstReg(data=df_reg, n=len(df_reg), m=5)
-        model = est.OLS()
-        self.df_summary_ols_m_v = model.summary2().tables[1]
-        self.df_norm_errores_m_v = est.test_norm_errores()
-        self.df_pvalores_homsk_m_v, self.df_resultados_homsk_m_v = est.test_homsk()
-
-        # Mostrar gráfica comparativa y tabla de homocedasticidad
-        est.plot_comparacion_OLS_WLS()
-
-        print("✅ Regresión masa vs voltaje completada.")
-        print("- self.df_mass_regression")
-        print("- self.df_summary_ols_m_v")
-        print("- self.df_pvalores_homsk_m_v")
-        print("- self.df_resultados_homsk_m_v")
-        print("- self.df_norm_errores_m_v")
-
-
+        print("✅ Regresión completada.")
 
     def df_process(self):
         dfs_a_mostrar = [
@@ -549,43 +389,34 @@ class Executable:
             plt.show()
 
 
-
 if __name__ == "__main__":
     archivos = [
-        "voltage_measurement", "voltage input", "mass", "phi",
-        "L_force", "base_cell", "high_cell", "L_def",
-        "high_grid", "T", "theta", "voltage_input"
+        "voltage_measurement", "voltage_input",  "phi",
+        "L"
     ]
 
     datasheet_values = pd.DataFrame({
-        "Variable": ["R1", "R2", "R3", "RG", "RL", "GF", "v", "g", "E", "K", "lg"],
-        "Nominal Value": [120, 120, 120, 120, 0.1, 2.1, 0.33, 9.7805, 6.9e10, 200, 1],
-        "+-%": [0.01, 0.01, 0.01, 0.1, 0.01, 0.2, 0.1, 0.0001, 0.01, 0.02, 0.03]
+        "Variable":         ["R1", "R2", "R3", "RG", "RL","GF", "v", "E", "K", "lg"],
+        "Nominal Value":    [1000, 1000, 1000, 1000,  0.006, 2.1, 0.33, 6.9e10, 128,  4.85*10**-3],
+        "+-%":              [0.02, 0.02, 0.02, 0.02 , 0.005, 0.1, 0.05,  0.03, 0.01, 0.01]
     })
 
     instrument_values = pd.DataFrame({
-        "Variable": ["ADC", "Voltimeter", "Scales", "Angle Sensor", "Thermometer", "Vernier"],
-        "Resolution": [5/2**10, None, 0.01, np.pi/180, None, 0.02*10**-3],
-        "Calibration": [None, 0.01, 0.01, None, 0.5, None]
+        "Variable": ["ADC", "Voltimeter", "Angle Sensor", "Vernier"],
+        "Resolution": [3.3/2**24, 0.1*10**-3, 0.00001, 0.02e-3],
+        "Calibration": [None, 0.005, None, 0]
     })
 
-    datasheet_values_d = pd.DataFrame({
-        "Variable": ["L", "hg", "x", "b", "h"],
-        "Nominal Value": [1.2, 0.2, 0.8, 0.01, 0.005],
-        "+-%": [0.03, 0.02, 0.04, 0.05, 0.07]
-    })
 
-    exe = Executable(archivos, datasheet_values,datasheet_values_d ,instrument_values)
+
+    exe = Executable(archivos, datasheet_values ,instrument_values)
     exe.loader()
     exe.statistical_analysis_single_samples()
-    """
     exe.uncertainly_gauge_default()
-    exe.montecarlo_gauge_model(n_iter = 100)
-    exe.sobol(n_iter = 2**2)
+    exe.montecarlo_gauge_model(n_iter = 10**2)
+    exe.sobol(n_iter = 2**8)
     exe.uncertainly_with_sens()    
-    exe.comparar_sensibilidades()"""
-
-    #exe.regression_analysis_def_v()
-    exe.regression_analysis_m_v()
+    exe.sensitivity_comparision()
+    exe.regression_analysis_def_v()
     exe.df_process()
     

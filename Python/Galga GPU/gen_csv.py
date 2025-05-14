@@ -41,7 +41,7 @@ class Generator:
 # === EJECUCIÓN ===
 
 archivos = [
-    "voltage_measurement", "mass", "angle", "phi", "T","theta",
+    "voltage_measurement", "mass", "angle", "phi", "L","theta",
     "L_force", "base_cell", "high_cell", "L_def", "high_grid", "voltage_input"
 ]
 
