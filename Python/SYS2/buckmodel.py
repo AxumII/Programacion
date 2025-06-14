@@ -3,98 +3,122 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-class BoostModel:
-    def __init__(self, L, C, R, f_sw, duty):
+class BuckModel:
+    def __init__(self, L, C, R, f_sw, duty,total_time, u, enable_graf = False):
         self.L = L
         self.C_val = C
         self.R = R
+        self.total_time = total_time  # Tiempo total de simulacion
+        self.u = u                    # voltaje
         self.f_sw = f_sw              # frecuencia de conmutación [Hz]
         self.T_sw = 1 / f_sw          # período total [s]
+        self.cycles = int(f_sw * total_time) #ciclos que se ejecutan en total
         self.duty = duty              # ciclo de trabajo (0 < D < 1)
 
         self.A = np.array([[0, -1 / self.L],
                            [1 / self.C_val, -1 / (self.R * self.C_val)]])
         self.C = np.array([[0, 1]])
         self.D = np.array([[0]])
+        self.B_on = np.array([[1 / self.L], [0]])
+        self.B_off = np.array([[0], [0]])
+        self.sys_on = StateSpace(self.A, self.B_on, self.C, self.D)
+        self.sys_off = StateSpace(self.A, self.B_off, self.C, self.D)
+
+
+        self.enable_graf = enable_graf
 
     def stateon(self, X0, T, u_value):
-        B = np.array([[1 / self.L], [0]])
-        sys_on = StateSpace(self.A, B, self.C, self.D)
         U = np.ones_like(T) * u_value
-        T, yout, xout = lsim(sys_on, U=U, T=T, X0=X0)
+        _, yout, xout = lsim(self.sys_on, U=U, T=T, X0=X0)
         return yout, xout
 
     def stateoff(self, X0, T):
-        B = np.array([[0], [0]])
-        sys_off = StateSpace(self.A, B, self.C, self.D)
-        U = np.zeros_like(T)*0.7
-        T, yout, xout = lsim(sys_off, U=U, T=T, X0=X0)
+        U = np.zeros_like(T) #*-0.7
+        _, yout, xout = lsim(self.sys_off, U=U, T=T, X0=X0)
         return yout, xout
 
-    def completesystem(self, T_total=5e-3, u=5, steps_per_half=20):
-        n_cycles = int(self.f_sw * T_total)
 
-        Ton = self.duty * self.T_sw
-        Toff = (1 - self.duty) * self.T_sw
+    def completesystem(self, steps_period=50):
+        ton = self.duty * self.T_sw
+        toff = (1 - self.duty) * self.T_sw
 
-        t_on = np.linspace(0, Ton, steps_per_half)
-        t_off = np.linspace(0, Toff, steps_per_half)
+        steps_on = int(round(steps_period * self.duty))
+        steps_off = int(round(steps_period * (1 - self.duty)))
+        steps_total = (steps_on + steps_off) * self.cycles
 
-        y_total = []
-        t_total = []
-        x_total = []
+        ton_array = np.linspace(0, ton, steps_on)
+        toff_array = np.linspace(0, toff, steps_off)
 
-        X0 = np.array([0, 0])  # iL=0, vC=0
+        # Prealocar memoria
+        Y = np.zeros((steps_total,))
+        T = np.zeros((steps_total,))
+        X = np.zeros((steps_total, 2))
+
+        X0 = np.array([0, 0])
         t_current = 0
+        index = 0
 
-        for _ in range(n_cycles):
+        for _ in range(self.cycles):
             # ON
-            y_on, x_on = self.stateon(X0, t_on, u_value=u)
-            t_on_global = t_current + t_on
-            y_total.append(y_on)
-            t_total.append(t_on_global)
-            x_total.append(x_on)
+            y_on, x_on = self.stateon(X0, ton_array, u_value=self.u)
+            t_on_global = t_current + ton_array
+            n_on = len(ton_array)
+
+            Y[index:index+n_on] = y_on.flatten()
+            T[index:index+n_on] = t_on_global
+            X[index:index+n_on, :] = x_on
             X0 = x_on[-1]
             t_current = t_on_global[-1]
+            index += n_on
 
             # OFF
-            y_off, x_off = self.stateoff(X0, t_off)
-            t_off_global = t_current + t_off
-            y_total.append(y_off)
-            t_total.append(t_off_global)
-            x_total.append(x_off)
+            y_off, x_off = self.stateoff(X0, toff_array)
+            t_off_global = t_current + toff_array
+            n_off = len(toff_array)
+
+            Y[index:index+n_off] = y_off.flatten()
+            T[index:index+n_off] = t_off_global
+            X[index:index+n_off, :] = x_off
             X0 = x_off[-1]
             t_current = t_off_global[-1]
-
-        # Concatenar todo
-        T = np.concatenate(t_total)
-        Y = np.concatenate(y_total)
-        X = np.vstack(x_total)
+            index += n_off
 
         return T, Y, X
 
 
+    def graf_single(self):
+        if self.enable_graf == True:
+            T,Y,X = self.completesystem()
+                    
+            plt.figure(figsize=(10, 5))
+
+            plt.subplot(2, 1, 1)    
+            plt.plot(T, X[:, 0], label='$i_L(t)$', color='blue')       
+            plt.ylabel('Corriente [A]')
+            plt.title('Corriente del inductor $i_L(t)$')
+            plt.grid(True)
+            plt.legend()
+
+            plt.subplot(2, 1, 2)
+            plt.plot(T, X[:, 1], label='$v_C(t)$', color='green')
+            plt.xlabel('Tiempo [s]')
+            plt.ylabel('Voltaje [V]')
+            plt.title('Voltaje del capacitor $v_C(t)$')
+            plt.grid(True)
+            plt.legend()
+
+            plt.tight_layout()
+            plt.show()
+
+        else:
+            pass
+
+"""
 # === PRUEBA Y GRÁFICAS ===
 if __name__ == "__main__":
-    boost = BoostModel(L=33e-6, C=22e-6, R=10, f_sw=100e3, duty=0.1)
-    T, Y, X = boost.completesystem(T_total=0.05, u=5)
+    boost = BuckModel(L=10e-6, C=470e-6, R=10, f_sw=100e3, duty=0.4,total_time=1,u = 12 ,enable_graf= True)
+    T, Y, X = boost.completesystem()
 
-    plt.figure(figsize=(10, 5))
-
-    plt.subplot(2, 1, 1)
-    plt.plot(T, X[:, 0], label='$i_L(t)$', color='blue')
-    plt.ylabel('Corriente [A]')
-    plt.title('Corriente del inductor $i_L(t)$')
-    plt.grid(True)
-    plt.legend()
-
-    plt.subplot(2, 1, 2)
-    plt.plot(T, X[:, 1], label='$v_C(t)$', color='green')
-    plt.xlabel('Tiempo [s]')
-    plt.ylabel('Voltaje [V]')
-    plt.title('Voltaje del capacitor $v_C(t)$')
-    plt.grid(True)
-    plt.legend()
-
-    plt.tight_layout()
-    plt.show()
+    #print(T[-1],X[-1],Y[-1])
+    boost.graf_single()
+"""
