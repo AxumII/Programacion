@@ -6,10 +6,10 @@ demod = DemodIIR('PruebaDemodulador.mat');
 
 % Demodulación con bilinear
 [salida110_bilineal, mezcla110_bilineal] = demodula110(demod, 'bilinear', true);
-[salida190_bilineal, mezcla190_bilineal] = demodula190(demod, 'bilinear', true);
+%[salida190_bilineal, mezcla190_bilineal] = demodula190(demod, 'bilinear', true);
 
 % Demodulación con invariancia de impulso
-[salida110_impinvar, mezcla110_impinvar] = demodula110(demod, 'impinvar', true);
+%[salida110_impinvar, mezcla110_impinvar] = demodula110(demod, 'impinvar', true);
 [salida190_impinvar, mezcla190_impinvar] = demodula190(demod, 'impinvar', true);
 
 % === FUNCIONES LOCALES ABAJO ===
