@@ -47,9 +47,8 @@ class PlotAnalisys:
 
 
 
-    def time_L_C(self):
-        freq = 50e3
-        duty = 0.95
+    def time_L_C(self,freq,duty):
+        
 
         for L in self.L_val:
             for C in self.C_val:
@@ -83,13 +82,13 @@ class PlotAnalisys:
         pass
 
 if __name__ == "__main__":
-    C_val = [10e-6, 330e-6, 1000e-6]
-    L_val = [10e-6, 100e-6, 470e-6]
-    f_sw = [50e3,100e3,1000e3]
+    C_val = [1e-6,10e-6]
+    L_val = [10e-6, 220e-6, 470e-6]
+    f_sw = [50e3,100e3,500e3]
 
     analisis = PlotAnalisys(C_val=C_val, L_val=L_val, f_sw = f_sw)
     analisis.frecuency_und_duty()
-    #analisis.time_L_C()
+    #analisis.time_L_C(freq = 50e3, duty = 0.95)
 
 
 
