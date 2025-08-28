@@ -88,7 +88,7 @@ if __name__ == "__main__":
 
     analisis = PlotAnalisys(C_val=C_val, L_val=L_val, f_sw = f_sw)
     analisis.frecuency_und_duty()
-    #analisis.time_L_C(freq = 50e3, duty = 0.95)
+    analisis.time_L_C(freq = 50e3, duty = 0.95)
 
 
 

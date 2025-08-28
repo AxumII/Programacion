@@ -140,7 +140,7 @@ analizador = Analisys(C_vals, L_vals, R_vals)
 #analizador.poles_graf_real_vs_C()
 #print(analizador.ts_table())
 #print(analizador.espectro_table())
-sp.pprint(analizador.Gs())
+#sp.pprint(analizador.Gs())
 
 
     #polos reales negativos
