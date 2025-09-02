@@ -1,4 +1,3 @@
-# Full executable demo with the Analisis class (no static methods) and synthetic data.
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -15,23 +14,23 @@ class Analisis:
     """
     def __init__(self,t,w1,w2,w_o,theta_init1,theta_init2,theta_o, L1,L2):
         self.t = t
-        self.w1 = w1      # (N,3) RELATIVA (en marco B)
-        self.w2 = w2      # (N,3) ABSOLUTA (en mundo)
-        self.w_o = w_o    # (N,3) medición externa (comparación)
-        self.theta_init1 = theta_init1  # (3,) relativo
-        self.theta_init2 = theta_init2  # (3,) absoluto
-        self.theta_o     = theta_o      # (3,) (opcional)
+        self.w1 = w1      # (N,3) Frecuencia del hombro
+        self.w2 = w2      # (N,3) Frecuencia del codo
+        self.w_o = w_o    # (N,3) Frecuencia de la punta
+        self.theta_init1 = theta_init1  # (3,) Angulo inicial hombro
+        self.theta_init2 = theta_init2  # (3,) Angulo inicial codo
+        self.theta_o     = theta_o      # (3,) Angulo inicial output
         self.L1 = L1     # |BC|
         self.L2 = L2     # |AB|
 
         # resultados
         self.alpha1 = self.alpha2 = self.alpha_o = None
         self.theta1_rel = self.theta2_abs = self.theta_out = None
-        self.r_BC_W = self.r_AB_W = None   # r1=BC en mundo, r2=AB en mundo
+        self.r_BC_W = self.r_AB_W = None   # r1=BC , r2=AB 
         self.RB = None                      # ^W R_B (matrices)
         self.w1_abs = None                  # ω de BC ABSOLUTA en mundo
 
-    # -------- utilidades internas (métodos de instancia) --------
+    # -------- Metodos --------
     def _R_zyx(self, phi, th, psi):
         cφ, sφ = np.cos(phi), np.sin(phi)
         cθ, sθ = np.cos(th),  np.sin(th)
@@ -42,20 +41,21 @@ class Analisis:
         return Rz @ Ry @ Rx   # ^W R (para los ángulos dados)
 
     def _cumtrapz_vec(self, y, x):
-        # integral acumulada por trapecios (solo NumPy)
+        # integral acumulada por trapecios 
         dt   = np.diff(x)                       # (N-1,)
         mid  = 0.5 * (y[1:] + y[:-1])           # (N-1,3)
         out  = np.zeros_like(y)
         out[1:] = np.cumsum(mid * dt[:,None], axis=0)
         return out
 
-    # ---------------- derivar e integrar ----------------
+    # ---------------- metodo para ac y angulo ----------------
     def variables_of_motion_operator(self, w, t, theta_init):
-        alpha = np.gradient(w, t, axis=0)            # (N,3)
-        theta = self._cumtrapz_vec(w, t) + np.asarray(theta_init, float).reshape(1,3)
+        alpha = np.gradient(w, t, axis=0)            # (N,3) aceleracion angular
+        theta = self._cumtrapz_vec(w, t) + np.asarray(theta_init, float).reshape(1,3) #angulo en el instante contando la pos inicial
         return alpha, theta
 
-    # vector barra alineada a +Z rotada por Euler ZYX (devuelve (N,3))
+    # ---------------- metodo para hallar el r (N,3) ----------------
+    
     def radius_operator(self, L, angle):
         phi = angle[:,0]; th = angle[:,1]; psi = angle[:,2]
         cφ, sφ = np.cos(phi), np.sin(phi)
@@ -68,8 +68,10 @@ class Analisis:
 
     # ---------- estado (orientaciones, radios y ω absolutas) ----------
     def state_of_motion(self):
-        # Eslabón AB (motor en B): ω2 es ABSOLUTA -> θ2_abs directamente
-        self.alpha2, self.theta2_abs = self.variables_of_motion_operator(self.w2, self.t, self.theta_init2)
+        # Eslabón AB (motor en B): 
+        self.alpha2, self.theta2 = self.variables_of_motion_operator(self.w2, self.t, self.theta_init2)
+
+#No se que hace aca, puto cahtgpt se invento este metodo
 
         # Matrices de rotación de B a mundo en cada instante
         N = self.t.size
@@ -78,8 +80,8 @@ class Analisis:
             phi, th, psi = self.theta2_abs[i]
             self.RB[i] = self._R_zyx(phi, th, psi)  # ^W R_B(i)
 
-        # Eslabón BC (motor en C): ω1 es RELATIVA en marco B -> θ1_rel
-        self.alpha1, self.theta1_rel = self.variables_of_motion_operator(self.w1, self.t, self.theta_init1)
+        # Eslabón BC (motor en C): 
+        self.alpha1, self.theta1 = self.variables_of_motion_operator(self.w1, self.t, self.theta_init1)
 
         # Radios:
         self.r_AB_W = self.radius_operator(self.L2, self.theta2_abs)         # (N,3) AB en mundo
