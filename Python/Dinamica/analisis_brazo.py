@@ -1,237 +1,235 @@
-# Full executable demo with the Analisis class (no static methods) and synthetic data.
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.integrate import cumulative_trapezoid as cum_trapz
 
 class Analisis:
-    """
-    t           : (N,) tiempos
-    w1          : (N,3)  ω del motor en C, RELATIVA al marco de B (B-frame)
-    w2          : (N,3)  ω del motor en B, ABSOLUTA en mundo (W-frame)
-    w_o         : (N,3)  ω medida en la punta (solo para comparar)
-    theta_init1 : (3,)   ángulo inicial RELATIVO de BC respecto a B
-    theta_init2 : (3,)   ángulo inicial ABSOLUTO de AB respecto a A
-    theta_o     : (3,)   ángulo inicial de la medición externa (opcional)
-    L1, L2      : escalares, longitudes de BC y AB, respectivamente
-    """
-    def __init__(self,t,w1,w2,w_o,theta_init1,theta_init2,theta_o, L1,L2):
+
+    def __init__(self,t,w1,w2,w_o,theta_init1,theta_init2,theta_init_o, L1,L2):
         self.t = t
-        self.w1 = w1      # (N,3) RELATIVA (en marco B)
-        self.w2 = w2      # (N,3) ABSOLUTA (en mundo)
+        self.w1 = w1      # (N,3) (del punto C)
+        self.w2 = w2      # (N,3) (Del punto B respecto a A)
         self.w_o = w_o    # (N,3) medición externa (comparación)
-        self.theta_init1 = theta_init1  # (3,) relativo
-        self.theta_init2 = theta_init2  # (3,) absoluto
-        self.theta_o     = theta_o      # (3,) (opcional)
-        self.L1 = L1     # |BC|
-        self.L2 = L2     # |AB|
+        self.theta_init1 = theta_init1  # (3,) 
+        self.theta_init2 = theta_init2  # (3,) 
+        self.theta_init_o     = theta_init_o      # (3,) 
+        self.L1 = L1     # ||BC||
+        self.L2 = L2     # ||AB||
 
         # resultados
         self.alpha1 = self.alpha2 = self.alpha_o = None
-        self.theta1_rel = self.theta2_abs = self.theta_out = None
-        self.r_BC_W = self.r_AB_W = None   # r1=BC en mundo, r2=AB en mundo
-        self.RB = None                      # ^W R_B (matrices)
-        self.w1_abs = None                  # ω de BC ABSOLUTA en mundo
+        self.theta1 = self.theta2 = self.theta_out = None
+        self.r_BC = self.r_AB = None   # r1=BC, r2=AB #Son los vectores en cada instante
+        
 
-    # -------- utilidades internas (métodos de instancia) --------
-    def _R_zyx(self, phi, th, psi):
-        cφ, sφ = np.cos(phi), np.sin(phi)
-        cθ, sθ = np.cos(th),  np.sin(th)
-        cψ, sψ = np.cos(psi), np.sin(psi)
-        Rz = np.array([[cψ,-sψ,0],[sψ,cψ,0],[0,0,1]])
-        Ry = np.array([[cθ,0,sθ],[0,1,0],[-sθ,0,cθ]])
-        Rx = np.array([[1,0,0],[0,cφ,-sφ],[0,sφ,cφ]])
-        return Rz @ Ry @ Rx   # ^W R (para los ángulos dados)
+    def kinematic(self):    
+        # ---------------- funciones primordiales ----------------
+        
+        # -------- lambdas primordiales --------
+        F_take_z  = lambda W: W[:, 2]
+        F_alpha   = lambda W, t: np.gradient(W, t, axis=0)  # -> (N,3)
+        F_theta = lambda wz,t,th0: (lambda th0z,dt:np.concatenate((np.array([th0z]),np.array([th0z + (wz[0]*dt[0] if dt.size>0 else 0.0)]),
+        (th0z + (wz[0]*dt[0] if dt.size>0 else 0.0) +(np.cumsum(0.5*(wz[2:]+wz[1:-1])*dt[1:]) if dt.size>1 else np.array([]))))))(float(np.asarray(th0).ravel()[-1]), np.diff(t))
+        F_point_position   = lambda th, L: np.column_stack((L*np.cos(th), L*np.sin(th), np.zeros_like(th)))
+        F_tip_position     = lambda r1, r2: r1 + r2
+        vel       = lambda w, r: np.cross(w, r)
+        acc       = lambda a, w, r: np.cross(a, r) + np.cross(w, np.cross(w, r))
 
-    def _cumtrapz_vec(self, y, x):
-        # integral acumulada por trapecios (solo NumPy)
-        dt   = np.diff(x)                       # (N-1,)
-        mid  = 0.5 * (y[1:] + y[:-1])           # (N-1,3)
-        out  = np.zeros_like(y)
-        out[1:] = np.cumsum(mid * dt[:,None], axis=0)
-        return out
 
-    # ---------------- derivar e integrar ----------------
-    def variables_of_motion_operator(self, w, t, theta_init):
-        alpha = np.gradient(w, t, axis=0)            # (N,3)
-        theta = self._cumtrapz_vec(w, t) + np.asarray(theta_init, float).reshape(1,3)
-        return alpha, theta
+        # ---------------- series escalares (z) ----------------
+        w_BC_z = F_take_z(self.w1)   # ω_BC (absoluta, en C)
+        w_AB_z = F_take_z(self.w2)   # ω_AB (absoluta, en B respecto a A)
+        w_tip_z = F_take_z(self.w_o) if self.w_o is not None else None  # medición externa
 
-    # vector barra alineada a +Z rotada por Euler ZYX (devuelve (N,3))
-    def radius_operator(self, L, angle):
-        phi = angle[:,0]; th = angle[:,1]; psi = angle[:,2]
-        cφ, sφ = np.cos(phi), np.sin(phi)
-        cθ, sθ = np.cos(th),  np.sin(th)
-        cψ, sψ = np.cos(psi), np.sin(psi)
-        x = L * (cψ*sθ*cφ - sψ*sφ)
-        y = L * (sψ*sθ*cφ + cψ*sφ)
-        z = L * (cθ * cφ)
-        return np.column_stack([x,y,z])
 
-    # ---------- estado (orientaciones, radios y ω absolutas) ----------
-    def state_of_motion(self):
-        # Eslabón AB (motor en B): ω2 es ABSOLUTA -> θ2_abs directamente
-        self.alpha2, self.theta2_abs = self.variables_of_motion_operator(self.w2, self.t, self.theta_init2)
+        # ---------------- aceleraciones angulares (z) ----------------
+        self.alpha1 = F_alpha(self.w1, self.t)  # (N,3)
+        self.alpha2 = F_alpha(self.w2, self.t)  # (N,3)
+        self.alpha_o = F_alpha(self.w_o, self.t) if self.w_o is not None else None
 
-        # Matrices de rotación de B a mundo en cada instante
-        N = self.t.size
-        self.RB = np.empty((N,3,3))
-        for i in range(N):
-            phi, th, psi = self.theta2_abs[i]
-            self.RB[i] = self._R_zyx(phi, th, psi)  # ^W R_B(i)
+        # ---------------- ángulos ----------------
+        theta_BC = F_theta(w_BC_z, self.t, self.theta_init1)  # θ_BC (absoluto)
+        theta_AB = F_theta(w_AB_z, self.t, self.theta_init2)  # θ_AB (absoluto)
+        theta_tip = F_theta(w_tip_z, self.t, self.theta_init_o) if w_tip_z is not None else None
 
-        # Eslabón BC (motor en C): ω1 es RELATIVA en marco B -> θ1_rel
-        self.alpha1, self.theta1_rel = self.variables_of_motion_operator(self.w1, self.t, self.theta_init1)
+        # ---------------- posiciones de los puntos clave ----------------
+        self.r_AB  = F_point_position(theta_AB, self.L2)   # A->B
+        self.r_BC  = F_point_position(theta_BC, self.L1)   # B->C
+        self.r_tip = F_tip_position(self.r_AB, self.r_BC)  # A->C
 
-        # Radios:
-        self.r_AB_W = self.radius_operator(self.L2, self.theta2_abs)         # (N,3) AB en mundo
-        r_BC_local  = self.radius_operator(self.L1, self.theta1_rel)         # (N,3) BC en marco B
-        self.r_BC_W = np.einsum('nij,nj->ni', self.RB, r_BC_local)           # (N,3) BC en mundo
 
-        # ω absolutas del segundo eslabón:
-        w1_rel_W = np.einsum('nij,nj->ni', self.RB, self.w1)                 # (N,3)
-        self.w1_abs = self.w2 + w1_rel_W
-        self.alpha1 = np.gradient(self.w1_abs, self.t, axis=0)
 
-        # Señal externa para comparar (no interviene en cinemática)
-        self.alpha_o, self.theta_out = self.variables_of_motion_operator(self.w_o, self.t, self.theta_o)
+        # ---------------- variables de cinematica y cinetica basica ----------------
+        v_b = vel(self.w1,self.r_BC)
+        a_b = acc(self.alpha1,self.w1,self.r_BC)
 
-        return (self.alpha1, self.theta1_rel, self.r_BC_W), (self.alpha2, self.theta2_abs, self.r_AB_W), (self.alpha_o, self.theta_out)
+        v_a__b = vel(self.w2,self.r_AB)
+        a_a__b = acc(self.alpha2,self.w2,self.r_AB)
 
-    # ---------------- posiciones y cinemática ----------------
-    def tip_position(self):
-        if self.r_BC_W is None or self.r_AB_W is None:
-            self.state_of_motion()
-        return self.r_AB_W + self.r_BC_W  # (N,3) posición C respecto a A (en mundo)
+        #velocidad en la punta 
+        v_a = v_b + v_a__b
+        a_a = a_b + a_a__b
 
-    def kinematic_single(self, w, alpha, r):
-        V = np.cross(w, r)
-        A = np.cross(alpha, r) + np.cross(w, np.cross(w, r))
-        return V, A
+        #velocidad en la punta alternativa
+        v_a_with_output = vel(self.w_o, self.r_tip)
+        a_a_with_output = acc(self.alpha_o, self.r_tip, self.w_o)
 
-    # Velocidad y aceleración de la punta C
-    def kinematic_general(self):
-        if self.r_BC_W is None or self.r_AB_W is None:
-            self.state_of_motion()
-        V_B,  A_B  = self.kinematic_single(self.w2,     self.alpha2, self.r_AB_W)
-        V_Cb, A_Cb = self.kinematic_single(self.w1_abs, self.alpha1, self.r_BC_W)
-        Va = V_B + V_Cb
-        Aa = A_B + A_Cb
-        return Va, Aa
-
-    # ---------- estimación geométrica de ω en la punta ----------
-    def w_tip_from_Va(self, V, r):
-        denom = np.sum(r*r, axis=1, keepdims=True) + 1e-12
-        return np.cross(r, V) / denom
-
-    # ---------------- gráficos ----------------
+        # 7) guardar
+        self.theta1, self.theta2, self.theta_out = theta_BC, theta_AB, theta_tip
+        self.v_b, self.a_b = v_b, a_b
+        self.v_a, self.a_a = v_a, a_a
+        self.v_a_with_output, self.a_a_with_output = v_a_with_output, a_a_with_output
+        return self
+    
     def graf(self):
-        self.state_of_motion()
-        Va, Aa = self.kinematic_general()
         t = self.t
-        ejes = ['x', 'y', 'z']
 
-        # 1) ω entradas y medición
-        fig, axs = plt.subplots(3,1,figsize=(10,9),sharex=True)
-        for i, ax in enumerate(axs):
-            ax.plot(t, self.w1[:,i], label='w1 (rel en B)')
-            ax.plot(t, self.w2[:,i], label='w2 (abs en W)')
-            ax.plot(t, self.w_o[:,i], label='w_o (medición)')
-            ax.set_ylabel(f'w_{ejes[i]} [rad/s]'); ax.grid(True); ax.legend()
-        axs[-1].set_xlabel('t [s]'); fig.suptitle('ω entradas y medición'); plt.tight_layout(); plt.show()
+        # ===== 1) ω por eje (w1, w2, w_o) =====
+        fig1, ax = plt.subplots(3, 3, figsize=(14, 9), sharex=True)
+        titles = [r'$\omega_{BC}$ (w1)', r'$\omega_{AB}$ (w2)', r'$\omega_{\mathrm{tip}}$ (w_o)']
+        Ws = [self.w1, self.w2, self.w_o if self.w_o is not None else np.zeros_like(self.w1)]
+        for i, W in enumerate(Ws):
+            for j, lab in enumerate(['x','y','z']):
+                ax[i, j].plot(t, W[:, j])
+                ax[i, j].set_ylabel(f'{titles[i]} – {lab}')
+                if i == 2 and self.w_o is None:
+                    ax[i, j].text(0.5, 0.5, 'sin datos', ha='center', va='center',
+                                transform=ax[i, j].transAxes)
+        for j in range(3): ax[2, j].set_xlabel('t [s]')
+        fig1.suptitle('Velocidades angulares por eje')
+        fig1.tight_layout()
 
-        # 2a) alphas
-        fig, axs = plt.subplots(3,1,figsize=(10,9),sharex=True)
-        for i, ax in enumerate(axs):
-            ax.plot(t, self.alpha1[:,i], label='alpha BC (abs)')
-            ax.plot(t, self.alpha2[:,i], label='alpha AB (abs)')
-            ax.plot(t, self.alpha_o[:,i], label='alpha_o (medida)')
-            ax.set_ylabel(f'α_{ejes[i]} [rad/s²]'); ax.grid(True); ax.legend()
-        axs[-1].set_xlabel('t [s]'); fig.suptitle('Aceleraciones angulares'); plt.tight_layout(); plt.show()
+        # ===== 2) α por eje =====
+        fig2, axa = plt.subplots(3, 3, figsize=(14, 9), sharex=True)
+        atitles = [r'$\alpha_{BC}$', r'$\alpha_{AB}$', r'$\alpha_{\mathrm{tip}}$']
+        As = [self.alpha1, self.alpha2, self.alpha_o if self.alpha_o is not None else np.zeros_like(self.alpha1)]
+        for i, A in enumerate(As):
+            for j, lab in enumerate(['x','y','z']):
+                axa[i, j].plot(t, A[:, j])
+                axa[i, j].set_ylabel(f'{atitles[i]} – {lab}')
+                if i == 2 and self.alpha_o is None:
+                    axa[i, j].text(0.5, 0.5, 'sin datos', ha='center', va='center',
+                                transform=axa[i, j].transAxes)
+        for j in range(3): axa[2, j].set_xlabel('t [s]')
+        fig2.suptitle('Aceleraciones angulares por eje')
+        fig2.tight_layout()
 
-        # 2b) thetas
-        fig, axs = plt.subplots(3,1,figsize=(10,9),sharex=True)
-        for i, ax in enumerate(axs):
-            ax.plot(t, self.theta1_rel[:,i], label='theta1 (rel)')
-            ax.plot(t, self.theta2_abs[:,i], label='theta2 (abs)')
-            ax.plot(t, self.theta_out[:,i], label='theta_o (medida)')
-            ax.set_ylabel(f'θ_{ejes[i]} [rad]'); ax.grid(True); ax.legend()
-        axs[-1].set_xlabel('t [s]'); fig.suptitle('Ángulos (rel/abs)'); plt.tight_layout(); plt.show()
+        # ===== 3) θ de los 3 puntos en los 3 ejes =====
+        # En 2D solo z es distinto de 0; x,y se trazan como 0 por claridad
+        N = t.size
+        z = lambda th: np.asarray(th).ravel()
+        zeros = lambda: np.zeros(N)
+        THs = [
+            np.column_stack((zeros(), zeros(), z(self.theta1))),   # θ_BC
+            np.column_stack((zeros(), zeros(), z(self.theta2))),   # θ_AB
+            np.column_stack((zeros(), zeros(), z(self.theta_out))) if self.theta_out is not None
+                else np.zeros((N,3))
+        ]
+        ttitles = [r'$\theta_{BC}$', r'$\theta_{AB}$', r'$\theta_{\mathrm{tip}}$']
 
-        # 3a) Va por eje
-        fig, axs = plt.subplots(3,1,figsize=(10,9),sharex=True)
-        for i, ax in enumerate(axs):
-            ax.plot(t, Va[:,i], label='Va (punta)')
-            ax.set_ylabel(f'V_{ejes[i]} [m/s]'); ax.grid(True); ax.legend()
-        axs[-1].set_xlabel('t [s]'); fig.suptitle('Velocidad lineal de la punta'); plt.tight_layout(); plt.show()
+        fig3, axt = plt.subplots(3, 3, figsize=(14, 9), sharex=True)
+        for i, TH in enumerate(THs):
+            for j, lab in enumerate(['x','y','z']):
+                axt[i, j].plot(t, TH[:, j])
+                axt[i, j].set_ylabel(f'{ttitles[i]} – {lab}')
+                if i == 2 and self.theta_out is None:
+                    axt[i, j].text(0.5, 0.5, 'sin datos', ha='center', va='center',
+                                transform=axt[i, j].transAxes)
+        for j in range(3): axt[2, j].set_xlabel('t [s]')
+        fig3.suptitle('Ángulos por eje')
+        fig3.tight_layout()
 
-        # 3b) Aa por eje
-        fig, axs = plt.subplots(3,1,figsize=(10,9),sharex=True)
-        for i, ax in enumerate(axs):
-            ax.plot(t, Aa[:,i], label='Aa (punta)')
-            ax.set_ylabel(f'A_{ejes[i]} [m/s²]'); ax.grid(True); ax.legend()
-        axs[-1].set_xlabel('t [s]'); fig.suptitle('Aceleración lineal de la punta'); plt.tight_layout(); plt.show()
+        # ===== 4) v_a y a_a por eje =====
+        fig4, axv = plt.subplots(2, 3, figsize=(14, 6), sharex=True)
+        for j, lab in enumerate(['x','y','z']):
+            axv[0, j].plot(t, self.v_a[:, j]); axv[0, j].set_ylabel(f'v_A – {lab} [m/s]')
+            axv[1, j].plot(t, self.a_a[:, j]); axv[1, j].set_ylabel(f'a_A – {lab} [m/s²]')
+        for j in range(3): axv[1, j].set_xlabel('t [s]')
+        fig4.suptitle('Punta A: velocidad y aceleración por eje')
+        fig4.tight_layout()
 
-        # 4) Trayectoria de la punta en el plano YZ
-        r_tip = self.tip_position()
-        y, z = r_tip[:,1], r_tip[:,2]
-        fig, ax = plt.subplots(1,1,figsize=(6,6))
-        ax.plot(y, z, label='trayectoria YZ')
-        ax.scatter(y[0],  z[0],  s=30, marker='o', label='inicio')
-        ax.scatter(y[-1], z[-1], s=30, marker='x', label='fin')
-        ax.set_xlabel('Y [m]'); ax.set_ylabel('Z [m]')
-        ax.set_aspect('equal', 'box'); ax.grid(True); ax.legend()
-        ax.set_title('Movimiento de la punta en el plano YZ')
-        plt.tight_layout(); plt.show()
+        # ===== 5) Comparación v_a (vectorial) vs v_a_with_output =====
+        fig5, axc = plt.subplots(1, 3, figsize=(14, 3.5), sharex=True)
+        if self.v_a_with_output is not None:
+            for j, lab in enumerate(['x','y','z']):
+                axc[j].plot(t, self.v_a[:, j], label='v_A (modelo)')
+                axc[j].plot(t, self.v_a_with_output[:, j], '--', label='v_A (con ω_tip)')
+                axc[j].set_ylabel(f'v – {lab} [m/s]'); axc[j].legend(); axc[j].grid(True)
+            for j in range(3): axc[j].set_xlabel('t [s]')
+            fig5.suptitle('Comparación de v_A')
+            fig5.tight_layout()
+        else:
+            for j in range(3):
+                axc[j].text(0.5,0.5,'sin ω_tip',ha='center',va='center',transform=axc[j].transAxes)
+            for j in range(3): axc[j].set_xlabel('t [s]')
+            fig5.suptitle('Comparación de v_A (no disponible)')
+            fig5.tight_layout()
 
-        # 5) Comparación: w_o (medida) vs ω_tip (geométrica desde Va y r_tip)
-        w_tip = self.w_tip_from_Va(Va, r_tip)
-        fig, axs = plt.subplots(3,1,figsize=(10,9),sharex=True)
-        for i, ax in enumerate(axs):
-            ax.plot(t, self.w_o[:,i], label='w_o (medición)')
-            ax.plot(t, w_tip[:,i],   label='w_tip (de Va, r_tip)')
-            ax.set_ylabel(f'ω_{ejes[i]} [rad/s]'); ax.grid(True); ax.legend()
-        axs[-1].set_xlabel('t [s]'); fig.suptitle('Comparación ω_out vs ω_tip'); plt.tight_layout(); plt.show()
+        # ===== 6) Trayectorias XY de B y A (origen en C) =====
+        r_CB = -self.r_BC              # C→B
+        r_CA = -self.r_BC - self.r_AB  # C→A
+        
+        fig6, ax = plt.subplots(1, 1, figsize=(6, 6))
+        lineB, = ax.plot(r_CB[:,0], r_CB[:,1], label='Trayectoria B (C→B)')
+        lineA, = ax.plot(r_CA[:,0], r_CA[:,1], label='Trayectoria A (C→A)')
 
+        # --- flechas simples y grandes ---
+        Nflechas = 12    # cuántas flechas por curva (sube/baja este número)
+        K       = 4.0    # factor de tamaño (más grande = flechas más largas)
 
-# =================== DEMO / EJECUCIÓN ===================
-# Datos sintéticos
-N = 1200
-t = np.linspace(0, 6, N)
+        # B
+        iB  = np.linspace(0, len(r_CB)-2, Nflechas, dtype=int)
+        dxB = r_CB[iB+1,0] - r_CB[iB,0]
+        dyB = r_CB[iB+1,1] - r_CB[iB,1]
+        ax.quiver(r_CB[iB,0], r_CB[iB,1], K*dxB, K*dyB,
+                angles='xy', scale_units='xy', scale=1, width=0.010,
+                color=lineB.get_color())
 
-# w2: ω del eslabón AB (absoluta en mundo). Predominantemente plano (z), con leves x,y.
-w2 = np.zeros((N,3))
-#w2[:,2] = 0.6 + 0.3*np.sin(0.7*t)         # z
-w2[:,0] = 0.2     # x
-#w2[:,1] = 0.05*np.cos(0.4*t - 0.2)        # y
+        # A
+        iA  = np.linspace(0, len(r_CA)-2, Nflechas, dtype=int)
+        dxA = r_CA[iA+1,0] - r_CA[iA,0]
+        dyA = r_CA[iA+1,1] - r_CA[iA,1]
+        ax.quiver(r_CA[iA,0], r_CA[iA,1], K*dxA, K*dyA,
+                angles='xy', scale_units='xy', scale=1, width=0.010,
+                color=lineA.get_color())
 
-# w1: ω del eslabón BC (RELATIVA a B). Principalmente z en el marco de B.
-w1 = np.zeros((N,3))
-#w1[:,2] = 1.2 + 0.2*np.sin(1.3*t + 0.3)   # z
-w1[:,0] = 0.2              # x
-#w1[:,1] = 0.02*np.cos(0.9*t)              # y
+        # origen C
+        ax.scatter(0, 0, s=60, c='k', label='C (origen)')
 
-# Señal externa w_o: colocamos una versión "medida" basada en la ω estimada de la punta + ruido
-# Inicialmente cero; luego la reemplazamos tras construir el objeto.
-w_o = np.zeros_like(w1)
+        ax.set_aspect('equal', 'box')
+        ax.set_xlabel('X [m]'); ax.set_ylabel('Y [m]')
+        ax.legend(); ax.grid(True)
+        ax.set_title('Trayectorias con sentido de desplazamiento (origen en C)')
 
-# Longitudes y ángulos iniciales
-L2 = 0.6   # |AB|
-L1 = 0.6   # |BC|
-theta_init2 = np.array([0.0, 0.0, 0.0])   # AB
-theta_init1 = np.array([0.0, 0.0, 0.0])   # BC (relativo)
-theta_o     = np.array([0.0, 0.0, 0.0])   # medición
-
-# Crear analizador
-an = Analisis(t, w1, w2, w_o, theta_init1, theta_init2, theta_o, L1, L2)
-
-# Primera pasada: calcular estados y w_tip para generar una "medición" sintética realista
-an.state_of_motion()
-Va, Aa = an.kinematic_general()
-r_tip = an.tip_position()
-w_tip = an.w_tip_from_Va(Va, r_tip)
+        plt.show()
 
 
-# Actualizar señales derivadas de la medición
-an.alpha_o, an.theta_out = an.variables_of_motion_operator(an.w_o, t, theta_o)
+# -------- parámetros del escenario --------
+T   = 2.0        # duración [s]
+fs  = 50        # Hz
+N   = int(T*fs)
+t   = np.linspace(0.0, T, N)
 
-# Gráficas completas
+L1, L2 = 1.35, 0.28   # longitudes BC y AB [m]
+
+
+# Velocidades angulares (solo z)
+w1z = 0.3*np.ones(N)                     # ω_BC: giro uniforme CCW
+w2z = 0.3*np.ones(N)   #0.5*np.sin(2*np.pi*0.5*t)          # ω_AB: oscilación en B (servo)
+w0z = 0.3*np.ones(N)
+# Empaquetar a (N,3) con solo z ≠ 0
+zeros = np.zeros(N)
+w1 = np.column_stack([zeros, zeros, w1z])   # (N,3)
+w2 = np.column_stack([zeros, zeros, w2z])   # (N,3)
+w_o = np.column_stack([zeros, zeros, w2z])   # (N,3)                              # sensor en A: misma ω que AB
+
+# Ángulos iniciales (solo se usa z)
+theta_init1  = np.array([0.0, 0.0, np.deg2rad(-10)])   # θ_BC(0)
+theta_init2  = np.array([0.0, 0.0, np.deg2rad(-80)])  # θ_AB(0)
+theta_init_o = np.array([0.0, 0.0, theta_init2[2]])   # θ_tip(0) (opcional)
+
+
+
+an = Analisis(t, w1, w2, w_o, theta_init1, theta_init2, theta_init_o, L1, L2)
+an.kinematic()
 an.graf()
+
