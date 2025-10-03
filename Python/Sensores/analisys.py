@@ -17,14 +17,14 @@ class Analisys:
 
         for hl in h_l_arr:
             model = mc(
-                e_d=[2.8, 1.0006, 40.0],  # [PLA, aire, agua] 
-                d_s=1.4e-3,                 
+                e_d=[2.8, 1.0006, 80.0],  # [PLA, aire, agua] 
+                d_s=2e-3,                 
                 h_right_copper=41.2/1000,
                 h_left_copper=39.5/1000,
                 w_up_copper=99.1/1000,
                 w_down_copper=99.1/1000,
                 h_in=34.8/1000,
-                w_in=16.6/1000,
+                w_in=10/1000,
                 h_level=hl,             
             )
             C.append(model.calculate_c())
@@ -63,7 +63,7 @@ class Analisys:
             G.append((num, den))   
 
         # Crear objeto de escrutinio y graficar comparativa
-        esc = ectr(G=G, types=["nd"] * len(G), col_G=colores, t_end=0.2, fs=2000)
+        esc = ectr(G=G, types=["nd"] * len(G), col_G=colores, t_end=5, fs=5000)
         esc.plotComp(labels=labels)
 
     def r2tf_an(self):
@@ -126,7 +126,7 @@ class Analisys:
 
 an = Analisys()
 
-"""
+
 # Definir niveles de líquido (en metros, por ejemplo)
 h_levels = np.linspace(0,(34.8/1000), 100)  
 
@@ -140,20 +140,19 @@ h_levels = np.array([0.000, 0.016, 0.04])
 # Parámetros del oscilador Wien
 Ra = 20e3
 Rb = 10e3
-R1 = R2 = 10e3
-C1_base = 10e-9 - 44.51*1e-12
-C2 = 10e-9
+R1 = R2 = 1e3
+C1_base = 100e-6
+C2 = 100e-6
 
 # Ejecutar análisis
 an.c2tf_an(Ra,Rb,R1,R2,C1_base,C2,h_levels)
 
-# Usando resistencia
-print(an.rorc2w(w = 10000, R=100))
+print(f"Capacitancia: {an.rorc2w(w=1000, R=100)}")
 
-# Usando capacitores
-print(an.rorc2w(w =10000, C1=10e-9, C2=11e-9))
+print(f"Resistencia: {an.rorc2w(w=10000, C1=1000e-6, C2=1000e-6)}")
 
-"""
+
+
 R2 = 10e3
 C2 = 10e-12
 

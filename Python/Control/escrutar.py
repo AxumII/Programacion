@@ -1,247 +1,224 @@
 import numpy as np
-import control as ctrl
 import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
-
-# Estilo/figuras
-plt.rcParams["figure.figsize"] = (7, 4)
-plt.rcParams["axes.grid"] = True
+import scipy.signal as sg
 
 
 class Escrutinio:
-    """
-    Analiza una función de transferencia SISO.
-    - t_end: duración de la simulación temporal (s)
-    - n_time: número de muestras del vector de tiempo
-    """
+    def __init__(self, G, types=None, col_G=None, t_end=2.0, fs=2000, x0=None):
+        self.G = list(G) if not isinstance(G, list) else G
+        if types is None:
+            self.types = ["nd"] * len(self.G)
+        else:
+            self.types = list(types)
+        if len(self.G) != len(self.types):
+            raise ValueError("G y types deben tener la misma longitud.")
 
-    def __init__(self, G, t_end=2.0, n_time=2000):
-        self.G = G
+        self.col_G = col_G if col_G is not None else [None] * len(self.G)
         self.t_end = float(t_end)
-        self.n_time = int(n_time)
-        self.t = np.linspace(0.0, self.t_end, self.n_time)  # vector de tiempo
-        self.SS_G = ctrl.ss(G)  # por si luego quieres espacio de estados
+        self.fs = int(fs)
+        self.x0 = None if x0 is None else np.asarray(x0, dtype=float)
 
-    # ---- Cálculos base ----
-    def impulso(self):
-        t, y = ctrl.impulse_response(self.G, T=self.t)
-        return t, np.squeeze(y)
+        npts = max(2, int(np.round(self.t_end * self.fs)))
+        self.t = np.linspace(0.0, self.t_end, npts, endpoint=True)
 
-    def zeros_polos(self):
-        z = np.asarray(ctrl.zeros(self.G))
-        p = np.asarray(ctrl.poles(self.G))
-        return z, p
+    def normalize(self,num,den):
+            num = np.asarray(num, dtype=float)
+            den = np.asarray(den, dtype=float)
+            if den.ndim != 1:
+                den = np.squeeze(den)
+            if num.ndim != 1:
+                num = np.squeeze(num)
+            if np.isclose(den[0], 0.0):
+                nz = np.flatnonzero(~np.isclose(den, 0.0))
+                if nz.size == 0:
+                    raise ValueError("Denominador nulo.")
+                den = den[nz[0]:]
+            num = num / den[0]
+            den = den / den[0]
+            return num, den
 
-    def num_den_degrees(self):
-        """Coeficientes num/den (1-D, sin ceros líderes) y grados."""
-        ret = ctrl.tfdata(self.G)
-        num, den = (ret[:2] if len(ret) >= 2 else ret)
-        num = np.atleast_1d(np.squeeze(np.asarray(num, dtype=float)))
-        den = np.atleast_1d(np.squeeze(np.asarray(den, dtype=float)))
-        if num.size > 1:
-            num = np.trim_zeros(num, 'f')
-        if den.size > 1:
-            den = np.trim_zeros(den, 'f')
-        n_deg = max(num.size - 1, 0)
-        d_deg = max(den.size - 1, 0)
-        return num, den, n_deg, d_deg
-
-    def bode_datos(self, omega_limits=(1e-1, 1e3), n=600, w=None, wrap_phase=False):
-        """
-        Devuelve (w, mag_db, phase_deg) sin usar ctrl.bode.
-        Evalúa G(jw) con np.polyval. Robusto a tfdata que devuelve arreglos 0-D.
-
-        wrap_phase=False -> fase "unwrapped" en grados (continua).
-        wrap_phase=True  -> fase envuelta en [-180, 180] grados.
-        """
-        # Rejilla
-        if w is None:
-            w = np.logspace(np.log10(omega_limits[0]), np.log10(omega_limits[1]), int(n))
+    def ft_process(self, G, type):
+        if type == "nd":
+            num, den = G
+            return self.normalize(num, den)
+        elif type == "zpk":
+            z, p, k = G
+            num, den = sg.zpk2tf(z, p, k)
+            return self.normalize(num, den)
+        elif type == "ss":
+            A, B, C, D = G
+            num, den = sg.ss2tf(A, B, C, D)
+            num = np.squeeze(num); den = np.squeeze(den)
+            return self.normalize(num, den)
         else:
-            w = np.asarray(w, dtype=float)
-
-        # --- Coeficientes num/den robustamente ---
-        num, den, _, _ = self.num_den_degrees()
-
-        # --- Evaluar G(jw) ---
-        jw = 1j * w
-        H = np.polyval(num, jw) / np.polyval(den, jw)
-
-        mag_db = 20.0 * np.log10(np.clip(np.abs(H), np.finfo(float).tiny, None))
-
-        # Fase en grados
-        phase_rad = np.unwrap(np.angle(H))
-        phase_deg = np.degrees(phase_rad)
-        if wrap_phase:
-            # Mapear a [-180, 180]
-            phase_deg = (phase_deg + 180.0) % 360.0 - 180.0
-
-        mask = np.isfinite(mag_db) & np.isfinite(phase_deg)
-        return w[mask], mag_db[mask], phase_deg[mask]
-
-    # ---- Gráficos individuales (por si los quieres) ----
-    def plot_impulso(self, label="G"):
-        t, y = self.impulso()
-        plt.figure()
-        plt.plot(t, y, label=label)
-        plt.title("Respuesta al impulso")
-        plt.xlabel("t [s]"); plt.ylabel("y(t)")
-        plt.legend(); plt.tight_layout(); plt.show()
-
-    def plot_pzmap(self, label="G"):
-        z, p = self.zeros_polos()
-        _, _, n_deg, d_deg = self.num_den_degrees()
-        ceros_inf = max(d_deg - n_deg, 0)
-
-        fig, ax = plt.subplots()
-        if z.size:
-            ax.scatter(np.real(z), np.imag(z), marker='o', label=f"Ceros {label}")
+            raise ValueError(f"Tipo desconocido: {type}")
+   
+    def plotComp(self, labels=None, min_imag_extent=5.0, other_responses = None, A = 1.0, w = 1.0):
+        if labels is None:
+            labels = [f"G{i+1}" for i in range(len(self.G))]
+        
+        # Decide la grilla según other_responses
+        if other_responses:
+            fig, axs = plt.subplots(3, 2, figsize=(12, 12))
+            ax_imp   = axs[0, 0]
+            ax_mag   = axs[0, 1]
+            ax_pz    = axs[1, 0]
+            ax_phase = axs[1, 1]
+            ax_step  = axs[2, 0]
+            ax_sin   = axs[2, 1]
         else:
-            # añade entrada a la leyenda indicando ceros en ∞ si aplica
-            if ceros_inf > 0:
-                ax.plot([], [], marker='o', linestyle='None',
-                        label=f"Ceros {label} ({ceros_inf} en ∞)")
+            fig, axs = plt.subplots(2, 2, figsize=(12, 9))
+            ax_imp   = axs[0, 0]
+            ax_mag   = axs[0, 1]
+            ax_pz    = axs[1, 0]
+            ax_phase = axs[1, 1]
 
-        ax.scatter(np.real(p), np.imag(p), marker='x', label=f"Polos {label}")
+        max_imag_abs = 0.0  # para tener cuadricula en caso de no tener valores imag
+        max_real_abs = 0.0  # para tener cuadricula en caso de no tener valores real
 
-        ax.axhline(0, linewidth=0.8); ax.axvline(0, linewidth=0.8)
-        ax.set_title("Mapa Polos–Ceros")
-        ax.set_xlabel("Re"); ax.set_ylabel("Im")
-        ax.legend()
-        # Asegurar al menos ±5 en Im y vista simétrica
-        im_parts = np.concatenate([np.imag(a) for a in (z, p) if getattr(a, "size", 0)])
-        max_im = float(np.max(np.abs(im_parts))) if im_parts.size else 0.0
-        ymax = max(5.0, 1.1 * max_im)
-        x0, x1 = ax.get_xlim()
-        r = max(abs(x0), abs(x1), ymax)
-        ax.set_xlim(-r, r)
-        ax.set_ylim(-r, r)
-        ax.set_aspect('equal', adjustable='box')
-        fig.tight_layout(); plt.show()
+        for i, (Gi, typ) in enumerate(zip(self.G, self.types)):
+            num, den = self.ft_process(Gi, typ)
 
-    def plot_bode(self, omega_limits=(1e-1, 1e3), n=600, label="G", wrap_phase=True):
-        w, mag_db, phase_deg = self.bode_datos(omega_limits, n, wrap_phase=wrap_phase)
-        fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(7, 6))
-        ax1.semilogx(w, mag_db, label=label)
-        ax1.set_title("Bode - Magnitud")
-        ax1.set_ylabel("|G(jω)| [dB]"); ax1.legend()
+            # Impulso
+            tout_imp, yimp = sg.impulse((num, den), T=self.t)
+            ax_imp.plot(tout_imp, yimp, label=labels[i], color=self.col_G[i])
 
-        ax2.semilogx(w, phase_deg, label=label)
-        ax2.set_title("Bode - Fase" + (" (envuelta)" if wrap_phase else " (unwrapped)"))
-        ax2.set_xlabel("ω [rad/s]"); ax2.set_ylabel("∠G(jω) [°]"); ax2.legend()
-        # Guías en 0 y ±180°
-        ax2.axhline(0, linewidth=0.8)
-        ax2.axhline(180, linewidth=0.4, linestyle=':')
-        ax2.axhline(-180, linewidth=0.4, linestyle=':')
+            # Bode (magnitud y fase)
+            w, mag, phase = sg.bode((num, den))
+            ax_mag.semilogx(w, mag, label=labels[i], color=self.col_G[i])
+            ax_phase.semilogx(w, phase, label=labels[i], color=self.col_G[i])
 
-        plt.tight_layout(); plt.show()
+            # Polos y ceros
+            z, p, k = sg.tf2zpk(num, den)
+            if z is not None and len(z) > 0:
+                ax_pz.scatter(np.real(z), np.imag(z), marker='o', facecolors='none',
+                              edgecolors=self.col_G[i], label=f"Ceros {labels[i]}")
+                max_imag_abs = max(max_imag_abs, float(np.max(np.abs(np.imag(z)))))
+                max_real_abs = max(max_real_abs, float(np.max(np.abs(np.real(z)))))
+            if p is not None and len(p) > 0:
+                ax_pz.scatter(np.real(p), np.imag(p), marker='x',
+                              color=self.col_G[i], label=f"Polos {labels[i]}")
+                max_imag_abs = max(max_imag_abs, float(np.max(np.abs(np.imag(p)))))
+                max_real_abs = max(max_real_abs, float(np.max(np.abs(np.real(p)))))
 
-class PlotComp:
-    """
-    Comparaciones superpuestas entre dos funciones de transferencia.
-    """
-    def __init__(self, G1, G2, COL_G1 = "#7e22ce", COL_G2 = "#fb923c", t_end=2.0, n_time=2000):
-        self.E1 = Escrutinio(G1, t_end=t_end, n_time=n_time)
-        self.E2 = Escrutinio(G2, t_end=t_end, n_time=n_time)
-        self.c1 = COL_G1
-        self.c2 = COL_G2
+            # Otras respuestas (opcional)
+            if other_responses:
+                # Escalón de amplitud A
+                u_step = A * np.ones_like(self.t)
+                tout, y_step, _ = sg.lsim((num, den), U=u_step, T=self.t, X0=self.x0)
+                ax_step.plot(tout, y_step, label=labels[i], color=self.col_G[i])
 
-    def impulsos(self, label1="G1", label2="G2"):
-        t1, y1 = self.E1.impulso()
-        t2, y2 = self.E2.impulso()
-        t = t1 if t1.size <= t2.size else t2
-        if y1.size != t.size: y1 = np.interp(t, t1, y1)
-        if y2.size != t.size: y2 = np.interp(t, t2, y2)
+                # Seno de amplitud A y frecuencia angular w (rad/s)
+                u_sin = A * np.sin(w * self.t)
+                tout, y_sin, _ = sg.lsim((num, den), U=u_sin, T=self.t, X0=self.x0)
+                ax_sin.plot(tout, y_sin, label=labels[i], color=self.col_G[i])
 
-        plt.figure()
-        plt.plot(t, y1, label=label1, color=self.c1, linestyle='--',linewidth=2)
-        plt.plot(t, y2, label=label2, color=self.c2, linestyle='--', linewidth=2)
-        plt.title("Impulso")
-        plt.xlabel("t [s]"); plt.ylabel("y(t)")
-        plt.legend(); plt.tight_layout(); plt.show()
+        # Estética y etiquetas
+        ax_imp.set_title("Respuesta al impulso")
+        ax_imp.set_xlabel("Tiempo [s]")
+        ax_imp.set_ylabel("Amplitud")
+        ax_imp.grid(True, which="both")
+        ax_imp.legend()
 
-    def pzmap(self, label1="G1", label2="G2"):
-        z1, p1 = self.E1.zeros_polos()
-        z2, p2 = self.E2.zeros_polos()
-        _, _, n1, d1 = self.E1.num_den_degrees()
-        _, _, n2, d2 = self.E2.num_den_degrees()
-        ceros_inf1 = max(d1 - n1, 0)
-        ceros_inf2 = max(d2 - n2, 0)
+        ax_mag.set_title("Bode - Magnitud")
+        ax_mag.set_ylabel("Magnitud [dB]")
+        ax_mag.grid(True, which="both")
+        ax_mag.legend()
 
-        fig, ax = plt.subplots()
+        ax_phase.set_title("Bode - Fase")
+        ax_phase.set_xlabel("Frecuencia angular [rad/s]")
+        ax_phase.set_ylabel("Fase [°]")
+        ax_phase.grid(True, which="both")
+        ax_phase.legend()
 
-        # G1 (morado)
-        if z1.size:
-            ax.scatter(np.real(z1), np.imag(z1), marker='o',
-                       facecolors='none', edgecolors=self.c1, label=f"Ceros {label1}")
-        else:
-            if ceros_inf1 > 0:
-                ax.plot([], [], marker='o', linestyle='None',
-                        markerfacecolor='none', markeredgecolor=self.c1,
-                        label=f"Ceros {label1} ({ceros_inf1} en ∞)")
-        ax.scatter(np.real(p1), np.imag(p1), marker='x',
-                   c=self.c1, s=70, label=f"Polos {label1}")
+        ax_pz.set_title("Diagrama de polos y ceros (plano s)")
+        ax_pz.axhline(0, color='k', linewidth=0.8)
+        ax_pz.axvline(0, color='k', linewidth=0.8)
+        ax_pz.set_xlabel("Re{s}")
+        ax_pz.set_ylabel("Im{s}")
+        ax_pz.grid(True, which="both")
+        ax_pz.legend()
+        ax_pz.set_aspect('equal', adjustable='box')
 
-        # G2 (naranja)
-        if z2.size:
-            ax.scatter(np.real(z2), np.imag(z2), marker='o',
-                       facecolors='none', edgecolors=self.c2, label=f"Ceros {label2}")
-        else:
-            if ceros_inf2 > 0:
-                ax.plot([], [], marker='o', linestyle='None',
-                        markerfacecolor='none', markeredgecolor=self.c2,
-                        label=f"Ceros {label2} ({ceros_inf2} en ∞)")
-        ax.scatter(np.real(p2), np.imag(p2), marker='x',
-                   c=self.c2, s=80, label=f"Polos {label2}")
+        # Límites automáticos con mínimo deseado
+        yext = max(min_imag_extent, max_imag_abs * 1.05)
+        xext = max(min_imag_extent, max_real_abs * 1.05)
+        ax_pz.set_ylim(-yext, yext)
+        ax_pz.set_xlim(-xext, xext)
 
-        ax.axhline(0, linewidth=0.8); ax.axvline(0, linewidth=0.8)
-        ax.set_title("Mapa Polos–Ceros")
-        ax.set_xlabel("Re"); ax.set_ylabel("Im")
-        ax.legend(loc="best")
+        if other_responses:
+            ax_step.set_title(f"Respuesta al escalón (A = {A})")
+            ax_step.set_xlabel("Tiempo [s]")
+            ax_step.set_ylabel("Salida")
+            ax_step.grid(True, which="both")
+            ax_step.legend()
 
-        im_parts = np.concatenate([np.imag(a) for a in (z1, p1, z2, p2) if getattr(a, "size", 0)])
-        max_im = float(np.max(np.abs(im_parts))) if im_parts.size else 0.0
-        ymax = max(5.0, 1.1 * max_im)
-        x0, x1 = ax.get_xlim(); r = max(abs(x0), abs(x1), ymax)
-        ax.set_xlim(-r, r); ax.set_ylim(-r, r); ax.set_aspect('equal', adjustable='box')
-        fig.tight_layout(); plt.show()
+            ax_sin.set_title(f"Respuesta a seno (A = {A}, ω = {w} rad/s)")
+            ax_sin.set_xlabel("Tiempo [s]")
+            ax_sin.set_ylabel("Salida")
+            ax_sin.grid(True, which="both")
+            ax_sin.legend()
 
-    def bodes(self, omega_limits=(1e-1, 1e3), n=800, label1="G1", label2="G2", wrap_phase=True):
-        w = np.logspace(np.log10(omega_limits[0]), np.log10(omega_limits[1]), int(n))
-        w1, mag1_db, ph1_deg = self.E1.bode_datos(w=w, wrap_phase=wrap_phase)
-        w2, mag2_db, ph2_deg = self.E2.bode_datos(w=w, wrap_phase=wrap_phase)
-
-        fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(7, 6))
-        ax1.semilogx(w1, mag1_db, label=label1, color=self.c1, linestyle='--',linewidth=2)
-        ax1.semilogx(w2, mag2_db, label=label2, color=self.c2, linestyle='--', linewidth=2)
-        ax1.set_title("Bode - Magnitud"); ax1.set_ylabel("[dB]"); ax1.legend()
-
-        ax2.semilogx(w1, ph1_deg, label=label1, color=self.c1, linestyle='--',linewidth=2)
-        ax2.semilogx(w2, ph2_deg, label=label2, color=self.c2, linestyle='--', linewidth=2)
-        ax2.set_title("Bode - Fase" + (" (envuelta)" if wrap_phase else ""))
-        ax2.set_xlabel("ω [rad/s]"); ax2.set_ylabel("[°]"); ax2.legend()
-
-        ax2.axhline(0, linewidth=0.8)
-        ax2.axhline(180, linewidth=0.4, linestyle=':')
-        ax2.axhline(-180, linewidth=0.4, linestyle=':')
-
-        plt.tight_layout(); plt.show()
-
-# ------------------- Ejemplo de uso -------------------
-if __name__ == "__main__":
-    # Cierra figuras previas si corres varias veces
-    plt.close('all')
-    s = ctrl.tf('s')
-
-    #G1 = (s-4)/(s**2+4*s+13 )
-    #G2 = (s+4)/(s**2+4*s+13 )
+        fig.tight_layout()
+        plt.show()
+        return fig, axs
     
-    G1 = (1)/((s+2)**2*(1))
-    G2 = (s)/((s+2)**2*(1))
+    def overshoot(self, A=1.0):
+        results = []
+        for Gi, typ in zip(self.G, self.types):
+            num, den = self.ft_process(Gi, typ)
 
-    comp = PlotComp(G1, G2, t_end=3.0, n_time=3000)
-    comp.impulsos("G1", "G2")
-    comp.pzmap("G1", "G2")
-    comp.bodes(omega_limits=(1e-1, 1e3), n=800, label1="G1", label2="G2", wrap_phase=False)
+            # Entrada: escalón de amplitud A
+            u = A * np.ones_like(self.t)
 
-    pass
+            # Simulación LTI con lsim (resp. al escalón A)
+            tout, y, _ = sg.lsim((num, den), U=u, T=self.t, X0=self.x0)
+
+            # Valor en régimen: promedio del 5% final
+            k = max(1, int(len(y) // 20))  # 5%
+            yss = float(np.mean(y[-k:]))
+
+            # Pico
+            i_peak = int(np.argmax(y))
+            y_peak = float(y[i_peak])
+            t_peak = float(tout[i_peak])
+
+            # Overshoot relativo a |y_ss| (evita signo/0)
+            if abs(yss) > 1e-12:
+                OS = max(0.0, (y_peak - yss) / abs(yss)) * 100.0
+            else:
+                OS = 0.0
+
+            results.append({"t_peak": t_peak, "y_peak": y_peak, "y_ss": yss, "%OS": OS})
+
+        return results
+
+# ----- Sistemas de ejemplo -----
+# ----- Sistemas de ejemplo -----
+z1 = [3.0]
+p1 = [-1.0, -5.0]
+k1 = 5.0
+
+num2 = [1.0]
+den2 = [1.0, 2.0, 2.0]
+
+A = [[0.0, 1.0],
+     [-4.0, -3.0]]
+B = [[0.0],
+     [1.0]]
+C = [[1.0, 0.0]]
+D = [[0.0]]
+
+# G SOLO con tuplas de datos (sin etiquetas de texto)
+G = [
+    (z1, p1, k1),        # zpk
+    (num2, den2),        # nd
+    (A, B, C, D),        # ss
+]
+types = ["zpk", "nd", "ss"]
+
+labels = ["G1 (zpk)", "G2 (nd)", "G3 (ss)"]
+colores = ["#7e22ce", "#fb923c", "#f13cfb"]
+
+esc = Escrutinio(G=G, types=types, col_G=colores, t_end=3.0, fs=2000)
+esc.plotComp(labels=labels)
