@@ -9,7 +9,7 @@ class Wien:
         self.C1 = float(C1); self.C2 = float(C2)
 
         # Ganancia lazo del opamp
-        self.K = 1.0 + (self.Ra / self.Rb)
+        self.K = 1.0 + (self.Rb / self.Ra)
 
         # Matriz A
         A11 = -(1.0 - self.K)/(self.R2*self.C1) - 1.0/(self.R1*self.C1)

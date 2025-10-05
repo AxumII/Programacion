@@ -1,6 +1,4 @@
 import numpy as np
-from capacitor import Capacitor as Cap
-
 
 class ModelCapacitor: #Modelo con aire, pla y agua
     def __init__(
@@ -16,6 +14,10 @@ class ModelCapacitor: #Modelo con aire, pla y agua
         w_in: float           = 16.6/1000,
         h_level: float        = 1.0/1000,
     ):
+        
+        # Constante
+        self.e_0 = 8.854e-12  # permitividad del vacío [F/m]
+
         # Geometría global (cobre perimetral)
         self.h_right_copper = float(h_right_copper)
         self.h_left_copper  = float(h_left_copper)
@@ -60,12 +62,22 @@ class ModelCapacitor: #Modelo con aire, pla y agua
             w_down=self.w_down_copper,
         )
 
+    def cap(self,A = None,e_d = None):     
+
+        A = np.array(A) if A is not None else np.array([1.0])  
+        e_d = np.array(e_d) if e_d is not None else np.array([1.0])  
+        c = 0
+
+        for i in range(self.e_d.size):
+            c += (A[i] * self.e_0 * e_d[i]) / self.d_s
+        return c
+
     def calculate_c(self):
         areas = [self.pla_area(), self.air_area(), self.fluid_area()]
         # Si e_d es escalar, replicarlo a 3 regiones
         e_d_vec = np.repeat(self.e_d, 3) if self.e_d.size == 1 else self.e_d
-        c1 = Cap(d_s=self.d_s, A=areas, e_d=e_d_vec)
-        return c1.c
+        c1 = self.cap( A=areas, e_d=e_d_vec)
+        return c1
 
     def pla_area(self):
         # Área de PLA = área total menos 4 ventanas rectangulares
@@ -81,12 +93,12 @@ class ModelCapacitor: #Modelo con aire, pla y agua
         h_fluid = min(self.h_level, self.h_in)
         return 4.0 * self.rectangle(h_fluid, self.w_in)
 
-"""# -------------------------
+# -------------------------
 # Ejemplo de uso (runnable)
 # -------------------------
 if __name__ == "__main__":
     model = ModelCapacitor(
-        e_d=[2.8, 1.0006, 80.0],  # [PLA, aire, agua] 
+        e_d=[2.8, 1.0006, 40.0],  # [PLA, aire, agua] 
         d_s=1.4e-3,                 
         h_right_copper=41.2/1000,
         h_left_copper=39.5/1000,
@@ -94,7 +106,7 @@ if __name__ == "__main__":
         w_down_copper=99.1/1000,
         h_in=34.8/1000,
         w_in=16.6/1000,
-        h_level=0/1000,             
+        h_level=30/1000,             
     )
 
     print("ÁREAS (m^2):")
@@ -103,4 +115,4 @@ if __name__ == "__main__":
     print("  Fluido:", model.fluid_area())
 
     C = model.calculate_c()
-    print("\nCapacitancia total (pF):", C* 1e12)"""
+    print("\nCapacitancia total (pF):", C* 1e12)
