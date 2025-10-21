@@ -99,7 +99,7 @@ class ModelCapacitor: #Modelo con aire, pla y agua
 if __name__ == "__main__":
     model = ModelCapacitor(
         e_d=[2.8, 1.0006, 40.0],  # [PLA, aire, agua] 
-        d_s=1.4e-3,                 
+        d_s=5e-3,                 
         h_right_copper=41.2/1000,
         h_left_copper=39.5/1000,
         w_up_copper=99.1/1000,

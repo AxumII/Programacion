@@ -191,14 +191,14 @@ if __name__ == "__main__":
     # Parámetros del oscilador Wien
     Ra = 10*k           #Ohm
     Rb = 20*k           #Ohm
-    R1 = 3.3*k           #Ohm
-    R2 = 3.3*k           #Ohm
-    C1_base = 100*n      #Faradios
-    C2 = 100*n           #Faradios
-    max_Cs = 50*p       #Faradios
-    f = 0.1*k             #Hertz
-    R_test = 3.3*k       #Ohm
-    C_test = 1000*n       #Ohm
+    R1 = 3.4*k           #Ohm
+    R2 = 3.4*k           #Ohm
+    C1_base = 47*n      #Faradios
+    C2 =47*n           #Faradios
+    max_Cs = 1*p *m      #Faradios
+    f = 1*k             #Hertz
+    R_test = 15*k       #Ohm
+    C_test = 10*n       #Ohm
     t_end = 1
 
     w_levels=[3*k, 6*k, 60*k]
@@ -234,4 +234,4 @@ if __name__ == "__main__":
         print(an.wientf_an())
 
     r()
-    tot()
+    #tot()
