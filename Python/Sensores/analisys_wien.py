@@ -201,7 +201,7 @@ if __name__ == "__main__":
     C_test = 10*n       #Ohm
     t_end = 1
 
-    w_levels=[3*k, 6*k, 60*k]
+    w_levels=[6*k, 30*k, 60*k]
     R_range=(100,20*k)
     C_range=(1*n, 1*u)
 
@@ -234,4 +234,4 @@ if __name__ == "__main__":
         print(an.wientf_an())
 
     r()
-    #tot()
+    tot()
