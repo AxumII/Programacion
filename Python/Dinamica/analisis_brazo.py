@@ -23,7 +23,8 @@ class Analisis:
         
         self.posx = lambda L,theta : L * np.cos(theta)
         self.posy = lambda L,theta : L * np.sin(theta)     
-           
+        
+        self.graf()
         
     
     def variables_of_motion(self, theta):
@@ -69,12 +70,6 @@ class Analisis:
         V_B, V_A_B, V_A, a_B, a_A_B, a_A = self.kinematic_general()
         (X_B, Y_B), (X_A, Y_A) = self.position()
         
-        #Graficas theta
-        plt.figure()
-        plt.plot(self.t, self.theta_1, label='θ1')
-        plt.plot(self.t, self.theta_2, label='θ2')
-        plt.title('Ángulos articulares'); plt.xlabel('t [s]'); plt.ylabel('θ [rad]')
-        plt.legend(); plt.grid(True)
         
         # θ
         plt.figure()
@@ -99,30 +94,46 @@ class Analisis:
         
         # Velocidad de la pinza
         plt.figure()
+        VA_mod = np.linalg.norm(V_A, axis=1) 
         plt.plot(self.t, VA_mod, label='|V_A|')
         plt.title('Velocidad lineal de la pinza'); plt.xlabel('t [s]'); plt.ylabel('V [m/s]')
         plt.legend(); plt.grid(True)
         
         # Aceleración de la pinza
         plt.figure()
+        aA_mod = np.linalg.norm(a_A, axis=1)
         plt.plot(self.t, aA_mod, label='|a_A|')
         plt.title('Aceleración lineal de la pinza'); plt.xlabel('t [s]'); plt.ylabel('a [m/s²]')
         plt.legend(); plt.grid(True)
         
         # Trayectorias
+
         plt.figure()
-        plt.plot(X_B, Y_B, label='Trayectoria codo B')
-        plt.plot(X_A, Y_A, label='Trayectoria pinza A')
+        plt.plot(X_B, Y_B, label='Trayectoria codo B', color='tab:orange')
+        plt.plot(X_A, Y_A, label='Trayectoria pinza A', color='tab:blue')
+
+        # Puntos de inicio (verde) y fin (rojo)
+        plt.scatter(X_B[0], Y_B[0], color='green', s=60, label='Inicio B')
+        plt.scatter(X_A[0], Y_A[0], color='green', s=60, label='Inicio A')
+        plt.scatter(X_B[-1], Y_B[-1], color='red', s=60, label='Fin B')
+        plt.scatter(X_A[-1], Y_A[-1], color='red', s=60, label='Fin A')
+                # Segmentos del brazo en la posición inicial (sólido) y final (discontinuo)
+        plt.plot([0, X_B[0],  X_A[0]],  [0, Y_B[0],  Y_A[0]],  linewidth=2, label='Brazo (inicio)', color='green')
+        plt.plot([0, X_B[-1], X_A[-1]], [0, Y_B[-1], Y_A[-1]], linewidth=2, label='Brazo (fin)', color='red')
+
         plt.axis('equal')
-        plt.title('Trayectorias en el plano'); plt.xlabel('X [m]'); plt.ylabel('Y [m]')
-        plt.legend(); plt.grid(True)
+        plt.title('Trayectorias en el plano (inicio y fin)')
+        plt.xlabel('X [m]')
+        plt.ylabel('Y [m]')
+        plt.legend()
+        plt.grid(True)
         plt.show()
 
-
-
+       
+"""
 # === Demostración ===
 t = np.linspace(0, 5, 400)
 theta1 = np.deg2rad(np.linspace(0, 80, 400))
 theta2 = np.deg2rad(np.linspace(20, 120, 400))
 modelo = Analisis(t, theta1, theta2, L1=0.5, L2=0.35)
-modelo.graf()
+modelo.graf()"""
