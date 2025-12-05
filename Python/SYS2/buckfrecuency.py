@@ -84,7 +84,7 @@ class PlotAnalisys:
 if __name__ == "__main__":
     C_val = [1e-6,10e-6]
     L_val = [10e-6, 220e-6, 470e-6]
-    f_sw = [50e3,100e3,500e3]
+    f_sw = [10e3,50e3,100e3]
 
     analisis = PlotAnalisys(C_val=C_val, L_val=L_val, f_sw = f_sw)
     analisis.frecuency_und_duty()
