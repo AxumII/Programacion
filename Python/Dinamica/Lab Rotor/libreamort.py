@@ -1,249 +1,286 @@
 import os
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
+import scipy.signal as sg
+
+from libre import AnalisisLibre
 
 
-class AnalisisAmortiguado:
-    def __init__(self, base_dir=None):
+class AnalisisLibreAmortiguado:
+    def __init__(
+        self,
+        d=0.119,   # m  distancia sensor–eje
+        L=0.845,   # m
+        n=3,       # n picos
+        k=3,        #kN/m
+        config=None,
+    ):
         """
-        Analiza los dos casos de 'Libre - con amortiguamiento':
-        - abierto_unido.csv
-        - cerrado_unido.csv
+        d   : distancia sensor–eje [m]
+        L   : longitud [m]
+        n   : número de picos entre d0 y dn
         """
 
-        if base_dir is None:
-            base_dir = os.path.dirname(os.path.abspath(__file__))
-        self.base_dir = base_dir
+        if config is None:
+            config = {
+                "Abierta": {
+                    "folder": "Archivos",
+                    "file": "Libre - con amortiguamiento - abierto_unido.csv",
+                },
+                "Cerrada": {
+                    "folder": "Archivos",
+                    "file": "Libre - con amortiguamiento - cerrado_unido.csv",
+                },
+            }
 
-        # ======= DATOS DEL ROTOR (EDITAR ESTO) ======================
-        # Momento de inercia Id [kg·m^2] y longitud efectiva L [m]
-        # para cada configuración (valores de tu guía de laboratorio)
-        self.casos = [
-            {
-                "nombre": "Abierta",
-                "archivo": r"Archivos/Libre - con amortiguamiento - abierto_unido.csv",
-                "Id": 0.0,   # TODO: poner Id_abierta [kg·m^2]
-                "L":  0.0,   # TODO: poner L_abierta [m]
-            },
-            {
-                "nombre": "Cerrada",
-                "archivo": r"Archivos/Libre - con amortiguamiento - cerrado_unido.csv",
-                "Id": 0.0,   # TODO: poner Id_cerrada [kg·m^2]
-                "L":  0.0,   # TODO: poner L_cerrada [m]
-            },
-        ]
-        # ============================================================
+        # Constantes del sistema
+        self.d = d
+        self.L = L
+        self.k = k / 1e-3
+        self.n = n
+        self.m_amort = 0.275    #Kg
+        self.config = config
+        
 
-    # ---------- Lectura de CSV ----------
+        # wn tomada del caso libre
+        self.w_n = self.extract_w_n()
+        self.I = ((self.k* self.L**2)/self.w_n**2) + (self.m_amort* self.L**2)
 
-    def _leer_csv(self, relative_path):
+    # ---------------------------------------------------------
+    def read(self):
         """
-        Lee un CSV con 'Tiempo' y 'Canal B' (mV).
-        Devuelve:
-            t  : tiempo [s]
-            dV : señal LVDT en voltios [V]
-        """
-        ruta = os.path.join(self.base_dir, relative_path)
-
-        if not os.path.exists(ruta):
-            raise FileNotFoundError(f"No se encontró el archivo:\n  {ruta}")
-
-        df = pd.read_csv(ruta, sep=";", decimal=",")
-
-        # Convertimos a numérico y quitamos filas con texto (unidades, etc.)
-        for col in ["Tiempo", "Canal B"]:
-            df[col] = pd.to_numeric(df[col], errors="coerce")
-        df = df.dropna(subset=["Tiempo", "Canal B"])
-
-        t = df["Tiempo"].to_numpy()
-        d_mV = df["Canal B"].to_numpy()
-
-        # En los *_unido.csv el tiempo ya viene en segundos (0–6 aprox).
-        # Si algún día te salen en ms (>10), puedes activar:
-        # if t.max() > 10:
-        #     t = t * 1e-3
-
-        d_V = d_mV / 1000.0  # mV → V
-
-        return t, d_V
-
-    # ---------- Detección de picos ----------
-
-    def _encontrar_picos(self, t, d):
-        """
-        Encuentra índices de picos positivos en la señal centrada.
-        """
-        d_c = d - np.mean(d)
-
-        idx = np.where((d_c[1:-1] > d_c[:-2]) & (d_c[1:-1] > d_c[2:]))[0] + 1
-        idx = idx[d_c[idx] > 0]  # solo picos positivos
-
-        if len(idx) < 2:
-            raise ValueError("Se encontraron muy pocos picos en la señal.")
-
-        return idx
-
-    # ---------- Análisis de un caso ----------
-
-    def analizar_caso(self, caso):
-        """
-        Aplica el procedimiento del informe a un archivo:
-        1) d0, dn, n
-        2) ζ por decremento logarítmico
-        3) Td como promedio entre picos sucesivos
-        4) ωd = 2π/Td
-        5) ωn = ωd / sqrt(1-ζ²)
-        6) Cc = 2 Id ωn / L² ; C = ζ Cc
-        """
-        nombre = caso["nombre"]
-        archivo = caso["archivo"]
-        Id = caso["Id"]
-        L = caso["L"]
-
-        # t en s, d en V
-        t, d = self._leer_csv(archivo)
-        idx_peaks = self._encontrar_picos(t, d)
-
-        # --- 1) d0 y dn separados n ciclos ---
-        i0 = idx_peaks[0]
-        iN = idx_peaks[-1]
-
-        d0 = d[i0]
-        dn = d[iN]
-
-        # número de ciclos completos entre d0 y dn
-        n = len(idx_peaks) - 1
-
-        # --- 2) ζ mediante decremento logarítmico (ecuaciones 6–7) ---
-        # δ = (1/n) ln(d0/dn)
-        delta = (1.0 / n) * np.log(d0 / dn)
-
-        # ζ = δ / sqrt( (2π)² + δ² )
-        zeta = delta / np.sqrt((2.0 * np.pi) ** 2 + delta ** 2)
-
-        # --- 3) Td como promedio entre picos sucesivos ---
-        periodos = np.diff(t[idx_peaks])   # diferencias entre tiempos de picos
-        Td = periodos.mean()
-
-        # --- 4) ωd = 2π / Td ---
-        w_d = 2.0 * np.pi / Td
-
-        # --- 5) ωn a partir de ωd = ωn sqrt(1-ζ²) ---
-        w_n = w_d / np.sqrt(1.0 - zeta ** 2)
-
-        # --- 6) Cc y C ---
-        if Id > 0 and L > 0:
-            Cc = 2.0 * Id * w_n / (L ** 2)   # Cc = 2 Id ωn / L²
-            C = zeta * Cc                    # C = ζ Cc
-        else:
-            Cc = np.nan
-            C = np.nan
-
-        resultados = {
-            "Caso": nombre,
-            "d0 [V]": d0,
-            "dn [V]": dn,
-            "Td [s]": Td,
-            "ωd [rad/s]": w_d,
-            "ζ": zeta,
-            "ωn [rad/s]": w_n,
-            "Cc [Ns/m]": Cc,
-            "C [Ns/m]": C,
-            "t": t,
-            "d": d,
-            "idx_peaks": idx_peaks,
+        Lee TODOS los archivos de self.config.
+        Devuelve un diccionario:
+        {
+            "Abierta": (tiempo, canal_a, canal_b),
+            "Cerrada": (tiempo, canal_a, canal_b)
         }
+        """
+
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        datos = {}
+
+        for caso, info in self.config.items():
+            folder = info["folder"]
+            file = info["file"]
+
+            ruta = os.path.join(base_dir, folder, file)
+
+            if not os.path.exists(ruta):
+                raise FileNotFoundError(
+                    f"No se encontró el archivo:\n{ruta}\n"
+                    f"Verifica el nombre de la carpeta y del archivo."
+                )
+
+            df = pd.read_csv(
+                ruta,
+                sep=";",
+                decimal=",",
+            )
+
+            # Limpieza
+            for col in ["Tiempo", "Canal A", "Canal B"]:
+                df[col] = pd.to_numeric(df[col], errors="coerce")
+
+            df = df.dropna(subset=["Tiempo", "Canal A", "Canal B"])
+
+            tiempo = df["Tiempo"].to_numpy()
+            canal_a = df["Canal A"].to_numpy()
+            canal_b = df["Canal B"].to_numpy()
+
+            datos[caso] = (tiempo, canal_a, canal_b)
+
+        return datos
+
+    # ---------------------------------------------------------
+    def fix(self):
+        """
+        Convierte voltajes → ángulos (rad) para cada archivo.
+        Devuelve:
+        {
+            "Abierta": (t, theta),
+            "Cerrada": (t, theta)
+        }
+        """
+        datos = self.read()
+        resultados = {}
+
+        for caso, (t_a, _, y) in datos.items():
+            t = t_a  # ya está en segundos
+            # y está en mV, sensor 350 mV/mm → dividir entre 1000 y 350
+            delta = (y / 1000.0) / 350.0  # [m]
+            theta = delta / self.d        # [rad]
+
+            resultados[caso] = (t, theta)
 
         return resultados
 
-    # ---------- Tabla tipo Cuadro IX ----------
-
-    def tabla_resultados(self):
-        filas = []
-        resultados_detallados = []
-
-        for caso in self.casos:
-            res = self.analizar_caso(caso)
-            resultados_detallados.append(res)
-            filas.append([
-                res["Caso"],
-                res["d0 [V]"],
-                res["dn [V]"],
-                res["Td [s]"],
-                res["ωd [rad/s]"],
-                res["ζ"],
-                res["C [Ns/m]"],
-            ])
-
-        tabla = pd.DataFrame(
-            filas,
-            columns=["Caso", "d0 [V]", "dn [V]", "Td [s]", "ωd [rad/s]", "ζ", "C [Ns/m]"],
-        )
-
-        return tabla, resultados_detallados
-
-    # ---------- Gráfica de cada caso (picos ≥ 5% d0) ----------
-
-    def graficar_caso(self, res, porcentaje=0.05):
+    # ---------------------------------------------------------
+    def p2p(self, theta, frac=0.1):
         """
-        Grafica la señal amortiguada mostrando SOLO los picos cuya
-        amplitud es mayor o igual a 'porcentaje' de d0 (por defecto 5%).
+        Calcula la amplitud pico a pico a partir de la fraccion de la señal
         """
-        t = res["t"]
-        d = res["d"]
-        idx_peaks = res["idx_peaks"]
-        nombre = res["Caso"]
+        n0 = int(len(theta) * frac)
+        th = theta[n0:]
+        return (np.max(th) - np.min(th)) / 2
 
-        # Primer pico d0
-        i0 = idx_peaks[0]
-        d0 = d[i0]
-        umbral = porcentaje * d0
+    # ---------------------------------------------------------
+    def extract_w_n(self):
+        analisis = AnalisisLibre()
+        T_n, f_n, w_n = analisis.result()
+        return w_n
+       
+        
+    # ---------------------------------------------------------
+    def result(self):
+        """
+        Calcula todos los parámetros para cada caso.
+        Devuelve un diccionario:
+        {
+            'Abierta': {...},
+            'Cerrada': {...}
+        }
+        """
+        resultados = {}
+        datos = self.fix()  # dict: caso -> (t, theta)
 
-        # Filtrar picos por umbral
-        idx_filtrados = [i for i in idx_peaks if d[i] >= umbral]
-        idx_filtrados = np.array(idx_filtrados, dtype=int)
+        for caso, (t, theta) in datos.items():
+            
 
-        plt.figure(figsize=(9, 4))
+            # Buscar picos
+            picos, _ = sg.find_peaks(theta, prominence=0.001, distance=80)
 
-        # Señal completa
-        plt.plot(t, d, label="Señal LVDT (V)")
+            if len(picos) <= self.n:
+                raise ValueError(
+                    f"No hay suficientes picos en el caso '{caso}' para n={self.n}"
+                )
 
-        # Picos por encima del 5% de d0
-        if len(idx_filtrados) > 0:
-            plt.plot(
-                t[idx_filtrados],
-                d[idx_filtrados],
-                "ro",
-                label=f"Picos ≥ {porcentaje*100:.0f}% d₀"
+            t_peaks = t[picos]
+            amps = np.abs(theta[picos])
+
+            # Tomar los dos primeros picos para Td
+            pico1 = picos[0]
+            pico2 = picos[1]
+            t1 = t[pico1]
+            t2 = t[pico2]
+
+            # Periodo amortiguado, frecuencia y velocidad angular amortiguada
+            T_d = t2 - t1
+            f_d = 1.0 / T_d
+            w_d = 2 * np.pi * f_d
+
+            # Amplitudes (en rad)
+            d0_theta = amps[0]
+            dn_theta = amps[self.n]
+
+            # Pasar amplitudes de rad → V (invirtiendo la conversión)
+            escala = 1000.0 * 350.0 * self.d
+            d0_V = d0_theta * escala
+            dn_V = dn_theta * escala
+
+            # Coeficiente de amortiguamiento crítico
+            Cc = (2 * self.I * self.w_n) / (self.L ** 2)
+
+            # Zeta: factor de amortiguamiento
+            # zeta = L / sqrt(L^2 + 4*pi^2*n^2), con L = ln(d0/dn)
+            L_log = np.log(d0_V / dn_V)
+            zeta = L_log / np.sqrt(L_log ** 2 + 4 * np.pi ** 2 * self.n ** 2)
+
+            #Coeficiente de amortiguamento
+            C = zeta*Cc
+
+            resultados[caso] = dict(
+                d0=d0_V,
+                dn=dn_V,
+                Td=T_d,
+                wd=w_d,
+                zeta=zeta,
+                C=C,
             )
 
-        # Marcar d0 y dn (primer y último pico usados en el análisis)
-        iN = idx_peaks[-1]
-        plt.plot(t[i0], d[i0], "go", markersize=10, label="d₀")
-        plt.plot(t[iN], d[iN], "mo", markersize=10, label="dₙ")
+        return resultados
 
-        plt.xlabel("Tiempo (s)")
-        plt.ylabel("d (V)")
-        plt.title(
-            f"Respuesta amortiguada - {nombre}\n"
-            f"(picos mostrados solo hasta ≥ {porcentaje*100:.0f}% d₀)"
-        )
-        plt.grid(True)
+    # ---------------------------------------------------------
+    def tabulate(self):
+
+        res = self.result()
+
+        filas = []
+        index = []
+        for caso, vals in res.items():
+            filas.append([
+                vals["d0"],
+                vals["dn"],
+                vals["Td"],
+                vals["wd"],
+                vals["zeta"],
+                vals["C"],
+            ])
+            index.append(caso)
+
+        columnas = ["d0 [mV]", "dn [mV]", "Td [s]", "ωd [rad/s]", "ζ", "C [Ns/m]"]
+
+        df = pd.DataFrame(filas, index=index, columns=columnas)
+        return df
+
+    # ---------------------------------------------------------
+    def graf(self, save=False, base=None):
+        """
+        Grafica el voltaje del Canal B vs tiempo para cada caso.
+        """
+        datos = self.read()
+
+        plt.figure()
+        for caso, (t, _, canal_b) in datos.items():
+            # canal_b viene en mV → pasar a V para ser consistentes con la etiqueta
+            plt.plot(t, canal_b / 1000.0, label=caso)
+
+        plt.xlabel("Tiempo [s]")
+        plt.ylabel("Voltaje Canal B [V]")
+        plt.title("Respuesta libre amortiguada")
         plt.legend()
+        plt.grid(True)
         plt.tight_layout()
-        plt.show()
+        
+        if save and base is not None:
+            png_name = base + "_grafica.png"
+            plt.savefig(png_name, dpi=300, bbox_inches="tight")
+            print(f"Gráfica exportada como: {png_name}")
+            plt.close()
+        else:
+            plt.show()
 
+    def export(self, base="Libre Amortiguada"):
+        """
+        Exporta:
+        - la tabla procesada de vibración forzada (CSV)
+        - la gráfica de FA vs r (PNG) usando graf_resonance()
 
-# ============================
-# EJECUCIÓN
-# ============================
-if __name__ == "__main__":
-    analizador = AnalisisAmortiguado()
+        base : prefijo para los nombres de archivo exportados
+        """
 
-    tabla, resultados = analizador.tabla_resultados()
-    print(tabla)           # Tu Cuadro IX
+        # ===== EXPORTAR TABLA =====
 
-    # Gráficas de Abierta y Cerrada (con picos ≥ 5% d0)
-    for res in resultados:
-        analizador.graficar_caso(res)
+        df = self.tabulate()
+        csv_name = base + "_resultados.csv"
+        df.to_csv(csv_name, index=False, sep=";")
+        print(f"Tabla exportada como: {csv_name}")
+
+        # Exportar gráfica usando graf
+        self.graf(save=True, base=base)
+
+    
+# ----------------- Uso -----------------
+
+"""
+analisis = AnalisisLibreAmortiguado()
+
+# Tabla pedida
+tabla = analisis.tabulate()
+print(tabla)
+
+# Gráfica
+analisis.graf()
+#analisis.export()
+"""
