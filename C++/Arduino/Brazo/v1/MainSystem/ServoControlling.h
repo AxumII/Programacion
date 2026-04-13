@@ -19,11 +19,17 @@ class ServoControlling {
         // Constructor actualizado
         ServoControlling(Kinematic* kinPtr);                
         bool settings(int _ps1, int _p2s1, int _ps2, int _p2s2, int _ps3, int _p2s3, int _maxA1, int _maxA2, int _maxA3, int _angSpeed, char _profile);
-        void moveServo(float theta1, float theta2, float theta3);
+        float getAngle(int numServo);
+        V3 getPos();
+        bool checkLimits(float t1, float t2, float t3);
         void goHome(); 
         void goExtendedHome();
-        bool moveJ(V3 target); 
+        bool ReachForAnglesAndStop(float theta1, float theta2, float theta3, int speed = -1);
+        bool ReachForAnglesContinuous(float theta1, float theta2, float theta3, int speed = -1);
+        bool moveJ(V3 target,int speed); 
+        bool moveJTrigg(V3 target,int speed); 
         bool moveL(V3 initPos, V3 targetPos, int steps);
+        
 };
 
 extern ServoEasing Servo1; 

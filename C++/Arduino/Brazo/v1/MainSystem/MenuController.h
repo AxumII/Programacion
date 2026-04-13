@@ -1,31 +1,40 @@
 #ifndef MENUCONTROLLER_H
 #define MENUCONTROLLER_H 
 #include "SystemConfig.h"
+#include "ServoControlling.h"
 
 class MenuController {
     private:
         SystemConfig* _sys;
         MenuView* _view;
+        ServoControlling* _servo;
 
         // --- VARIABLES DE ESTADO (CURSORES) ---
         int actualStateMain;
         int actualStateMenu;
         int actualStateSystem;
-        int actualStateConfig;         // NUEVO
-        int actualStateManual;         // NUEVO
-        int actualStateTool;           // NUEVO
-        int actualStateSetControlMove; // NUEVO
+        int actualStateConfig;         
+        int actualStateManual;         
+        int actualStateTool;           
+        int actualStateSetControlMove; 
         
         bool updateState;
 
+        // --- VARIABLES PARA APOYO DE CURSORES
+        int multiplierIndex = 0; 
+        int multipliers[3] = {1, 2, 5};
+        bool wasMoving = false;
+        bool wasMovingTool = false;
         // Puntero a función miembro
         void (MenuController::*ptrState)(char, int);
 
-        // --- FUNCIONES DE APOYO PARA EL RENDERIZADO ---
+
+        // --- METODOS DE APOYO PARA EL RENDERIZADO ---
         void renderCurrentView();
         int getNumButtonsForState(void (MenuController::*currentState)(char, int));
         int getCurrentCursor();
         const char* textPicker(void (MenuController::*currentState)(char, int), int id);
+
 
         // --- HANDLERS PRINCIPALES ---
         void handleIdle(char key, int joy);
@@ -62,7 +71,7 @@ class MenuController {
         void handleCamera(char key, int joy);
 
     public:
-        MenuController(SystemConfig* sys, MenuView* view);
+        MenuController(SystemConfig* sys, MenuView* view, ServoControlling* servo);
         void update(); 
 };
 #endif

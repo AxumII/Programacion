@@ -1,6 +1,9 @@
 #include "MenuController.h"
+
+using V3 = Eigen::Vector3f;
+
 const char* labelsMain[]   = {"SYSTEM", "CONFIG", "MANUAL", "LOAD", "TOOLS"}; // 5 opciones
-const char* labelsSystem[] = {"HOME", "CALIBRATE", "TEST", "RESTRICT", "ABOUT"}; // 5 opciones
+const char* labelsSystem[] = {"GO HOME", "CALIBRATE", "TEST", "RESTRICT", "ABOUT"}; // 5 opciones
 const char* labelsConfig[] = {"COORD REF", "UNITS", "MOVE INFO", "SEGMENT"}; // 4 opciones
 const char* labelsManual[] = {"SET TYPE MOVE"}; // 1 opción
 const char* labelsTool[]   = {"GRIPPER", "TRACER", "CAMERA"}; // 3 opciones
@@ -12,7 +15,8 @@ struct Transicion {
     void (MenuController::*nextState)(char, int);
 };
 
-MenuController::MenuController(SystemConfig* sys, MenuView* view) : _sys(sys), _view(view) {
+MenuController::MenuController(SystemConfig* sys, MenuView* view, ServoControlling* servo) 
+  : _sys(sys), _view(view), _servo(servo) {
     
     ptrState = &MenuController::handleIdle; 
     
@@ -63,9 +67,7 @@ void MenuController::renderCurrentView() {
     if (ptrState == &MenuController::handleIdle) {
         _view->loadScreen();
         return; 
-    }
-    
-
+    }   
     int numButtons = getNumButtonsForState(ptrState); 
 
     for (int i = 0; i < maxSize; i++) {
@@ -249,8 +251,12 @@ void MenuController::handleTool(char key, int joy){
 //-------------------------------------- FUNCIONES DE SYSTEM ----------------------------------
 
 void MenuController::handleGoHome(char key, int joy){
-    if(key == '#') { ptrState = &MenuController::handleSystem; updateState = true; }
-    //Por ahora vacia
+    if(key == '#') { 
+        ptrState = &MenuController::handleSystem; 
+        updateState = true; 
+    }    
+    _servo->goHome(); 
+    
 }
 void MenuController::handleCalibrate(char key, int joy){
     if(key == '#') { ptrState = &MenuController::handleSystem; updateState = true; }
@@ -326,10 +332,119 @@ void MenuController::handleCamera(char key, int joy){
 //-------------------------------------- FUNCIONES DE SETCONTROLMOVE------------------------------------
 void MenuController::handleJoyAngular(char key, int joy){
     if(key == '#') { ptrState = &MenuController::handleSetControlMove; updateState = true; }
-    //Por ahora vacia
+    
+    // 1. SELECTOR GLOBAL DE VELOCIDAD 
+    if (_sys->getJoySwState(1) || _sys->getJoySwState(2)) {
+        multiplierIndex = (multiplierIndex + 1) % 3; // *1 -> *2 -> *5
+        updateState = true; 
+    }
+    int currentMult = multipliers[multiplierIndex];
+    float baseStep = 0.5;
+
+    // 2. SELECTOR DE MOVIMIENTO
+    int vQ1   = _sys->joystickAsFasterSelector(_sys->getJoystickAxis(1, 'Y')); 
+    int vQ2   = _sys->joystickAsFasterSelector(_sys->getJoystickAxis(1, 'X')); 
+    int vQ3 = _sys->joystickAsFasterSelector(_sys->getJoystickAxis(2, 'X'));
+    int vTool = _sys->joystickAsFasterSelector(_sys->getJoystickAxis(2, 'Y'));
+
+    // 3. CONTROLADOR DE MOVIMIENTO
+    bool moveState = (vQ1 != 0 || vQ2 != 0 || vQ3 != 0);
+
+    if (moveState) {
+        // --- MODO CONTINUO (En movimiento) ---
+        float targetQ1   = _servo->getAngle(1) + (vQ1 * baseStep * currentMult);
+        float targetQ2   = _servo->getAngle(2) + (vQ2 * baseStep * currentMult);
+        float targetQ3 = _servo->getAngle(3) + (vQ3 * baseStep * currentMult);
+        if (_servo->ReachForAnglesContinuous(targetQ1, targetQ2, targetQ3)) {
+            updateState = true; 
+        }
+        wasMoving = true;
+    } 
+    else if (wasMoving) {
+        // --- MODO STOP (Justo cuando sueltas el Joystick) ---
+        float finalQ1 = _servo->getAngle(1);
+        float finalQ2 = _servo->getAngle(2);
+        float finalQ3 = _servo->getAngle(3);
+        if (_servo->ReachForAnglesAndStop(finalQ1, finalQ2, finalQ3)) {
+            updateState = true; 
+        }
+        wasMoving = false;
+    }
+    // 3. TOOL
+    if (vTool != 0) {
+        float toolStep = 1.0;
+        float targetTool = _servo->getAngle(4) + (vTool * toolStep * currentMult);        
+        // Llamada al método de movimiento continuo de la tool        
+        wasMovingTool = true;
+        updateState = true;
+    } 
+    else if (wasMovingTool) {
+        // Stop exclusivo para la tool
+        float fQ4 = _servo->getAngle(4);
+        // _servo->moveToolAndStop(fQ4);         
+        wasMovingTool = false;
+        updateState = true;
+    }
 }
-void MenuController::handleJoyPosition(char key, int joy){
-    if(key == '#') { ptrState = &MenuController::handleSetControlMove; updateState = true; }
-    //Por ahora vacia
+
+void MenuController::handleJoyPosition(char key, int joy) {
+    if(key == '#') { ptrState = &MenuController::handleSetControlMove; updateState = true; return; }
+    
+    // 1. SELECTOR GLOBAL DE VELOCIDAD 
+    if (_sys->getJoySwState(1) || _sys->getJoySwState(2)) {
+        multiplierIndex = (multiplierIndex + 1) % 3; // *1 -> *2 -> *5
+        updateState = true; 
+    }
+    int currentMult = multipliers[multiplierIndex];
+    float baseStep = 1.0; // Milímetros por iteración
+    
+    // 2. LECTURA DE EJES CARTESIANOS
+    int vX = _sys->joystickAsFasterSelector(_sys->getJoystickAxis(1, 'Y')); 
+    int vY = _sys->joystickAsFasterSelector(_sys->getJoystickAxis(1, 'X')); 
+    int vZ = _sys->joystickAsFasterSelector(_sys->getJoystickAxis(2, 'Y'));
+    int vTool = _sys->joystickAsFasterSelector(_sys->getJoystickAxis(2, 'X')); 
+
+    bool moveState = (vX != 0 || vY != 0 || vZ != 0);
+
+    // 3. CONTROLADOR ESPACIAL (X, Y, Z)
+    if (moveState) {
+        // --- MODO CONTINUO ---
+        V3 currentPos = _servo->getPos();
+        
+        float targetX = currentPos.x() + (vX * baseStep * currentMult);
+        float targetY = currentPos.y() + (vY * baseStep * currentMult);
+        float targetZ = currentPos.z() + (vZ * baseStep * currentMult);
+        
+        V3 targetPos(targetX, targetY, targetZ);
+
+        // moveJ_Trigg procesa la cinemática inversa y hace el Reach Continuous
+        if (_servo->moveJTrigg(targetPos, -1)) {
+            updateState = true; 
+        }
+        wasMoving = true;
+    } 
+    else if (wasMoving) {
+        // --- MODO STOP ---
+        V3 finalPos = _servo->getPos();
+        
+        // moveJ hace el ReachAndStop usando la velocidad por defecto (-1)
+        if (_servo->moveJ(finalPos, -1)) {
+            updateState = true; 
+        }
+        wasMoving = false;
+    }
+
+    // 4. CONTROLADOR DE LA TOOL (Se mantiene en ángulos locales)
+    if (vTool != 0) {
+        float targetTool = _servo->getAngle(4) + (vTool * 1.0 * currentMult);
+        // _servo->moveToolContinuous(targetTool);
+        wasMovingTool = true;
+        updateState = true;
+    } 
+    else if (wasMovingTool) {
+        // _servo->moveToolAndStop(_servo->getAngle(4));
+        wasMovingTool = false;
+        updateState = true;
+    }
 }
 

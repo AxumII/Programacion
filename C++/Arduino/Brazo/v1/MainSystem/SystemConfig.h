@@ -19,9 +19,8 @@ class SystemConfig {
         byte* _pinCols;
         byte* _pinI2C;
         byte* _pinSPI;
+        
         uint32_t _bauds;
-        byte* _pinJoy1; // Para {X, Y, SW}
-        byte* _pinJoy2; // Para {X, Y, SW}
 
         char customKeys[4][4] = {
             { '1','2','3','A' },
@@ -34,6 +33,8 @@ class SystemConfig {
         static volatile uint32_t _statePulsadores;
         static byte* _ptrPulsadores;
         static byte _numPulsadores;
+        static byte* _pinJoy1; 
+        static byte* _pinJoy2; 
         hw_timer_t* timerDebounce = NULL;
 
         bool _I2CStatus, _PCA9685Status, _SPIStatus, _SerialStatus, _GPIOStatus;
@@ -74,7 +75,8 @@ class SystemConfig {
         void clearP();
 
         int getJoystickAxis(byte joystick, char axis);
-
+        bool getJoySwState(byte joyNum);
+            
 };
 
 #endif

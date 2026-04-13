@@ -3,7 +3,8 @@
 volatile uint32_t SystemConfig::_statePulsadores = 0;
 byte* SystemConfig::_ptrPulsadores = nullptr;
 byte SystemConfig::_numPulsadores = 0; 
-
+byte* SystemConfig::_pinJoy1 = nullptr;
+byte* SystemConfig::_pinJoy2 = nullptr;
 
 
 
@@ -14,12 +15,13 @@ SystemConfig::SystemConfig(byte dimA, byte dimP, byte dimL, byte dimD,
     : _dimA(dimA), _dimP(dimP), _dimL(dimL), _dimD(dimD),
       _pinAnalogI(pA), _pinPulsadores(pP), _pinLEDs(pL), _pinDigitalIO(pD), 
       _pinRows(pF), _pinCols(pC), _bauds(b), _pinI2C(pI), _pinSPI(pS),
-      _pinJoy1(j1), _pinJoy2(j2),
       _teclado(makeKeymap(customKeys), pF, pC, 4, 4),
       _joyTimer(0), _joyDelay(300)
 {
     _ptrPulsadores = pP;
     _numPulsadores = dimP;
+    _pinJoy1 = j1; 
+    _pinJoy2 = j2;
 }
 bool SystemConfig::start() {
     // 1. Diagnóstico de Serial
@@ -75,12 +77,18 @@ bool SystemConfig::start() {
 }
 
 void IRAM_ATTR SystemConfig::debounceISR() {
+
     for (int i = 0; i < _numPulsadores; i++) {
         if (digitalRead(_ptrPulsadores[i]) == LOW) {
             _statePulsadores |= (1 << i); 
         }
     }
-    // Muestreo periódico: Si el pin está bajo, marcamos el bit 
+    if (_pinJoy1 != nullptr && digitalRead(_pinJoy1[2]) == LOW) {
+        _statePulsadores |= (1 << _numPulsadores);
+    }
+    if (_pinJoy2 != nullptr && digitalRead(_pinJoy2[2]) == LOW) {
+        _statePulsadores |= (1 << (_numPulsadores + 1));
+    }
 }
 
 uint32_t SystemConfig::getP() { return _statePulsadores; }
@@ -179,6 +187,7 @@ byte SystemConfig::getJoystickPin(byte joyNum, byte axis) {
     if (joyNum == 2 && _pinJoy2) return _pinJoy2[axis];
     return 255;
 }
+
 int SystemConfig::getJoystickAxis(byte joystick, char axis) {
     axis = toupper(axis); 
     if (joystick == 1) {
@@ -190,4 +199,21 @@ int SystemConfig::getJoystickAxis(byte joystick, char axis) {
         if (axis == 'Y') return analogRead(_pinJoy2[1]);
     }    
     return 0; 
+}
+
+bool SystemConfig::getJoySwState(byte joyNum) {
+    bool pressed = false;
+    
+    // Verificar SW Joystick 1
+    if (joyNum == 1 && (_statePulsadores & (1 << _numPulsadores))) {
+        pressed = true;
+        _statePulsadores &= ~(1 << _numPulsadores); // Limpiamos el bit para no repetir la acción
+    }
+    // Verificar SW Joystick 2
+    else if (joyNum == 2 && (_statePulsadores & (1 << (_numPulsadores + 1)))) {
+        pressed = true;
+        _statePulsadores &= ~(1 << (_numPulsadores + 1)); // Limpiamos el bit
+    }
+    
+    return pressed;
 }
