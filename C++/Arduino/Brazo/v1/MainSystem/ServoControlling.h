@@ -15,6 +15,7 @@ class ServoControlling {
         int maxAngle1, maxAngle2, maxAngle3;
         int angSpeed; 
         char profile; 
+
     public:
         // Constructor actualizado
         ServoControlling(Kinematic* kinPtr);                
@@ -29,7 +30,9 @@ class ServoControlling {
         bool moveJ(V3 target,int speed); 
         bool moveJTrigg(V3 target,int speed); 
         bool moveL(V3 initPos, V3 targetPos, int steps);
-        
+        bool moveSingleServo(int calibServo, int angle);
+        bool configAttach(int newp1, int newp2, int calibServo, int angle, bool liveUpdate = false);
+        int getPulseLimit(int servoNum, int angle);
 };
 
 extern ServoEasing Servo1; 

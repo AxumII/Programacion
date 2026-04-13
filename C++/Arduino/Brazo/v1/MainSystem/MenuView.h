@@ -14,13 +14,19 @@ class MenuView {
         int posXMenuButton;
         int hMenuButton;
         int wMenuButton;
+        int posXCenterUpper;
+        int posYCenterUpper;
+        int hCenterUpper;
+        int wCenterUpper;
 
     public:
         MenuView(byte cs, byte dc, byte rst);
         void initTFT();
         void loadScreen();   
-        void drawMenuButton(int id, bool picked, const char* text);
         void clearForMenu(); 
+        void clear(uint16_t color);
+        void drawMenuButton(int id, bool picked, const char* text);
+        void drawCalibrateMenu( int calibState, int calibServo, int p1,int p2);
 };
 
 #endif

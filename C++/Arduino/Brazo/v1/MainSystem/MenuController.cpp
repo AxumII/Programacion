@@ -90,6 +90,7 @@ int MenuController::getNumButtonsForState(void (MenuController::*currentState)(c
     if (currentState == &MenuController::handleManual) return 5;
     if (currentState == &MenuController::handleTool) return 4;
     if (currentState == &MenuController::handleSetControlMove) return 3;
+    if (currentState == &MenuController::handleCalibrate && _calibState == 0) return 3;
     
     return 0; // Si es un estado final (como handleGoHome), no dibuja menú
 }
@@ -114,7 +115,11 @@ const char* MenuController::textPicker(void (MenuController::*currentState)(char
     if (currentState == &MenuController::handleManual && id < 1)  return labelsManual[id];
     if (currentState == &MenuController::handleTool && id < 3)    return labelsTool[id];
     if (currentState == &MenuController::handleSetControlMove && id < 2) return labelsSetControlMove[id];
-    
+    if (currentState == &MenuController::handleCalibrate) {
+        if (id == 0) return "1. BASE";
+        if (id == 1) return "2. HOMBRO";
+        if (id == 2) return "3. CODO";
+    }
     return ""; 
 }
 // -------------------------------------- REPOSO / MENU --------------------------------------
@@ -258,10 +263,96 @@ void MenuController::handleGoHome(char key, int joy){
     _servo->goHome(); 
     
 }
-void MenuController::handleCalibrate(char key, int joy){
-    if(key == '#') { ptrState = &MenuController::handleSystem; updateState = true; }
-    //Por ahora vacia
+
+void MenuController::handleCalibrate(char key, int joy) {
+    int rawY = _sys->getJoystickAxis(1, 'Y');
+    int joyDir = _sys->joystickAsFasterSelector(rawY);
+    int step = joyDir * 7.5; 
+
+    if (key == '#' && _calibState == 0) {
+        ptrState = &MenuController::handleSystem;
+        _calibServo = 0; 
+        updateState = true;
+        return;
+    }
+
+    switch (_calibState) {
+        case 0: // --- SELECCIÓN ---
+            if (_calibServo == 0) _calibServo = 1; 
+            if (joy != 0) {
+                _calibServo = _calibServo + joy;
+                if (_calibServo > 3) _calibServo = 1;
+                if (_calibServo < 1) _calibServo = 3;
+                updateState = true;
+            }
+            if (key >= '1' && key <= '3') {
+                _calibServo = key - '0';
+                updateState = true;
+            }
+            if (key == '*') {
+                _calibState = 1;
+                _servo->moveSingleServo(_calibServo, 0);
+                updateState = true;
+            }
+            break;
+
+        case 1: // --- AJUSTE 0° ---
+            if (step != 0) {
+                int p1 = _servo->getPulseLimit(_calibServo, 0);
+                int p2 = _servo->getPulseLimit(_calibServo, 180);
+                int nuevoP1 = constrain(p1 + step, 500, 2500); // Límite de seguridad
+                
+                if (nuevoP1 != p1) {
+                    // Ponemos TRUE: Movimiento suave y seguro por I2C
+                    _servo->configAttach(nuevoP1, p2, _calibServo, 0, true); 
+                    updateState = true;
+                }
+            }
+            if (key == '*') {
+                _calibState = 2;
+                int p1 = _servo->getPulseLimit(_calibServo, 0);
+                int p2 = _servo->getPulseLimit(_calibServo, 180);
+                // Ponemos FALSE: Guarda definitivo y salta a 180°
+                _servo->configAttach(p1, p2, _calibServo, 180, false); 
+                updateState = true;
+            }
+            if (key == '#') { _calibState = 0; updateState = true; } 
+            break;
+
+        case 2: // --- AJUSTE 180° ---
+            if (step != 0) {
+                int p1 = _servo->getPulseLimit(_calibServo, 0);
+                int p2 = _servo->getPulseLimit(_calibServo, 180);
+                int nuevoP2 = constrain(p2 + step, 500, 2500);
+                
+                if (nuevoP2 != p2) {
+                    // Ponemos TRUE: Movimiento suave
+                    _servo->configAttach(p1, nuevoP2, _calibServo, 180, true);
+                    updateState = true;
+                }
+            }
+            if (key == '*') {
+                _calibState = 0;
+                int p1 = _servo->getPulseLimit(_calibServo, 0);
+                int p2 = _servo->getPulseLimit(_calibServo, 180);
+                // Ponemos FALSE: Cierra calibración y manda el brazo a reposo (90°)
+                _servo->configAttach(p1, p2, _calibServo, 90, false);
+                
+                _calibServo = 0; 
+                updateState = true;
+            }
+            if (key == '#') { _calibState = 1; updateState = true; }
+            break;
+    }
+
+    if (updateState) {
+        int p1 = _servo->getPulseLimit(_calibServo, 0);
+        int p2 = _servo->getPulseLimit(_calibServo, 180);
+        _view->drawCalibrateMenu(_calibState, _calibServo, p1, p2);
+        updateState = false;
+    }
 }
+
 void MenuController::handleTest(char key, int joy){
     if(key == '#') { ptrState = &MenuController::handleSystem; updateState = true; }
     //Por ahora vacia

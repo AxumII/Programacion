@@ -138,9 +138,8 @@ bool ServoControlling::moveJTrigg(V3 target,int speed){
     }
 }
 
-
-
 bool ServoControlling::moveL(V3 initPos, V3 targetPos, int steps) {
+
     float q1, q2, q3;
     for (int i = 1; i <= steps; i++) {
         float t = (float)i / steps;
@@ -161,4 +160,51 @@ bool ServoControlling::moveL(V3 initPos, V3 targetPos, int steps) {
         }
     }
     return true;
+}
+
+
+//--------------------------------------------- CALIBRATE ---------------------------------------------------------------------------------
+bool ServoControlling::moveSingleServo(int calibServo, int angle ){
+    switch(calibServo){
+        case 1: Servo1.write(angle); return true;
+        case 2: Servo2.write(angle); return true;
+        case 3: Servo3.write(angle); return true;
+        default: return false;
+    }
+}
+
+bool ServoControlling::configAttach(int newp1, int newp2, int calibServo, int angle, bool liveUpdate) {
+    // 1. Guardamos los valores en memoria SIEMPRE para no perder la configuración
+    if (calibServo == 1) { p1s1 = newp1; p2s1 = newp2; }
+    if (calibServo == 2) { p1s2 = newp1; p2s2 = newp2; }
+    if (calibServo == 3) { p1s3 = newp1; p2s3 = newp2; }
+
+    
+    if (liveUpdate) {
+        int pulse = (angle == 0) ? newp1 : newp2;
+        if (calibServo == 1) Servo1.write(pulse); 
+        if (calibServo == 2) Servo2.write(pulse);
+        if (calibServo == 3) Servo3.write(pulse);
+        return true;
+    } 
+    
+    else {
+        if (calibServo == 1) Servo1.attach(0, angle, p1s1, p2s1);
+        if (calibServo == 2) Servo2.attach(1, angle, p1s2, p2s2);
+        if (calibServo == 3) Servo3.attach(2, angle, p1s3, p2s3);
+        
+        return moveSingleServo(calibServo, angle);
+    }
+}
+int ServoControlling::getPulseLimit(int servoNum, int angle) {
+    if (angle == 0) { // Retornar el límite inferior (P1)
+        if (servoNum == 1) return p1s1;
+        if (servoNum == 2) return p1s2;
+        if (servoNum == 3) return p1s3;
+    } else { // Retornar el límite superior (P2)
+        if (servoNum == 1) return p2s1;
+        if (servoNum == 2) return p2s2;
+        if (servoNum == 3) return p2s3;
+    }
+    return 0;
 }

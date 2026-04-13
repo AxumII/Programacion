@@ -17,8 +17,8 @@ byte rows[]   = {15, 16, 17, 18};
 byte cols[]   = {39, 40, 41, 42};
 byte i2cPins[] = {1, 2};
 byte spiPins[] = {11, 255, 12, 10, 13, 14}; // SPI para ST7789: MOSI(11), MISO(N/A), SCK(12), CS(10), DC(13), RST(14)
-byte joystick1Pins[] = {5, 4, 21}; // X, Y, SW
-byte joystick2Pins[] = {7, 6, 38}; // X, Y, SW
+byte joystick1Pins[] = {4, 5, 21}; // X, Y, SW
+byte joystick2Pins[] = {6, 7, 38}; // X, Y, SW
 // Creamos la instancia
 
 SystemConfig sistema(2, 2, 2, 1, aPines, pPines, lPines, dPines, rows, cols, 115200, i2cPins, spiPins, joystick1Pins, joystick2Pins);
@@ -34,7 +34,7 @@ ServoEasing Servo3(0x40, &Wire);
 
 void setup() {
     sistema.start();
-    controladorServos.settings(500, 2500, 500, 2500, 500, 2500, 90, 120, 90, 30, 'Q');    
+    controladorServos.settings(500, 2500, 620, 2280, 570, 2266, 90, 90, 90, 30, 'Q');    
     Serial.println("Sistema Iniciado - Esperando comandos...");
     
 

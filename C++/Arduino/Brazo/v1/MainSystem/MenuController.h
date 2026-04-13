@@ -28,6 +28,9 @@ class MenuController {
         // Puntero a función miembro
         void (MenuController::*ptrState)(char, int);
 
+        // --- VARIABLES APOYO CALIBRACION
+        int _calibState = 0; // 0: Base, 1: 0°, 2: 180°
+        int _calibServo = 0; // 1, 2, 3
 
         // --- METODOS DE APOYO PARA EL RENDERIZADO ---
         void renderCurrentView();
@@ -35,7 +38,7 @@ class MenuController {
         int getCurrentCursor();
         const char* textPicker(void (MenuController::*currentState)(char, int), int id);
 
-
+        
         // --- HANDLERS PRINCIPALES ---
         void handleIdle(char key, int joy);
         void handleMenu(char key, int joy);
