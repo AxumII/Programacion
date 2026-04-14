@@ -21,8 +21,29 @@ byte joystick1Pins[] = {4, 5, 21}; // X, Y, SW
 byte joystick2Pins[] = {6, 7, 38}; // X, Y, SW
 // Creamos la instancia
 
+float l1 = 40.04; // Longitud del primer eslabón
+float l2 = 100.8; // Longitud del segundo eslabón
+float l3 = 55;    // Longitud del tercer eslabón (si es
+float w1 = 0.1;     // Ancho del primer eslabón
+float w2 = 1;     // Ancho del segundo eslabón      
+float w3 = -14;     // Ancho del tercer eslabón (si es necesario)
+int toolType = 0; // Tipo de herramienta (1: pinza, 2: soldador, etc.)
+/*
+float lTool = 114.8;  // Longitud de la herramienta
+float wTool = -6.5;  // Ancho de la herramienta
+float thetaTool = 0; // Ángulo de la herramienta respecto al último eslabón
+
+*/
+
+float lTool = 14;  // Longitud de la herramienta
+float wTool = 0;  // Ancho de la herramienta
+float thetaTool = 0; // Ángulo de la herramienta respecto al último eslabón
+
+
+
 SystemConfig sistema(2, 2, 2, 1, aPines, pPines, lPines, dPines, rows, cols, 115200, i2cPins, spiPins, joystick1Pins, joystick2Pins);
-Kinematic calculosBrazo(97.0, 106.0, 0, 0, 0);
+Kinematic calculosBrazo(l1, l2, l3, w1, w2, w3, toolType, lTool, wTool, thetaTool);
+//Kinematic calculosBrazo(l1, l2, l3, w1, w2, w3, toolType);
 ServoControlling controladorServos(&calculosBrazo);
 MenuView pantalla(spiPins[3], spiPins[4], spiPins[5]);
 MenuController menu(&sistema, &pantalla, &controladorServos);
@@ -34,7 +55,7 @@ ServoEasing Servo3(0x40, &Wire);
 
 void setup() {
     sistema.start();
-    controladorServos.settings(500, 2500, 620, 2280, 570, 2266, 90, 90, 90, 30, 'Q');    
+    controladorServos.settings(500, 2500, 620, 2280, 570, 2266, 180, 180, 180, 30, 'Q');    
     Serial.println("Sistema Iniciado - Esperando comandos...");
     
 

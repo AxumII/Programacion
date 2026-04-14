@@ -196,6 +196,7 @@ bool ServoControlling::configAttach(int newp1, int newp2, int calibServo, int an
         return moveSingleServo(calibServo, angle);
     }
 }
+
 int ServoControlling::getPulseLimit(int servoNum, int angle) {
     if (angle == 0) { // Retornar el límite inferior (P1)
         if (servoNum == 1) return p1s1;

@@ -202,6 +202,7 @@ int SystemConfig::getJoystickAxis(byte joystick, char axis) {
 }
 
 bool SystemConfig::getJoySwState(byte joyNum) {
+
     bool pressed = false;
     
     // Verificar SW Joystick 1
@@ -216,4 +217,21 @@ bool SystemConfig::getJoySwState(byte joyNum) {
     }
     
     return pressed;
+}
+
+float SystemConfig::joystickAnalogProportional(int axisValue) {
+    const int centerLow = 1500;  // Antes 1800
+    const int centerHigh = 2500; // Antes 2200
+    const int minVal = 0;
+    const int maxVal = 4095;
+
+    if (axisValue > centerHigh) {
+        float val = (float)(axisValue - centerHigh) / (maxVal - centerHigh);
+        return constrain(val, 0.0f, 1.0f); 
+    } 
+    else if (axisValue < centerLow) {
+        float val = (float)(axisValue - centerLow) / centerLow; 
+        return constrain(val, -1.0f, 0.0f); 
+    }    
+    return 0.0f; 
 }

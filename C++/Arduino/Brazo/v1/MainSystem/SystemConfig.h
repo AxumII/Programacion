@@ -76,6 +76,7 @@ class SystemConfig {
 
         int getJoystickAxis(byte joystick, char axis);
         bool getJoySwState(byte joyNum);
+        float joystickAnalogProportional(int axisValue);
             
 };
 

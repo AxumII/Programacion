@@ -33,7 +33,7 @@ class MenuController {
         int _calibServo = 0; // 1, 2, 3
 
         // --- METODOS DE APOYO PARA EL RENDERIZADO ---
-        void renderCurrentView();
+        void renderMenuView(bool activate);
         int getNumButtonsForState(void (MenuController::*currentState)(char, int));
         int getCurrentCursor();
         const char* textPicker(void (MenuController::*currentState)(char, int), int id);

@@ -32,83 +32,71 @@ MenuController::MenuController(SystemConfig* sys, MenuView* view, ServoControlli
 
 
 void MenuController::update() {
-    // 1. Leer el teclado
-    char key = _sys->getKey(); 
-    
-    // 2. Leer el joystick usando tu nueva función (Joystick 1, Eje Y)
-    int rawJoyY = _sys->getJoystickAxis(1, 'Y'); 
-    
-    // 3. Procesar el movimiento con el anti-rebote
+    char key = _sys->getKey();     
+    int rawJoyY = _sys->getJoystickAxis(1, 'Y');     
     int joy = _sys->joystickAsSelector(rawJoyY);
-    
-    // Imprimir para depuración (opcional, pero recomendado)
-    if (key || joy != 0) {
-        Serial.print("Tecla: "); Serial.print(key ? key : '-');
-        Serial.print(" | Joy Y: "); Serial.print(rawJoyY);
-        Serial.print(" -> Dir: "); Serial.print(joy);
-        Serial.print(" | Main: "); Serial.print(actualStateMain);
-        Serial.print(" | Sub: "); Serial.println(actualStateMenu);
-    }
 
-    // 4. Ejecutar la máquina de estados
     if (ptrState != nullptr) {
         (this->*ptrState)(key, joy);
     }
-    if (updateState) {
-        renderCurrentView(); // Nueva función privada para decidir qué dibujar
-        updateState = false; 
-    }
 }
 
-//--------------------------------------- RENDERIZADOR ---------------------------------------
+//--------------------------------------- RENDERIZADOR DE MENÚS NORMALES ---------------------------------------
 
-void MenuController::renderCurrentView() {
-    int maxSize = 5;
-    if (ptrState == &MenuController::handleIdle) {
-        _view->loadScreen();
-        return; 
-    }   
-    int numButtons = getNumButtonsForState(ptrState); 
+void MenuController::renderMenuView(bool activate) {
+    if (activate) {
+        
+        if (ptrState == &MenuController::handleIdle) {
+            _view->loadScreen();
+            updateState = false;
+            return; 
+        }   
 
-    for (int i = 0; i < maxSize; i++) {
-        const char* label = textPicker(ptrState, i);        
-        if (label[0] == '\0') {
-            _view->drawMenuButton(i, false, ""); 
-        } else {
-            bool isSelected = (getCurrentCursor() == i); 
-            _view->drawMenuButton(i, isSelected, label);
+        int maxSize = 5;
+        int numButtons = getNumButtonsForState(ptrState); 
+
+        for (int i = 0; i < maxSize; i++) {
+            const char* label = textPicker(ptrState, i);        
+            if (label[0] == '\0') {
+                _view->drawMenuButton(i, false, ""); 
+            } else {
+                bool isSelected = (getCurrentCursor() == i); 
+                _view->drawMenuButton(i, isSelected, label);
+            }
         }
-    }
+        updateState = false; 
+    }        
 }
+
 //--------------------------------------- APOYO GRAFICO -----------------------------------
 
 int MenuController::getNumButtonsForState(void (MenuController::*currentState)(char, int)) {
-    // Retorna la cantidad de opciones que tiene cada menú para que el 'for' no dibuje de más
+    // Retorna la cantidad de opciones reales
     if (currentState == &MenuController::handleMenu) return 5;
     if (currentState == &MenuController::handleSystem) return 5;
     if (currentState == &MenuController::handleConfig) return 4;
-    if (currentState == &MenuController::handleManual) return 5;
-    if (currentState == &MenuController::handleTool) return 4;
-    if (currentState == &MenuController::handleSetControlMove) return 3;
+    if (currentState == &MenuController::handleManual) return 1; 
+    if (currentState == &MenuController::handleTool) return 3;
+    if (currentState == &MenuController::handleSetControlMove) return 2;
     if (currentState == &MenuController::handleCalibrate && _calibState == 0) return 3;
     
-    return 0; // Si es un estado final (como handleGoHome), no dibuja menú
+    return 0; 
 }
 
 int MenuController::getCurrentCursor() {
-    // Devuelve la variable de cursor correcta dependiendo de dónde estemos
     if (ptrState == &MenuController::handleMenu) return actualStateMenu;
     if (ptrState == &MenuController::handleSystem) return actualStateSystem;
     if (ptrState == &MenuController::handleConfig) return actualStateConfig;
     if (ptrState == &MenuController::handleManual) return actualStateManual;
     if (ptrState == &MenuController::handleTool) return actualStateTool;
     if (ptrState == &MenuController::handleSetControlMove) return actualStateSetControlMove;
-    
+    if (ptrState == &MenuController::handleCalibrate) {
+        return _calibServo == 0 ? 0 : (_calibServo - 1); 
+    }
     return 0;
 }
 
 const char* MenuController::textPicker(void (MenuController::*currentState)(char, int), int id) {
-    // Añadimos && id < cantidad para que NUNCA lea memoria prohibida
     if (currentState == &MenuController::handleMenu && id < 5)    return labelsMain[id];
     if (currentState == &MenuController::handleSystem && id < 5)  return labelsSystem[id];
     if (currentState == &MenuController::handleConfig && id < 4)  return labelsConfig[id];
@@ -122,15 +110,17 @@ const char* MenuController::textPicker(void (MenuController::*currentState)(char
     }
     return ""; 
 }
+
 // -------------------------------------- REPOSO / MENU --------------------------------------
 
 void MenuController::handleIdle(char key, int joy) {
     if (key == '#' || joy != 0 || key == '*' ) {
-        _view->clearForMenu();
         actualStateMain = 1;
+        _view->clearForMenu(); 
         updateState = true;
         ptrState = &MenuController::handleMenu;
     }
+    renderMenuView(updateState);
 }
 
 void MenuController::handleMenu(char key, int joy) {
@@ -138,7 +128,7 @@ void MenuController::handleMenu(char key, int joy) {
         actualStateMenu = (actualStateMenu + joy + 5) % 5; 
         updateState = true;
     }
-
+    
     Transicion menu[] = {
         {'#', -1, &MenuController::handleIdle},      
         {'*',  0, &MenuController::handleSystem},    
@@ -152,9 +142,10 @@ void MenuController::handleMenu(char key, int joy) {
         if (key == t.tecla && (t.cursor == -1 || t.cursor == actualStateMenu)) {
             ptrState = t.nextState;
             updateState = true;
-            return; 
+            break; // IMPORTANTE: Solo rompe el for, no la función
         }
     }
+    renderMenuView(updateState);
 }
 
 //-------------------------------- SUBMENÚS ---------------------------------------------------
@@ -178,9 +169,10 @@ void MenuController::handleSystem(char key, int joy){
         if (key == t.tecla && (t.cursor == -1 || t.cursor == actualStateSystem)) {
             ptrState = t.nextState;
             updateState = true;
-            return; 
+            break; 
         }
     }
+    renderMenuView(updateState);
 }
 
 void MenuController::handleConfig(char key, int joy){
@@ -201,9 +193,10 @@ void MenuController::handleConfig(char key, int joy){
         if (key == t.tecla && (t.cursor == -1 || t.cursor == actualStateConfig)) {
             ptrState = t.nextState;
             updateState = true;
-            return; 
+            break; 
         }
     }
+    renderMenuView(updateState);
 }
 
 void MenuController::handleManual(char key, int joy){
@@ -221,14 +214,19 @@ void MenuController::handleManual(char key, int joy){
         if (key == t.tecla && (t.cursor == -1 || t.cursor == actualStateManual)) {
             ptrState = t.nextState;
             updateState = true;
-            return; 
+            break; 
         }
     }
+    renderMenuView(updateState);
 }
 
 void MenuController::handleLoad(char key, int joy){
-    if(key == '#') { actualStateMain = 1; ptrState = &MenuController::handleMenu; updateState = true; }
-    //Por ahora vacio ya que no voy a implementar esto por ahora
+    if(key == '#') { 
+        actualStateMain = 1; 
+        ptrState = &MenuController::handleMenu; 
+        updateState = true; 
+    }
+    renderMenuView(updateState);
 }
 
 void MenuController::handleTool(char key, int joy){
@@ -248,9 +246,10 @@ void MenuController::handleTool(char key, int joy){
         if (key == t.tecla && (t.cursor == -1 || t.cursor == actualStateTool)) {
             ptrState = t.nextState;
             updateState = true;
-            return; 
+            break; 
         }
     }
+    renderMenuView(updateState);
 }
 
 //-------------------------------------- FUNCIONES DE SYSTEM ----------------------------------
@@ -261,7 +260,6 @@ void MenuController::handleGoHome(char key, int joy){
         updateState = true; 
     }    
     _servo->goHome(); 
-    
 }
 
 void MenuController::handleCalibrate(char key, int joy) {
@@ -300,10 +298,9 @@ void MenuController::handleCalibrate(char key, int joy) {
             if (step != 0) {
                 int p1 = _servo->getPulseLimit(_calibServo, 0);
                 int p2 = _servo->getPulseLimit(_calibServo, 180);
-                int nuevoP1 = constrain(p1 + step, 500, 2500); // Límite de seguridad
+                int nuevoP1 = constrain(p1 + step, 500, 2500); 
                 
                 if (nuevoP1 != p1) {
-                    // Ponemos TRUE: Movimiento suave y seguro por I2C
                     _servo->configAttach(nuevoP1, p2, _calibServo, 0, true); 
                     updateState = true;
                 }
@@ -312,7 +309,6 @@ void MenuController::handleCalibrate(char key, int joy) {
                 _calibState = 2;
                 int p1 = _servo->getPulseLimit(_calibServo, 0);
                 int p2 = _servo->getPulseLimit(_calibServo, 180);
-                // Ponemos FALSE: Guarda definitivo y salta a 180°
                 _servo->configAttach(p1, p2, _calibServo, 180, false); 
                 updateState = true;
             }
@@ -326,7 +322,6 @@ void MenuController::handleCalibrate(char key, int joy) {
                 int nuevoP2 = constrain(p2 + step, 500, 2500);
                 
                 if (nuevoP2 != p2) {
-                    // Ponemos TRUE: Movimiento suave
                     _servo->configAttach(p1, nuevoP2, _calibServo, 180, true);
                     updateState = true;
                 }
@@ -335,8 +330,7 @@ void MenuController::handleCalibrate(char key, int joy) {
                 _calibState = 0;
                 int p1 = _servo->getPulseLimit(_calibServo, 0);
                 int p2 = _servo->getPulseLimit(_calibServo, 180);
-                // Ponemos FALSE: Cierra calibración y manda el brazo a reposo (90°)
-                _servo->configAttach(p1, p2, _calibServo, 90, false);
+                _servo->configAttach(p1, p2, _calibServo, 0, false);
                 
                 _calibServo = 0; 
                 updateState = true;
@@ -346,8 +340,8 @@ void MenuController::handleCalibrate(char key, int joy) {
     }
 
     if (updateState) {
-        int p1 = _servo->getPulseLimit(_calibServo, 0);
-        int p2 = _servo->getPulseLimit(_calibServo, 180);
+        int p1 = (_calibServo != 0) ? _servo->getPulseLimit(_calibServo, 0) : 0;
+        int p2 = (_calibServo != 0) ? _servo->getPulseLimit(_calibServo, 180) : 0;
         _view->drawCalibrateMenu(_calibState, _calibServo, p1, p2);
         updateState = false;
     }
@@ -355,33 +349,26 @@ void MenuController::handleCalibrate(char key, int joy) {
 
 void MenuController::handleTest(char key, int joy){
     if(key == '#') { ptrState = &MenuController::handleSystem; updateState = true; }
-    //Por ahora vacia
 }
 void MenuController::handleRestrict(char key, int joy){
     if(key == '#') { ptrState = &MenuController::handleSystem; updateState = true; }
-    //Por ahora vacia
 }
 void MenuController::handleAboutSystem(char key, int joy){
     if(key == '#') { ptrState = &MenuController::handleSystem; updateState = true; }
-    //Por ahora vacia
 }
 
 //-------------------------------------- FUNCIONES DE CONFIG ----------------------------------
 void MenuController::handleSetCoordRef(char key, int joy){
     if(key == '#') { ptrState = &MenuController::handleConfig; updateState = true; }
-    //Por ahora vacia
 }
 void MenuController::handleSetSystemOfUnits(char key, int joy){
     if(key == '#') { ptrState = &MenuController::handleConfig; updateState = true; }
-    //Por ahora vacia
 }
 void MenuController::handleSetMoveInfo(char key, int joy){
     if(key == '#') { ptrState = &MenuController::handleConfig; updateState = true; }
-    //Por ahora vacia
 }
 void MenuController::handleSetSegment(char key, int joy){
     if(key == '#') { ptrState = &MenuController::handleConfig; updateState = true; }
-    //Por ahora vacia
 }
 
 //-------------------------------------- FUNCIONES DE MANUAL ----------------------------------
@@ -399,143 +386,233 @@ void MenuController::handleSetControlMove(char key, int joy){
 
     for (auto& t : controlMove) {
         if (key == t.tecla && (t.cursor == -1 || t.cursor == actualStateSetControlMove)) {
+            _view->clearForMenu(); 
             ptrState = t.nextState;
+            
+            if (t.nextState == &MenuController::handleJoyAngular || 
+                t.nextState == &MenuController::handleJoyPosition) {
+                
+                _view->loadScreen();                 
+                if (t.nextState == &MenuController::handleJoyPosition || t.nextState == &MenuController::handleJoyAngular) {
+                    _servo->ReachForAnglesAndStop(90, 90, 90);
+                }
+                _view->clearForMenu();
+            }
             updateState = true;
             return; 
         }
     }
+    if (updateState) {
+        renderMenuView(updateState);
+    }
 }
-
 //-------------------------------------- FUNCIONES DE TOOL ------------------------------------
 void MenuController::handleGrippen(char key, int joy){
     if(key == '#') { ptrState = &MenuController::handleTool; updateState = true; }
-    //Por ahora vacia
 }
 void MenuController::handleTracer(char key, int joy){
     if(key == '#') { ptrState = &MenuController::handleTool; updateState = true; }
-    //Por ahora vacia
 }
 void MenuController::handleCamera(char key, int joy){
     if(key == '#') { ptrState = &MenuController::handleTool; updateState = true; }
-    //Por ahora vacia
 }
 
 //-------------------------------------- FUNCIONES DE SETCONTROLMOVE------------------------------------
-void MenuController::handleJoyAngular(char key, int joy){
-    if(key == '#') { ptrState = &MenuController::handleSetControlMove; updateState = true; }
-    
-    // 1. SELECTOR GLOBAL DE VELOCIDAD 
-    if (_sys->getJoySwState(1) || _sys->getJoySwState(2)) {
-        multiplierIndex = (multiplierIndex + 1) % 3; // *1 -> *2 -> *5
+
+void MenuController::handleJoyAngular(char key, int joy) {
+    // --- 1. SALIDA Y LIMPIEZA ---
+    if(key == '#') { 
+        _view->clearForMenu(); 
+        ptrState = &MenuController::handleSetControlMove; 
         updateState = true; 
+        return; 
     }
+    
+    // --- 2. CAJA DE CAMBIOS CON ANTI-REBOTE (Adiós parpadeo loco) ---
+    // Usamos un temporizador para que un "click" humano no cuente como 50 clicks del procesador.
+    static unsigned long lastSwPress = 0;
+    if ((_sys->getJoySwState(1) || _sys->getJoySwState(2)) && (millis() - lastSwPress > 300)) {
+        multiplierIndex = (multiplierIndex + 1) % 3; // Itela: 0 -> 1 -> 2
+        lastSwPress = millis();
+    }
+    
+    // Asegúrate de que tu arreglo multipliers esté definido (ej. multipliers[] = {1, 2, 5};)
     int currentMult = multipliers[multiplierIndex];
-    float baseStep = 0.5;
+    float maxBaseStep = 1.0; 
 
-    // 2. SELECTOR DE MOVIMIENTO
-    int vQ1   = _sys->joystickAsFasterSelector(_sys->getJoystickAxis(1, 'Y')); 
-    int vQ2   = _sys->joystickAsFasterSelector(_sys->getJoystickAxis(1, 'X')); 
-    int vQ3 = _sys->joystickAsFasterSelector(_sys->getJoystickAxis(2, 'X'));
-    int vTool = _sys->joystickAsFasterSelector(_sys->getJoystickAxis(2, 'Y'));
+    // --- 3. LECTURA PROPORCIONAL (-1.0 a 1.0) ---
+    float pQ1 = _sys->joystickAnalogProportional(_sys->getJoystickAxis(2, 'Y')); 
+    float pQ2 = _sys->joystickAnalogProportional(_sys->getJoystickAxis(1, 'Y')); 
+    float pQ3 = _sys->joystickAnalogProportional(_sys->getJoystickAxis(1, 'X'));
+    float pTool = _sys->joystickAnalogProportional(_sys->getJoystickAxis(2, 'X'));
 
-    // 3. CONTROLADOR DE MOVIMIENTO
-    bool moveState = (vQ1 != 0 || vQ2 != 0 || vQ3 != 0);
+    bool moveState = (pQ1 != 0.0f || pQ2 != 0.0f || pQ3 != 0.0f);
 
+    // --- 4. CEREBRO FÍSICO (Refresco Dinámico) ---
     if (moveState) {
-        // --- MODO CONTINUO (En movimiento) ---
-        float targetQ1   = _servo->getAngle(1) + (vQ1 * baseStep * currentMult);
-        float targetQ2   = _servo->getAngle(2) + (vQ2 * baseStep * currentMult);
-        float targetQ3 = _servo->getAngle(3) + (vQ3 * baseStep * currentMult);
-        if (_servo->ReachForAnglesContinuous(targetQ1, targetQ2, targetQ3)) {
-            updateState = true; 
+        static unsigned long lastAngularUpdate = 0;
+        
+        // Si el multiplicador es alto, damos un poco más de tiempo para que el servo se mueva
+        // x1 -> 40ms, x2 -> 60ms, x5 -> 100ms
+        int dynamicDelay = 40 + (currentMult * 12); 
+
+        if (millis() - lastAngularUpdate > dynamicDelay) {
+            lastAngularUpdate = millis();
+
+            // Calculamos los targets
+            float targetQ1 = _servo->getAngle(1) + (pQ1 * maxBaseStep * currentMult);
+            float targetQ2 = _servo->getAngle(2) + (pQ2 * maxBaseStep * currentMult);
+            float targetQ3 = _servo->getAngle(3) + (pQ3 * maxBaseStep * currentMult);
+            
+            // Usamos el método de movimiento sin bloqueo
+            _servo->ReachForAnglesContinuous(targetQ1, targetQ2, targetQ3);
         }
         wasMoving = true;
-    } 
+    }
     else if (wasMoving) {
-        // --- MODO STOP (Justo cuando sueltas el Joystick) ---
-        float finalQ1 = _servo->getAngle(1);
-        float finalQ2 = _servo->getAngle(2);
-        float finalQ3 = _servo->getAngle(3);
-        if (_servo->ReachForAnglesAndStop(finalQ1, finalQ2, finalQ3)) {
-            updateState = true; 
-        }
-        wasMoving = false;
-    }
-    // 3. TOOL
-    if (vTool != 0) {
-        float toolStep = 1.0;
-        float targetTool = _servo->getAngle(4) + (vTool * toolStep * currentMult);        
-        // Llamada al método de movimiento continuo de la tool        
-        wasMovingTool = true;
-        updateState = true;
-    } 
-    else if (wasMovingTool) {
-        // Stop exclusivo para la tool
-        float fQ4 = _servo->getAngle(4);
-        // _servo->moveToolAndStop(fQ4);         
-        wasMovingTool = false;
-        updateState = true;
-    }
-}
-
-void MenuController::handleJoyPosition(char key, int joy) {
-    if(key == '#') { ptrState = &MenuController::handleSetControlMove; updateState = true; return; }
-    
-    // 1. SELECTOR GLOBAL DE VELOCIDAD 
-    if (_sys->getJoySwState(1) || _sys->getJoySwState(2)) {
-        multiplierIndex = (multiplierIndex + 1) % 3; // *1 -> *2 -> *5
-        updateState = true; 
-    }
-    int currentMult = multipliers[multiplierIndex];
-    float baseStep = 1.0; // Milímetros por iteración
-    
-    // 2. LECTURA DE EJES CARTESIANOS
-    int vX = _sys->joystickAsFasterSelector(_sys->getJoystickAxis(1, 'Y')); 
-    int vY = _sys->joystickAsFasterSelector(_sys->getJoystickAxis(1, 'X')); 
-    int vZ = _sys->joystickAsFasterSelector(_sys->getJoystickAxis(2, 'Y'));
-    int vTool = _sys->joystickAsFasterSelector(_sys->getJoystickAxis(2, 'X')); 
-
-    bool moveState = (vX != 0 || vY != 0 || vZ != 0);
-
-    // 3. CONTROLADOR ESPACIAL (X, Y, Z)
-    if (moveState) {
-        // --- MODO CONTINUO ---
-        V3 currentPos = _servo->getPos();
-        
-        float targetX = currentPos.x() + (vX * baseStep * currentMult);
-        float targetY = currentPos.y() + (vY * baseStep * currentMult);
-        float targetZ = currentPos.z() + (vZ * baseStep * currentMult);
-        
-        V3 targetPos(targetX, targetY, targetZ);
-
-        // moveJ_Trigg procesa la cinemática inversa y hace el Reach Continuous
-        if (_servo->moveJTrigg(targetPos, -1)) {
-            updateState = true; 
-        }
-        wasMoving = true;
-    } 
-    else if (wasMoving) {
-        // --- MODO STOP ---
-        V3 finalPos = _servo->getPos();
-        
-        // moveJ hace el ReachAndStop usando la velocidad por defecto (-1)
-        if (_servo->moveJ(finalPos, -1)) {
-            updateState = true; 
-        }
+        // Stop exacto al soltar el joystick
+        float fQ1 = _servo->getAngle(1);
+        float fQ2 = _servo->getAngle(2);
+        float fQ3 = _servo->getAngle(3);
+        _servo->ReachForAnglesAndStop(fQ1, fQ2, fQ3);
         wasMoving = false;
     }
 
-    // 4. CONTROLADOR DE LA TOOL (Se mantiene en ángulos locales)
-    if (vTool != 0) {
-        float targetTool = _servo->getAngle(4) + (vTool * 1.0 * currentMult);
-        // _servo->moveToolContinuous(targetTool);
+    // --- 5. CONTROL TOOL ---
+    if (pTool != 0.0f) {
+        static unsigned long lastToolUpdate = 0;
+        if (millis() - lastToolUpdate > 50) {
+            lastToolUpdate = millis();
+            float targetTool = _servo->getAngle(4) + (pTool * maxBaseStep * currentMult);
+            // _servo->moveToolContinuous(targetTool);
+        }
         wasMovingTool = true;
-        updateState = true;
     } 
     else if (wasMovingTool) {
         // _servo->moveToolAndStop(_servo->getAngle(4));
         wasMovingTool = false;
-        updateState = true;
+    }
+
+    // --- 6. CEREBRO VISUAL (Anti-Flicker Maestro) ---
+    static bool justEntered = true; 
+    static unsigned long lastUIDraw = 0;
+    static int lastDrawnMult = -1; // Memoria para saber si cambió la velocidad
+    
+    // ¿Cuándo redibujar la pantalla? 
+    // 1. Si acabamos de entrar.
+    // 2. Si pasaron 250ms (solo actualiza números de forma fluida y sin titilar).
+    // 3. Si se pulsó el botón y cambió el multiplicador.
+    if (justEntered || millis() - lastUIDraw > 250 || currentMult != lastDrawnMult) {
+        lastUIDraw = millis();
+        lastDrawnMult = currentMult;
+        
+        V3 pos = _servo->getPos(); 
+        float q1 = _servo->getAngle(1);
+        float q2 = _servo->getAngle(2);
+        float q3 = _servo->getAngle(3);
+        float q4 = _servo->getAngle(4); 
+        
+        _view->drawMoveMenu(0, pos.x(), pos.y(), pos.z(), q1, q2, q3, q4, currentMult, true);
+        
+        justEntered = false; 
     }
 }
 
+void MenuController::handleJoyPosition(char key, int joy) {
+    // --- 1. SALIDA Y LIMPIEZA DE PANTALLA ---
+    if(key == '#') { 
+        _view->clearForMenu(); 
+        ptrState = &MenuController::handleSetControlMove; 
+        updateState = true; 
+        return; 
+    }
+    
+    // --- 2. CAJA DE CAMBIOS CON ANTI-REBOTE ---
+    static unsigned long lastSwPress = 0;
+    if ((_sys->getJoySwState(1) || _sys->getJoySwState(2)) && (millis() - lastSwPress > 300)) {
+        multiplierIndex = (multiplierIndex + 1) % 3; // Ciclo: x1 -> x2 -> x5
+        lastSwPress = millis();
+        updateState = true; // Forzar redibujo para mostrar el cambio de multiplicador
+    }
+    int currentMult = multipliers[multiplierIndex];
+    float maxBaseStep = 1.0; 
+    
+    // --- 3. LECTURA PROPORCIONAL DE EJES ---
+    float pX = _sys->joystickAnalogProportional(_sys->getJoystickAxis(1, 'Y')); 
+    float pY = _sys->joystickAnalogProportional(_sys->getJoystickAxis(1, 'X')); 
+    float pZ = _sys->joystickAnalogProportional(_sys->getJoystickAxis(2, 'Y'));
+    float pTool = _sys->joystickAnalogProportional(_sys->getJoystickAxis(2, 'X')); 
+
+    bool moveState = (pX != 0.0f || pY != 0.0f || pZ != 0.0f);
+    static bool ikPossible = true; // Almacena el estado de la cinemática
+
+    // --- 4. CONTROLADOR ESPACIAL (Cerebro Físico: 50ms) ---
+    if (moveState) {
+        static unsigned long lastCartesianUpdate = 0;
+        if (millis() - lastCartesianUpdate > 50) { 
+            lastCartesianUpdate = millis();
+            
+            V3 currentPos = _servo->getPos();
+            
+            float stepX = maxBaseStep * currentMult * pX;
+            float stepY = maxBaseStep * currentMult * pY;
+            float stepZ = maxBaseStep * currentMult * pZ;
+            
+            V3 targetPos(currentPos.x() + stepX, 
+                         currentPos.y() + stepY, 
+                         currentPos.z() + stepZ);
+
+            // Intentar mover y capturar si el punto es alcanzable
+            ikPossible = _servo->moveJTrigg(targetPos, -1);
+            
+            // Si hubo movimiento o intento, pedimos actualizar pantalla
+            updateState = true; 
+        }
+        wasMoving = true;
+    } 
+    else if (wasMoving) {
+        // Al soltar el joystick, clavamos la posición actual
+        V3 finalPos = _servo->getPos();
+        _servo->moveJ(finalPos, -1);
+        wasMoving = false;
+        updateState = true;
+    }
+
+    // --- 5. CONTROLADOR DE LA TOOL ---
+    if (pTool != 0.0f) {
+        static unsigned long lastToolUpdate = 0;
+        if (millis() - lastToolUpdate > 50) {
+            lastToolUpdate = millis();
+            float maxToolStep = 2.0; 
+            float targetTool = _servo->getAngle(4) + (maxToolStep * currentMult * pTool);
+            // _servo->moveToolContinuous(targetTool);
+            updateState = true;
+        }
+        wasMovingTool = true;
+    } 
+    else if (wasMovingTool) {
+        wasMovingTool = false;
+        updateState = true;
+    }
+    
+    // --- 6. CEREBRO VISUAL (Actualización de pantalla) ---
+    // Redibujamos si updateState es true o por tiempo (cada 250ms) para suavidad
+    static unsigned long lastUIDraw = 0;
+    static bool firstRun = true;
+
+    if (updateState || firstRun || (millis() - lastUIDraw > 250)) {
+        lastUIDraw = millis();
+        firstRun = false;
+
+        V3 pos = _servo->getPos(); 
+        float q1 = _servo->getAngle(1);
+        float q2 = _servo->getAngle(2);
+        float q3 = _servo->getAngle(3);
+        float q4 = _servo->getAngle(4); 
+        
+        // Llamada a la vista (modo 1 = Position) pasando el estado ikPossible
+        _view->drawMoveMenu(1, pos.x(), pos.y(), pos.z(), q1, q2, q3, q4, currentMult, ikPossible);
+        
+        updateState = false; 
+    }
+}

@@ -125,5 +125,80 @@ void MenuView::drawCalibrateMenu(int calibState, int calibServo, int p1, int p2)
     }
 }
 
-//
+void MenuView::drawMoveMenu(int mode, float x, float y, float z, float q1, float q2, float q3, float q4, int speedMult, bool isPossible) {
+    
+    
 
+    // 2. ENCABEZADO DINÁMICO
+    _tft->setTextSize(2);
+    _tft->setTextColor(ST77XX_YELLOW, ST77XX_BLACK);
+    _tft->setCursor(36, 15); 
+    
+    if (mode == 0) {
+        _tft->print(" MODO ANGULAR ");
+    } else {
+        _tft->print(" MODO POSITION");
+    }
+
+    // 3. INDICADOR DE VELOCIDAD (MULTIPLICADOR)
+    _tft->setTextColor(ST77XX_GREEN, ST77XX_BLACK);
+    _tft->setCursor(24, 40);
+    _tft->print("Multiplier: x" + String(speedMult));
+
+    // 4. CONFIGURACIÓN DE COLUMNAS
+    int startY = 85;     // Altura inicial de datos
+    int gap = 30;        // Espacio vertical entre filas
+    int colAngles = 10;  // X columna izquierda (Servos)
+    int colCoords = 125; // X columna derecha (Cartesianas)
+    char buf[20]; 
+
+    // >> COLUMNA IZQUIERDA: ÁNGULOS DE SERVOS (Q) <<
+    _tft->setTextColor(ST77XX_CYAN, ST77XX_BLACK);
+    
+    sprintf(buf, "Q1:%6.1f", q1);
+    _tft->setCursor(colAngles, startY);
+    _tft->print(buf);
+    
+    sprintf(buf, "Q2:%6.1f", q2);
+    _tft->setCursor(colAngles, startY + gap);
+    _tft->print(buf);
+    
+    sprintf(buf, "Q3:%6.1f", q3);
+    _tft->setCursor(colAngles, startY + gap * 2);
+    _tft->print(buf);
+    
+    sprintf(buf, "TL:%6.1f", q4);
+    _tft->setCursor(colAngles, startY + gap * 3);
+    _tft->print(buf);
+
+    // >> COLUMNA DERECHA: COORDENADAS (X, Y, Z) <<
+    // Estos valores vienen de la cinemática directa (DH)
+    _tft->setTextColor(ST77XX_ORANGE, ST77XX_BLACK);
+    
+    sprintf(buf, "X:%6.1f", x);
+    _tft->setCursor(colCoords, startY);
+    _tft->print(buf);
+    
+    sprintf(buf, "Y:%6.1f", y);
+    _tft->setCursor(colCoords, startY + gap);
+    _tft->print(buf);
+    
+    sprintf(buf, "Z:%6.1f", z);
+    _tft->setCursor(colCoords, startY + gap * 2);
+    _tft->print(buf);
+
+    _tft->setCursor(140, 200);
+    if (isPossible) {
+        _tft->setTextColor(ST77XX_GREEN, ST77XX_BLACK);
+        _tft->print("READY ");
+    } else {
+        _tft->setTextColor(ST77XX_RED, ST77XX_BLACK);
+        _tft->print("BLOCK ");
+    }
+
+    // 5. PIE DE PÁGINA (Instrucciones)
+    _tft->setTextSize(1);
+    _tft->setTextColor(0x7BEF, ST77XX_BLACK); // Gris
+    _tft->setCursor(51, 220);
+    _tft->print("Presione [#] para salir");
+}
