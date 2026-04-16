@@ -1,0 +1,34 @@
+{
+    "version": "2.0.0",
+    "configurations": [
+        {
+            "name": "Ejecutar Brazo (Eigen)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "C:/GitHub/Programacion/C++/Arduino/Brazo/v2/Kinematic Analysis/output/main.exe",
+            "args": [
+                "-fdiagnostics-color=always",
+                "-g",
+                "-I", "C:/Librerias c++/eigen-5.0.0",
+                "${fileDirname}/main.cpp",
+                "${fileDirname}/Kinematic.cpp",
+                "-o",
+                "${fileDirname}/output/main.exe"
+            ],
+            "stopAtEntry": false,
+            "cwd": "C:/GitHub/Programacion/C++/Arduino/Brazo/v2/Kinematic Analysis/output",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "C:/msys64/mingw64/bin/gdb.exe",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "FORZAR_EIGEN_COMPILACION"
+        }
+    ]
+}
