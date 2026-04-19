@@ -37,12 +37,14 @@ class SystemConfig {
         static byte* _pinJoy2; 
         hw_timer_t* timerDebounce = NULL;
 
-        bool _I2CStatus, _PCA9685Status, _SPIStatus, _SerialStatus, _GPIOStatus;
-
         unsigned long _joyTimer;
-        const int _joyDelay; // Se inicializa en el constructor
-
+        const int _joyDelay;
+        int timeout = 1000;
     public:
+        bool _SPIStatus = false;
+        bool _SerialStatus = false;
+        bool _I2CStatus = false;
+        bool _PCA9685Status = false;
         SystemConfig(byte dimA, byte dimP, byte dimL, byte dimD,
                      byte* pA, byte* pP, byte* pL, byte* pD, 
                      byte* pF, byte* pC, uint32_t b, 
@@ -56,28 +58,27 @@ class SystemConfig {
             }
             return mask;
         }
-
         bool start();
+        Eigen::VectorXi I2CScan();
         static void IRAM_ATTR debounceISR();
 
         bool readPulsador(byte index);
         void setLED(byte index, bool state);
+
         byte getJoystickPin(byte joyNum, byte axis);
         byte getAnalogPin(byte index);
         char getKey();
-        
-        int joystickAsSelector(int axisValue);
-        int joystickAsFasterSelector(int axisValue);
-        bool statusChecker();
-        Eigen::VectorXi I2CScan();
-
-        uint32_t getP();
-        void clearP();
-
         int getJoystickAxis(byte joystick, char axis);
         bool getJoySwState(byte joyNum);
         float joystickAnalogProportional(int axisValue);
-            
+        
+        int joystickAsSelector(int axisValue);
+        int joystickAsFasterSelector(int axisValue);
+
+        uint32_t getP();
+        void clearP();            
 };
 
 #endif
+
+

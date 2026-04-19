@@ -13,7 +13,7 @@ extern const uint16_t Axum[] PROGMEM;
 #define COLOR_FILL_MENU COLOR_AZUL_CLARO
 #define COLOR_AMARILLO     0xFFE0
 MenuView::MenuView(byte cs, byte dc, byte rst) {
-    _tft = new Adafruit_ST7789(cs, dc, rst);
+    _tft = new Adafruit_ST7789(&SPI, cs, dc, rst);
     posXMenuButton = 40;
     hMenuButton = 30;
     wMenuButton = 180;
@@ -26,6 +26,7 @@ MenuView::MenuView(byte cs, byte dc, byte rst) {
 
 void MenuView::initTFT() {
     _tft->init(240, 280); 
+    _tft->setRotation(2);
 }
 
 void MenuView::loadScreen() {

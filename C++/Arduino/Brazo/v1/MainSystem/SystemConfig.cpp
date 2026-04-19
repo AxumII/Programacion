@@ -31,13 +31,9 @@ bool SystemConfig::start() {
     _SerialStatus = (Serial) ? true : false;
 
     // 2. Diagnóstico de SPI
-    if(_pinSPI[2] != 255 && _pinSPI[0] != 255) { //Permite ignorar el pin vacio
-        SPI.begin(_pinSPI[2], _pinSPI[1], _pinSPI[0]);
-    } else {
-        _SPIStatus = false;
-    }
-    MenuView UI(10, 13, 14);
-    UI.initTFT();
+    SPI.begin(_pinSPI[2], _pinSPI[1], _pinSPI[0], _pinSPI[3]);
+    MenuView UI(_pinSPI[3], _pinSPI[4], _pinSPI[5]);
+    UI.initTFT();      
     UI.loadScreen();
 
 

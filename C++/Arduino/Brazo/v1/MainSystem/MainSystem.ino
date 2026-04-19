@@ -9,14 +9,14 @@
 #include "MenuController.h"
 
 // Datos de ejemplo para ESP32
-byte aPines[] = {8, 9};
+byte aPines[] = {8};
 byte dPines[] = {254};
 byte pPines[] = {3, 47};
 byte lPines[] = {45, 46};
 byte rows[]   = {15, 16, 17, 18};
 byte cols[]   = {39, 40, 41, 42};
 byte i2cPins[] = {1, 2};
-byte spiPins[] = {11, 255, 12, 10, 13, 14}; // SPI para ST7789: MOSI(11), MISO(N/A), SCK(12), CS(10), DC(13), RST(14)
+byte spiPins[] = {11, 255, 12, 10, 14, 9};// SPI para ST7789: MOSI(11), MISO(N/A), SCK(12), CS(10), DC(14), RST(9)
 byte joystick1Pins[] = {4, 5, 21}; // X, Y, SW
 byte joystick2Pins[] = {6, 7, 38}; // X, Y, SW
 // Creamos la instancia
@@ -54,7 +54,9 @@ ServoEasing Servo3(0x40, &Wire);
 
 
 void setup() {
+    SPI.begin(spiPins[2], spiPins[1], spiPins[0], spiPins[3]);
     sistema.start();
+    pantalla.initTFT();
     controladorServos.settings(500, 2500, 620, 2280, 570, 2266, 180, 180, 180, 30, 'Q');    
     Serial.println("Sistema Iniciado - Esperando comandos...");
     

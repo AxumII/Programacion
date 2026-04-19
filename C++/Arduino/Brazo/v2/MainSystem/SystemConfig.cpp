@@ -6,8 +6,6 @@ byte SystemConfig::_numPulsadores = 0;
 byte* SystemConfig::_pinJoy1 = nullptr;
 byte* SystemConfig::_pinJoy2 = nullptr;
 
-
-
 SystemConfig::SystemConfig(byte dimA, byte dimP, byte dimL, byte dimD,
                            byte* pA, byte* pP, byte* pL, byte* pD, 
                            byte* pF, byte* pC, uint32_t b, 
@@ -23,57 +21,90 @@ SystemConfig::SystemConfig(byte dimA, byte dimP, byte dimL, byte dimD,
     _pinJoy1 = j1; 
     _pinJoy2 = j2;
 }
-bool SystemConfig::start() {
-    // 1. Diagnóstico de Serial
-    unsigned long startWait = millis();
-    Serial.begin(_bauds);
-    while (!Serial && millis() - startWait < 3000); //Espera de configuracion  
-    _SerialStatus = (Serial) ? true : false;
 
-    // 2. Diagnóstico de SPI
-    if(_pinSPI[2] != 255 && _pinSPI[0] != 255) { //Permite ignorar el pin vacio
-        SPI.begin(_pinSPI[2], _pinSPI[1], _pinSPI[0]);
-    } else {
-        _SPIStatus = false;
-    }
-    MenuView UI(10, 13, 14);
-    UI.initTFT();
-    UI.loadScreen();
-
-
-    while (!Serial && millis() - startWait < 1000); //Espera de configuracion
-
-    // 2. Diagnóstico de Serial
-    Serial.begin(_bauds);
-    while (!Serial && millis() - startWait < 3000); //Espera de configuracion
-    
-    // 3. Diagnóstico de I2C
-    Wire.setPins(_pinI2C[0], _pinI2C[1]); 
-    Wire.begin(); 
-    while (!Serial && millis() - startWait < 1000); //Espera de configuracion
-
-    
-    // 4. Configuración de Pines Digitales    
-    for (int i = 0; i < _dimP; i++) pinMode(_pinPulsadores[i], INPUT_PULLUP);
+bool SystemConfig::start(){
+    //GPIO
+    for (int i = 0; i < _numPulsadores; i++) pinMode(_ptrPulsadores[i], INPUT_PULLUP);
     for (int i = 0; i < _dimL; i++) pinMode(_pinLEDs[i], OUTPUT);
     for (int i = 0; i < _dimD; i++) {
         if (_pinDigitalIO != nullptr) pinMode(_pinDigitalIO[i], INPUT);
     }
     for (int i = 0; i < _dimA; i++) {
-        if (_pinAnalogI!= nullptr) pinMode(_pinAnalogI[i], ANALOG);
+        if (_pinAnalogI != nullptr) pinMode(_pinAnalogI[i], INPUT); // En ESP32 se usa INPUT para analógicos
     }
-    // 5 Configuracion de los Joystick
     if (_pinJoy1 != nullptr) pinMode(_pinJoy1[2], INPUT_PULLUP);
     if (_pinJoy2 != nullptr) pinMode(_pinJoy2[2], INPUT_PULLUP);
 
+    //SPI 
+    if (_dimL > 0) digitalWrite(_pinLEDs[0], HIGH);
+    SPI.begin(_pinSPI[2], _pinSPI[1], _pinSPI[0], _pinSPI[3]);
+    UI = new MenuView(_pinSPI[3], _pinSPI[4], _pinSPI[5]);
+    UI->initTFT();      
+    UI->loadScreen();
+    _SPIStatus = (UI != nullptr);
+    if (!_SPIStatus && _dimL > 0) digitalWrite(_pinLEDs[0], LOW);
+   
 
-    // 6. Configuración del timer de debounce para pulsadores
+    //Serial 
+    Serial.begin(_bauds);
+    unsigned long SerialTimer = millis(); // Usando tu nombre de timer
+    while (millis() - SerialTimer < (unsigned long)timeout) {
+        if (Serial) {
+            _SerialStatus = true;
+            break;
+        }
+        yield();
+    }
+
+    if (_SerialStatus) {
+        Serial.println(F("System: Serial Connected"));
+    } else {
+        Serial.end();
+        if (_dimL > 0) digitalWrite(_pinLEDs[0], LOW);
+    }
+
+
+    //I2C
+    Wire.setPins(_pinI2C[0], _pinI2C[1]); 
+    Wire.begin(); 
+    unsigned long I2CTimer = millis();
+    _I2CStatus = false;
+    _PCA9685Status = false;
+    while (millis() - I2CTimer < timeout){
+        Wire.beginTransmission(0x40); 
+        if (Wire.endTransmission() == 0) {
+            _I2CStatus = true;
+            _PCA9685Status  = true;
+            break;
+        }
+        yield();
+    }
+    if (!_I2CStatus && _dimL > 0) digitalWrite(_pinLEDs[0], LOW);
+    //Timer 
     timerDebounce = timerBegin(1000000); 
-    timerAttachInterrupt(timerDebounce, &SystemConfig::debounceISR);
-    timerAlarm(timerDebounce, 100000, true, 0); 
+    timerAttachInterrupt(timerDebounce, SystemConfig::debounceISR);
+    timerAlarm(timerDebounce, 50000, true, 0); 
 
-    // 7. Verificación final de protocolos
-    return statusChecker();
+    return _I2CStatus && _PCA9685Status && _SPIStatus && _SerialStatus;
+}
+
+Eigen::VectorXi SystemConfig::I2CScan() {
+    uint8_t tempDir[127];
+    int contador = 0;
+    byte error, address;
+    for (address = 1; address < 127; address++) {
+        Wire.beginTransmission(address);
+        error = Wire.endTransmission();
+        if (error == 0) {
+            tempDir[contador] = address;
+            contador++;        
+        }
+    }
+    Eigen::VectorXi resultado(contador);
+    for (int i = 0; i < contador; i++) {
+        resultado(i) = tempDir[i];
+    }
+    return resultado;
 }
 
 void IRAM_ATTR SystemConfig::debounceISR() {
@@ -94,46 +125,6 @@ void IRAM_ATTR SystemConfig::debounceISR() {
 uint32_t SystemConfig::getP() { return _statePulsadores; }
 
 void SystemConfig::clearP() { _statePulsadores = 0; }
-
-bool SystemConfig::statusChecker() {
-    // Escaneo I2C
-    Eigen::VectorXi addresses = I2CScan();
-    _I2CStatus = (addresses.size() > 0);
-
-    // PCA9685 Check
-    Wire.beginTransmission(0x40);
-    if (Wire.endTransmission() == 0) {
-        Wire.requestFrom(0x40, (size_t)1);
-        if (Wire.available()) {
-            byte mode1 = Wire.read();
-            _PCA9685Status = !(mode1 & 0x10); 
-        }
-    }
-    //GPIO Check
-    _GPIOStatus = (_numPulsadores > 0); 
-
-    return _I2CStatus && _PCA9685Status && _SPIStatus;
-}
-
-Eigen::VectorXi SystemConfig::I2CScan() {
-    uint8_t tempDir[127];
-    int contador = 0;
-    byte error, address;
-    for (address = 1; address < 127; address++) {
-        Wire.beginTransmission(address);
-        error = Wire.endTransmission();
-        if (error == 0) {
-            tempDir[contador] = address;
-            contador++;        
-        }
-    }
-    // 2. Creamos el vector de Eigen con el tamaño exacto encontrado
-    Eigen::VectorXi resultado(contador);
-    for (int i = 0; i < contador; i++) {
-        resultado(i) = tempDir[i];
-    }
-    return resultado;
-}
 
 int SystemConfig::joystickAsSelector(int axisValue) {
     int d = 0;
@@ -202,20 +193,15 @@ int SystemConfig::getJoystickAxis(byte joystick, char axis) {
 }
 
 bool SystemConfig::getJoySwState(byte joyNum) {
-
     bool pressed = false;
-    
-    // Verificar SW Joystick 1
     if (joyNum == 1 && (_statePulsadores & (1 << _numPulsadores))) {
         pressed = true;
-        _statePulsadores &= ~(1 << _numPulsadores); // Limpiamos el bit para no repetir la acción
+        _statePulsadores &= ~(1 << _numPulsadores); 
     }
-    // Verificar SW Joystick 2
     else if (joyNum == 2 && (_statePulsadores & (1 << (_numPulsadores + 1)))) {
         pressed = true;
-        _statePulsadores &= ~(1 << (_numPulsadores + 1)); // Limpiamos el bit
+        _statePulsadores &= ~(1 << (_numPulsadores + 1)); 
     }
-    
     return pressed;
 }
 

@@ -8,68 +8,92 @@
 #include "MenuView.h"
 #include "MenuController.h"
 
-// Datos de ejemplo para ESP32
-byte aPines[] = {8, 9};
+// Pines
+byte aPines[] = {8};
 byte dPines[] = {254};
 byte pPines[] = {3, 47};
 byte lPines[] = {45, 46};
 byte rows[]   = {15, 16, 17, 18};
 byte cols[]   = {39, 40, 41, 42};
 byte i2cPins[] = {1, 2};
-byte spiPins[] = {11, 255, 12, 10, 13, 14}; // SPI para ST7789: MOSI(11), MISO(N/A), SCK(12), CS(10), DC(13), RST(14)
+byte spiPins[] = {11, 255, 12, 10, 14, 9};// SPI para ST7789: MOSI(11), MISO(N/A), SCK(12), CS(10), DC(14), RST(9)
 byte joystick1Pins[] = {4, 5, 21}; // X, Y, SW
 byte joystick2Pins[] = {6, 7, 38}; // X, Y, SW
-// Creamos la instancia
-
-float l1 = 40.04; // Longitud del primer eslabón
-float l2 = 100.8; // Longitud del segundo eslabón
-float l3 = 55;    // Longitud del tercer eslabón (si es
-float w1 = 0.1;     // Ancho del primer eslabón
-float w2 = 1;     // Ancho del segundo eslabón      
-float w3 = -14;     // Ancho del tercer eslabón (si es necesario)
-int toolType = 0; // Tipo de herramienta (1: pinza, 2: soldador, etc.)
-/*
-float lTool = 114.8;  // Longitud de la herramienta
-float wTool = -6.5;  // Ancho de la herramienta
-float thetaTool = 0; // Ángulo de la herramienta respecto al último eslabón
-
-*/
-
-float lTool = 14;  // Longitud de la herramienta
-float wTool = 0;  // Ancho de la herramienta
-float thetaTool = 0; // Ángulo de la herramienta respecto al último eslabón
 
 
-
+//Instancias
 SystemConfig sistema(2, 2, 2, 1, aPines, pPines, lPines, dPines, rows, cols, 115200, i2cPins, spiPins, joystick1Pins, joystick2Pins);
-Kinematic calculosBrazo(l1, l2, l3, w1, w2, w3, toolType, lTool, wTool, thetaTool);
-//Kinematic calculosBrazo(l1, l2, l3, w1, w2, w3, toolType);
-ServoControlling controladorServos(&calculosBrazo);
-MenuView pantalla(spiPins[3], spiPins[4], spiPins[5]);
-MenuController menu(&sistema, &pantalla, &controladorServos);
 
 ServoEasing Servo1(0x40, &Wire); 
 ServoEasing Servo2(0x40, &Wire);
 ServoEasing Servo3(0x40, &Wire);
+ServoEasing Servo4(0x40, &Wire);
+
+Kinematic* cinBrazo = nullptr;
+ServoControlling* controladorServos = nullptr;
+MenuController* menu = nullptr;
 
 
-void setup() {
-    sistema.start();
-    controladorServos.settings(500, 2500, 620, 2280, 570, 2266, 180, 180, 180, 30, 'Q');    
-    Serial.println("Sistema Iniciado - Esperando comandos...");
+int typeDimensionsConfig = 3;
+
+void setup(){
+    // IMPORTANTE: Nota cómo cada case ahora tiene llaves { }
+    switch (typeDimensionsConfig){
+        case 0: { // 3 articulaciones, antebrazo corto, con tool de calibracion
+            float l1 = 40.04, l2 = 100.8, l3 = 55;
+            float w1 = 0.1, w2 = 1, w3 = -14;
+            float lTool = 14, wTool = -6.5;
+            // Se usa "new" para guardar el objeto en el puntero global
+            cinBrazo = new Kinematic(l1, l2, l3, w1, w2, w3, lTool, wTool, 0.0, 0.0);
+            break;
+        }
+        case 1: { // 3 articulaciones, antebrazo largo con tool de calibracion
+            float l1 = 40.04, l2 = 100.8, l3 = 85;
+            float w1 = 0.1, w2 = 1, w3 = -14;
+            float lTool = 14, wTool = -6.5;
+            cinBrazo = new Kinematic(l1, l2, l3, w1, w2, w3, lTool, wTool, 0.0, 0.0);
+            break;
+        }
+        case 2: { // 3 articulaciones, antebrazo corto, con grippen
+            float l1 = 40.04, l2 = 100.8, l3 = 55;
+            float w1 = 0.1, w2 = 1, w3 = -14;
+            float lTool = 90.4, wTool = -6.5;
+            cinBrazo = new Kinematic(l1, l2, l3, w1, w2, w3, lTool, wTool, 0.0, 0.0);
+            break;
+        }
+        case 3: { // 4 articulaciones, antebrazo corto, con tool de calibracion
+            float l1 = 40.04, l2 = 100.8, l3 = 70;
+            float w1 = 0.1, w2 = 1, w3 = -14;
+            float lTool = 69, wTool = 20.5;
+            cinBrazo = new Kinematic(l1, l2, l3, w1, w2, w3, lTool, wTool, 0.0, 0.0);
+            break;
+        }
+        case 4: { // 4 articulaciones, antebrazo corto, con grippen
+            float l1 = 40.04, l2 = 100.8, l3 = 70;
+            float w1 = 0.1, w2 = 1, w3 = -14;
+            float lTool = 90.4 + 55, wTool = 20.5;
+            cinBrazo = new Kinematic(l1, l2, l3, w1, w2, w3, lTool, wTool, 0.0, 0.0);
+            break;
+        }
+        default: {
+            float l1 = 40.04, l2 = 100.8, l3 = 55;
+            float w1 = 0.1, w2 = 1, w3 = -14;
+            float lTool = 14, wTool = -6.5;
+            cinBrazo = new Kinematic(l1, l2, l3, w1, w2, w3, lTool, wTool, 0.0, 0.0);
+            break;
+        }
+    }
     
-
+    // Asignación de dependencias
+    controladorServos = new ServoControlling(cinBrazo);
+    menu = new MenuController(&sistema, controladorServos);
+    
+    sistema.start();
+    
+    // CORRECCIÓN: Usar la flecha -> porque controladorServos es un puntero
+    controladorServos->settings(612, 2305, 693, 2369, 652, 2266, 500, 2900, 180, 180, 135, 92, 20, 'Q'); 
 }
 
-void loop() {
-    /*char tecla = sistema.getKey();
-    if (tecla == '*') {
-        brazo.goHome();
-        delay(2000);
-        Eigen::Vector3f puntoDestino(12.0, 5.0, 8.0);
-        brazo.moveJ(puntoDestino);
-        delay(2000);
-        brazo.goHome();
-    }*/
-    menu.update();
+void loop(){
+    menu->update();
 }
