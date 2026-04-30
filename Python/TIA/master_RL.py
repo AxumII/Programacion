@@ -59,6 +59,19 @@ class MasterDQN(MasterRLBase):
             max_next_q = target_net(next_states).max(1)[0].unsqueeze(1)
             target_q = rewards + (gamma * max_next_q * (1 - dones))
         return nn.MSELoss()(current_q, target_q)
+    
+class MasterSARSA(MasterRLBase):
+    def compute_loss(self, states, actions, rewards, next_states, dones, next_actions, target_net, gamma):
+        # 1. Calculamos el valor Q de la acción actual
+        current_q = self(states).gather(1, actions)
+        
+        with torch.no_grad():
+            # 2. SARSA: En lugar de usar .max(), usamos el valor de la ACCIÓN REAL 
+            # que el agente tomó en el siguiente paso (next_actions)
+            next_q = target_net(next_states).gather(1, next_actions)
+            target_q = rewards + (gamma * next_q * (1 - dones))
+            
+        return nn.MSELoss()(current_q, target_q)
 
 # =====================================================================
 # 3. LA EXPLORACIÓN 
@@ -171,7 +184,7 @@ class MotorRL:
 # =====================================================================
 # 5. EL BLOQUE PRINCIPAL (Ejecución mucho más limpia)
 # =====================================================================
-if __name__ == "__main__":
+"""if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
     env = gym.make("CartPole-v1")
@@ -179,7 +192,7 @@ if __name__ == "__main__":
     action_dim = env.action_space.n            
     
     agente = MasterDQN(input_size=state_dim, action_dim=action_dim).to(device)
-    exploracion = EpsilonGreedy(start=1.0, end=0.05, decay=0.99)
+    exploracion = EpsilonGreedy(start=1.0, end=0.05, decay=0.999)
     optimizador = optim.Adam(agente.parameters(), lr=0.001)
     
     # Instanciamos el motor
@@ -193,6 +206,6 @@ if __name__ == "__main__":
     )
     
     # Ejecutamos el entrenamiento
-    historial = motor.train(episodes=150)
+    historial = motor.train(episodes=1000)
     
-    env.close()
+    env.close()"""
