@@ -225,10 +225,10 @@ def main():
     # =================================================================
     print("\n🎓 FASE 0: ENTRENANDO AL MAESTRO")
     maestro = MasterDQN(input_size=9, action_dim=9, hidden_layers=[128, 128]).to(device)
-    opt_m = optim.Adam(maestro.parameters(), lr=0.0001)
+    opt_m = optim.Adam(maestro.parameters(), lr=0.005)
     
     motor_m = MotorRL(agent=maestro, env=env, optimizer=opt_m, exploration_strategy=EpsilonGreedy(decay=0.9995), device=device)
-    motor_m.train(episodes=200)
+    motor_m.train(episodes=20000)
 
     # =================================================================
     # CURRICULUM LIGUILLA: ENTRENAMIENTO POR ETAPAS
@@ -245,9 +245,9 @@ def main():
             return alg.play2()
 
     etapas = [
-        {"nombre": "VS MAESTRO", "oponente": maestro, "eps": 200},
-        {"nombre": "VS ALGORITMO", "oponente": bot_wrapper, "eps": 200},  # Usamos la función wrapper aquí
-        {"nombre": "VS RANDOM", "oponente": None, "eps": 200}
+        {"nombre": "VS MAESTRO", "oponente": maestro, "eps": 20000},
+        {"nombre": "VS ALGORITMO", "oponente": bot_wrapper, "eps": 20000},  # Usamos la función wrapper aquí
+        {"nombre": "VS RANDOM", "oponente": None, "eps": 20000}
     ]
 
     historicos_globales = {nombre: {"recompensas": [], "epsilons": []} for nombre in alumnos}
@@ -277,7 +277,7 @@ def main():
     participantes = {"Maestro": maestro, **alumnos}
     
     campeonato = Championship(agents_dict=participantes, env_instance=env, device=device)
-    campeonato.run_tournament(episodes_per_matchup=400)
+    campeonato.run_tournament(episodes_per_matchup=1000)
     print(campeonato.get_global_leaderboard())
     
     print("\n🤝 GENERANDO ANÁLISIS VISUAL DE LA LIGA...")
