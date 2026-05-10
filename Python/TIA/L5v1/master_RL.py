@@ -6,7 +6,7 @@ import time
 from collections import deque
 import copy
 
-import gymnasium as gym
+
 
 # =====================================================================
 # 1. LA MEMORIA 
@@ -112,6 +112,9 @@ class MotorRL:
 
     def train(self, episodes=300, target_update_freq=10, log_freq=20):
         historial_recompensas = []
+        historial_epsilons = []
+        historial_resultados = []
+        
         print(f"▶ Motor RL Iniciado. Entrenando en {self.device} por {episodes} episodios...")
         start_time = time.time()
 
@@ -156,12 +159,26 @@ class MotorRL:
                 
             # Log de métricas
             historial_recompensas.append(total_reward)
-            if (ep + 1) % log_freq == 0:
+            historial_epsilons.append(self.exploration.epsilon if hasattr(self, 'exploration') else self.exploration_strategy.epsilon)
+            
+            # Clasificar el resultado basado en tu rewards_config [3.0, 1.0, -3.0, -10.0]
+            if total_reward >= 3.0:
+                historial_resultados.append("W")
+            elif total_reward > 0 and total_reward < 3.0: # Suele ser 1.0 (Empate)
+                historial_resultados.append("D")
+            else:
+                historial_resultados.append("L")
+            
+            if (ep + 1) % log_freq == 0: 
                 print(f"Episodio {ep+1:03d} | Recompensa Total: {total_reward:5.1f} | Epsilon: {self.exploration.epsilon:.3f}")
+    
 
-        print(f"✔ Entrenamiento finalizado en {time.time() - start_time:.2f}s")
-        return historial_recompensas
-
+        print(f"✔ Entrenamiento finalizado en {time.time() - start_time:.2f}s")       
+        return {
+            "recompensas": historial_recompensas,
+            "epsilons": historial_epsilons,
+            "resultados": historial_resultados
+        }
     def _optimize_step(self):
         """Método interno para manejar el muestreo y el Backpropagation."""
         s, a, r, ns, d, na = self.memory.sample(self.batch_size)

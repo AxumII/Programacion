@@ -8,7 +8,7 @@ class Game:
         self.game_over = False
 
     def _execute_move(self, row, col, player_id):
-        if self.game_over:
+        if self.game_over or self.game_matrix[row, col] != 0:
             # print("🛑 El juego terminó.")
             return False
 
@@ -21,6 +21,7 @@ class Game:
             return False
 
         if self.game_matrix[row, col] != 0:
+            
             # print(f"⚠️ Posición ({row}, {col}) ocupada.")
             return False
 
@@ -37,8 +38,6 @@ class Game:
 
         self.current_player = 2 if self.current_player == 1 else 1
 
-        if self.turns_played == 8 and not self.game_over:
-            self._auto_last_move()
             
         return True
 
@@ -72,3 +71,13 @@ class Game:
     
     def get_game_matrix(self):
         return self.game_matrix
+    
+    def get_winner(self):
+        m = self.game_matrix
+        for p in [1, 2]:
+            if np.any(np.all(m == p, axis=1)) or \
+            np.any(np.all(m == p, axis=0)) or \
+            np.all(np.diag(m) == p) or \
+            np.all(np.diag(np.fliplr(m)) == p):
+                return p
+        return 0

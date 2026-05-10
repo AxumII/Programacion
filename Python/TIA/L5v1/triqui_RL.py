@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import os
 
-from triqui import Game as g 
-from master_RL import MasterDQN, MotorRL, EpsilonGreedy
+from L5v2.triqui import Game as g 
+from L5v2.master_RL import MasterDQN, MotorRL, EpsilonGreedy
 
 # --- Entorno de Entrenamiento ---
 class TrainGameRL:

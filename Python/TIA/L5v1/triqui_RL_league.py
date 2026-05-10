@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import itertools
 
-from triqui import Game as g 
-from master_RL import MasterDQN, MasterSARSA, MotorRL, EpsilonGreedy
+from L5v2.triqui import Game as g 
+from L5v2.master_RL import MasterDQN, MasterSARSA, MotorRL, EpsilonGreedy
 
 # =====================================================================
 # 1. ENTORNO DE LIGA
@@ -333,8 +333,8 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------
     # CONTROL DE VARIABLES GLOBALES (Modifica estas a tu gusto)
     # -----------------------------------------------------------------
-    EPS_TRAIN_MAESTRO = 6000   # Episodios para que el Master aprenda lo básico vs Random
-    EPS_TRAIN_AGENTES = 10000   # Episodios para que cada agente entrene vs Master
+    EPS_TRAIN_MAESTRO = 1000   # Episodios para que el Master aprenda lo básico vs Random
+    EPS_TRAIN_AGENTES = 1000   # Episodios para que cada agente entrene vs Master
     FREQ_EVALUACION   = 1000   # Cada cuántos episodios evaluar y guardar métricas
     EPS_TORNEO_MATCH  = 1000    # Partidas jugadas por CADA emparejamiento en el torneo final
     # -----------------------------------------------------------------

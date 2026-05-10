@@ -1,4 +1,4 @@
-from master_perceptron import MasterPerceptron 
+from L3.master_perceptron import MasterPerceptron 
 from sklearn.datasets import fetch_olivetti_faces
 import torch
 import torch.nn as nn
