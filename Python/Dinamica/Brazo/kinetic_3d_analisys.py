@@ -211,16 +211,16 @@ m_gripper = 150/1000
 m_load = 100 /1000 
 
 robot_def = [
-    {'axis': 'z', 'offset': [0, 0, 0],       'm_servo': m_servo_base, 'm_link': 0.1, 'com_link': [0, 0, 0.05], 't_rated': 54.0},
+    {'axis': 'z', 'offset': [0.1, 0, 0],       'm_servo': m_servo_base, 'm_link': 0.1, 'com_link': [0, 0, 0.05], 't_rated': 20.0},
     {'axis': 'y', 'offset': [0, 0, 0.25],    'm_servo': m_servo_base, 'm_link': 60/100, 'com_link': [0.05, 0, 0], 't_rated': 54.0},
-    {'axis': 'y', 'offset': [0.20, 0, 0],    'm_servo': m_servo_jgb37, 'm_link': 30/1000, 'com_link': [0.07, 0, 0], 't_rated': 24.0},
-    {'axis': 'x', 'offset': [0.07, 0, 0],    'm_servo': m_servo_jgb37, 'm_link': 30/1000, 'com_link': [0.02, 0, 0], 't_rated': 24.0},
+    {'axis': 'y', 'offset': [0.20, 0, 0],    'm_servo': m_servo_jgb37, 'm_link': 30/1000, 'com_link': [0.07, 0, 0], 't_rated': 20.0},
+    {'axis': 'x', 'offset': [0.07, 0, 0],    'm_servo': m_servo_jgb37, 'm_link': 30/1000, 'com_link': [0.02, 0, 0], 't_rated': 20.0},
     {'axis': 'y', 'offset': [0.07, 0, 0],       'm_servo': 0.100,         'm_link': 20/1000, 'com_link': [0.02, 0, 0], 't_rated': 9.0},
     {'axis': 'z', 'offset': [0.07, 0, 0.0],     'm_servo': 0.100,         'm_link': m_gripper, 'com_link': [0, 0, 0.02], 't_rated': 9.0}
 ]
 
 # Inicializamos con una aceleración que VAMOS A PROBAR (ej: 15 rad/s^2)
-arm_6dof = Robot6DOF_3D(joints=robot_def, alpha_target=1.0, m_load=m_load)
+arm_6dof = Robot6DOF_3D(joints=robot_def, alpha_target=10.0, m_load=m_load)
 
 # Posición horizontal extrema
 arm_6dof.analyze_pose([0, 0, 0, 0, 0, 0])
