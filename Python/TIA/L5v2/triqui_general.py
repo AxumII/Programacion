@@ -228,7 +228,7 @@ def main():
     opt_m = optim.Adam(maestro.parameters(), lr=0.005)
     
     motor_m = MotorRL(agent=maestro, env=env, optimizer=opt_m, exploration_strategy=EpsilonGreedy(decay=0.9995), device=device)
-    motor_m.train(episodes=20000)
+    motor_m.train(episodes=5000)
 
     # =================================================================
     # CURRICULUM LIGUILLA: ENTRENAMIENTO POR ETAPAS
@@ -245,9 +245,9 @@ def main():
             return alg.play2()
 
     etapas = [
-        {"nombre": "VS MAESTRO", "oponente": maestro, "eps": 20000},
-        {"nombre": "VS ALGORITMO", "oponente": bot_wrapper, "eps": 20000},  # Usamos la función wrapper aquí
-        {"nombre": "VS RANDOM", "oponente": None, "eps": 20000}
+        {"nombre": "VS MAESTRO", "oponente": maestro, "eps": 4000},
+        {"nombre": "VS ALGORITMO", "oponente": bot_wrapper, "eps": 3000},  # Usamos la función wrapper aquí
+        {"nombre": "VS RANDOM", "oponente": None, "eps": 1000}
     ]
 
     historicos_globales = {nombre: {"recompensas": [], "epsilons": []} for nombre in alumnos}

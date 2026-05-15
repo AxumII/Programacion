@@ -18,7 +18,7 @@ def rot_z(theta):
 def translation(v):
     return np.array([[1, 0, 0, v[0]], [0, 1, 0, v[1]], [0, 0, 1, v[2]], [0, 0, 0, 1]])
 
-class Robot6DOF_3D:
+class RobotDOF_3D:
     def __init__(self, joints, alpha_target, m_load=0.0):
         """
         joints: Lista de diccionarios describiendo el robot.
@@ -200,30 +200,3 @@ class Robot6DOF_3D:
         ax.legend()
         plt.show()
 
-# ==========================================
-# CONFIGURACIÓN
-# ==========================================
-m_servo_base = 700/1000  
-m_servo_medio = 410/1000  
-m_servo_jgb37 = 180/1000
-
-m_gripper = 150/1000   
-m_load = 100 /1000 
-
-robot_def = [
-    {'axis': 'z', 'offset': [0, 0, 0],       'm_servo': m_servo_base, 'm_link': 0.1, 'com_link': [0, 0, 0.05], 't_rated': 54.0},
-    {'axis': 'y', 'offset': [0, 0, 0.25],    'm_servo': m_servo_base, 'm_link': 60/100, 'com_link': [0.05, 0, 0], 't_rated': 54.0},
-    {'axis': 'y', 'offset': [0.20, 0, 0],    'm_servo': m_servo_jgb37, 'm_link': 30/1000, 'com_link': [0.07, 0, 0], 't_rated': 24.0},
-    {'axis': 'x', 'offset': [0.07, 0, 0],    'm_servo': m_servo_jgb37, 'm_link': 30/1000, 'com_link': [0.02, 0, 0], 't_rated': 24.0},
-    {'axis': 'y', 'offset': [0.07, 0, 0],       'm_servo': 0.100,         'm_link': 20/1000, 'com_link': [0.02, 0, 0], 't_rated': 9.0},
-    {'axis': 'z', 'offset': [0.07, 0, 0.0],     'm_servo': 0.100,         'm_link': m_gripper, 'com_link': [0, 0, 0.02], 't_rated': 9.0}
-]
-
-# Inicializamos con una aceleración que VAMOS A PROBAR (ej: 15 rad/s^2)
-arm_6dof = Robot6DOF_3D(joints=robot_def, alpha_target=1.0, m_load=m_load)
-
-# Posición horizontal extrema
-arm_6dof.analyze_pose([0, 0, 0, 0, 0, 0])
-
-# Posición plegada
-#arm_6dof.analyze_pose([0, -45, 90, 0, -45, 0])
