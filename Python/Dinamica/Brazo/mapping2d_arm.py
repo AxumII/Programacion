@@ -107,15 +107,15 @@ class Mapping2DArm:
         
         
 if __name__ == "__main__":
-    l1 = 106.0
-    l2 = 97.0
+    l1 = 100.0
+    l2 = 120.0
     mapping = Mapping2DArm(l1, l2)
     
     x_target = 100.0
     y_target = 100.0
     
-    x_res = 
-    y_res = 
+    x_res = 30
+    y_res = 30
     physical_restrictions = [x_res, y_res]
     
     
