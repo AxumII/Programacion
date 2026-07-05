@@ -1,0 +1,67 @@
+import numpy as np
+from Kin import Kinematic
+
+class Limits:
+    def __init__(self, robot_kinematic: Kinematic):
+        self.robot = robot_kinematic
+    
+    def analyze_points(self, points, phi_val=None, theta4_in=None):
+        """Calcula la cinemática inversa para una lista de puntos (x, y, z)"""
+        th1_f, th2_f, th3_f, th4_f = [], [], [], []
+
+        for pt in points:
+            x, y, z = pt
+            exito, listas_angulos = self.robot.InvKin(x, y, z, phi_val=phi_val, theta4_in=theta4_in)
+            if exito:
+                # CORRECCIÓN: Iteramos sobre las múltiples soluciones que retorna InvKin
+                for angles in listas_angulos: 
+                    th1_f.append(angles[0])
+                    th2_f.append(angles[1])
+                    th3_f.append(angles[2])
+                    if len(angles) == 4: th4_f.append(angles[3])
+
+        intervals = {}
+        if th1_f:
+            intervals['θ1'] = [min(th1_f), max(th1_f)]
+            intervals['θ2'] = [min(th2_f), max(th2_f)]
+            intervals['θ3'] = [min(th3_f), max(th3_f)]
+        if th4_f:
+            intervals['θ4'] = [min(th4_f), max(th4_f)]
+        return intervals
+
+    def get_oriented_box_points(self, center, dims, rpy, step=5.0):
+        """Genera la nube de puntos para una caja inclinada"""
+        dx, dy, dz = dims[0]/2, dims[1]/2, dims[2]/2
+        x_s = np.arange(-dx, dx + step, step)
+        y_s = np.arange(-dy, dy + step, step)
+        z_s = np.arange(-dz, dz + step, step)
+        X, Y, Z = np.meshgrid(x_s, y_s, z_s)
+        pts_local = np.vstack((X.ravel(), Y.ravel(), Z.ravel())).T
+        
+        R = self.robot.get_rotation_matrix(*np.radians(rpy))
+        pts_world = (R @ pts_local.T).T + center
+        return pts_world
+
+    def get_cylinder_points(self, center, radius, height, step=5.0):
+        """Genera la nube de puntos para un cilindro vertical"""
+        cx, cy, cz = center
+        x_s = np.arange(cx - radius, cx + radius + step, step)
+        y_s = np.arange(cy - radius, cy + radius + step, step)
+        z_s = np.arange(cz, cz + height + step, step)
+        
+        X, Y, Z = np.meshgrid(x_s, y_s, z_s)
+        mask = (X - cx)**2 + (Y - cy)**2 <= radius**2
+        pts = np.vstack((X[mask], Y[mask], Z[mask])).T
+        return pts
+
+    def analyze_obstacle(self, obs, step=10.0):
+        """Enrutador que genera puntos y analiza según el tipo de obstáculo"""
+        if obs['type'] == 'box':
+            pts = self.get_oriented_box_points(obs['center'], obs['dims'], obs['rpy'], step)
+        elif obs['type'] == 'cylinder':
+            pts = self.get_cylinder_points(obs['center'], obs['radius'], obs['height'], step)
+        return self.analyze_points(pts)
+    
+    def graficar_limites(self, theta1=0.0, theta2=0.0, theta3=0.0, theta4=0.0, obstacles=None):
+        """Delega la graficación a la clase principal de cinemática con sus respectivos parámetros."""
+        self.robot.plot(theta1, theta2, theta3, theta4=theta4, obstacles=obstacles)
