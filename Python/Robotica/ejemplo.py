@@ -27,21 +27,26 @@ def ejemplo():
         # Caja 4: A La derecha recta
         {'type': 'box', 'center': [30, -110, 30], 'dims': [30, 80, 60], 'rpy': [0, 0, 90], 'name': 'Caja 4 Roja '},
         
+        
+        # Piso
+        {'type': 'box', 'center': [0, 0, -152.5], 'dims': [600, 600, 300], 'rpy': [0, 0, 0], 'name': 'Piso '},
+        
+        
         # Cilindro: Atrás del robot
-        {'type': 'cylinder', 'center': [260, 0, 0], 'radius': 25, 'height': 150, 'name': 'Columna Camara'}
+        {'type': 'cylinder', 'center': [260, 0, 0], 'radius': 25, 'height': 140, 'name': 'Columna Camara'}
     ]
     mi_tracer.mapear_obstaculos(obstaculos)
 
     # 3. Prueba de Cinemática Directa (Forward),
     print("--- 1. FORWARD KINEMATICS ---")
-    fwd = mi_tracer.trace_forward(0, 0, 0, 1,use_tcp_norm = False)
+    fwd = mi_tracer.trace_forward(0, 0, 0, 1)
     print(f"Posición Cartesiana : {[round(v, 2) for v in fwd['Coordenadas']]}")
     print(f"Orientación RPY     : {[round(v, 2) for v in fwd['Rotacion_RPY']]}\n")
 
     # 4. Prueba de Cinemática Inversa (Inverse) con Detección de Codo
     print("--- 2. INVERSE KINEMATICS ---")
-    x, y, z, phi = 200, 0, 50, -45
-    inv = mi_tracer.trace_inverse(x, y, z, phi)
+    x, y, z, theta4 = 200, 100, 5, 0
+    inv = mi_tracer.trace_inverse(x, y, z, theta4 = theta4)
     if inv['Estado'] == "Éxito":
         for sol in inv['Soluciones']:
             angulos = [f"{a:.1f}°" for a in sol['Configuracion']]
@@ -51,13 +56,13 @@ def ejemplo():
     # 5. Prueba de Interpolación (Quintica)
     print("--- 3. INTERPOLACIÓN DE TRAYECTORIA ---")
     q_inicial = [0.0, 0.0, 0.0, 0.0]
-    q_final = [0, 45, 0, 0.0]
+    q_final = [27, 37, -90,0]
     
     # Probemos con interpolación quíntica (5th order)
     trayectoria, colisiones = mi_tracer.interpolar_trayectoria(
         q_start=q_inicial, 
         q_end=q_final, 
-        steps=5,              # Solo 5 pasos para verlo fácil en consola
+        steps=5,              
         method='quintica', 
         validar_colisiones=True
     )

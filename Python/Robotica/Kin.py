@@ -74,8 +74,39 @@ class Kinematic:
             roll = np.arctan2(-T[1,2], T[1,1])
             pitch = np.arctan2(-T[2,0], sy)
             yaw = 0
-            
+    
         return x, y, z, np.degrees(roll), np.degrees(pitch), np.degrees(yaw)
+    
+    
+    def get_joint_positions(self, theta1, theta2, theta3, theta4=None):
+        """Retorna las coordenadas (X,Y,Z) de la base, juntas y el TCP."""
+        if theta4 is None: theta4 = self.theta4_internal
+        
+        t1 = np.radians((theta1 * self.dir1) + self.off1)
+        t2 = np.radians((theta2 * self.dir2) + self.off2)
+        t3 = np.radians((theta3 * self.dir3) + self.off3)
+        t4 = np.radians((theta4 * self.dir4) + self.off4)
+        
+        # Origen (Base)
+        T0 = np.eye(4)
+        
+        # Multiplicación acumulativa de matrices para hallar cada codo
+        m1 = self.MTH(t1, np.pi/2.0, self.l1, self.w1)
+        T1 = m1
+        
+        m2 = self.MTH(t2, 0.0, self.w2, self.l2)
+        T2 = T1 @ m2
+        
+        m3 = self.MTH(t3, 0.0, self.w3, self.l3)
+        T3 = T2 @ m3
+        
+        m4 = self.MTH(t4, 0.0, self.wTool, self.lTool)
+        T4 = T3 @ m4
+        
+        # Retorna: [Base, Junta 1, Junta 2, Junta 3, TCP]
+        return [T0[:3,3], T1[:3,3], T2[:3,3], T3[:3,3], T4[:3,3]]
+    
+    
     def InvKin(self, x, y, z, phi_val=None, theta4_in=None):
         """Retorna: (Exito, [Soluciones])"""
         W = self.w2 + self.w3 + self.wTool

@@ -13,51 +13,100 @@ class Tracer:
         self.intervalos_cacheados = {}
 
     def mapear_obstaculos(self, obstaculos):
-        """Pre-calcula los rangos prohibidos de los obstáculos una sola vez y los imprime."""
+        """Pre-calcula los micro-rangos prohibidos y guarda la geometría original."""
         print("Mapeando obstáculos en el C-Space...")
+        self.obstaculos_geom = obstaculos  # <-- NUEVO: Guardar geometría
         for obs in obstaculos:
             nombre = obs.get('name', 'Obstáculo')
-            intervalos = self.limits.analyze_obstacle(obs, step=10.0)
-            self.intervalos_cacheados[nombre] = intervalos
-            
-            # NUEVO: Imprimir los límites calculados en la consola
-            print(f" -> {nombre}:")
-            if intervalos:
-                for art, rangos in intervalos.items():
-                    print(f"      {art}: [{rangos[0]:.1f}°, {rangos[1]:.1f}°] prohibidos")
-            else:
-                print("      (Sin colisión en el espacio de trabajo / No alcanzable)")
-                
+            lista_intervalos = self.limits.analyze_obstacle(obs, step=12.0)
+            self.intervalos_cacheados[nombre] = lista_intervalos
+            print(f" -> {nombre}: Mapeado con {len(lista_intervalos)} sub-regiones articulares prohibidas")
         print("Mapeo completo.\n")
 
-    def _esta_colisionando(self, q_sol):
-        """Evalúa si una configuración específica entra en algún volumen prohibido."""
-        for nombre, intervalos in self.intervalos_cacheados.items():
-            if not intervalos: continue
+    def _punto_en_obstaculo(self, x, y, z, obs, margen=2):
+        """Matemática rápida para ver si un eslabón atraviesa un obstáculo."""
+        if obs['type'] == 'box':
+            cx, cy, cz = obs['center']
+            dx, dy, dz = obs['dims'][0]/2, obs['dims'][1]/2, obs['dims'][2]/2
+            R = self.robot.get_rotation_matrix(*np.radians(obs['rpy']))
+            p_local = R.T @ np.array([x - cx, y - cy, z - cz])
             
-            en_colision = True
-            for i, art in enumerate(['θ1', 'θ2', 'θ3', 'θ4']):
-                if art in intervalos:
-                    vmin, vmax = intervalos[art]
-                    if not (vmin <= q_sol[i] <= vmax):
-                        en_colision = False
-                        break
-            
-            if en_colision:
-                return True, nombre
-        return False, None
+            return (-dx - margen <= p_local[0] <= dx + margen) and \
+                   (-dy - margen <= p_local[1] <= dy + margen) and \
+                   (-dz - margen <= p_local[2] <= dz + margen)
+                   
+        elif obs['type'] == 'cylinder':
+            cx, cy, cz = obs['center']
+            r = obs['radius'] + margen
+            h = obs['height'] + margen
+            return ((x - cx)**2 + (y - cy)**2 <= r**2) and (cz - margen <= z <= cz + h + margen)
+        return False
 
-    def trace_forward(self, q1, q2, q3, q4=None, use_tcp_norm = False):
+    def _esta_colisionando(self, q_sol):
+        """Devuelve (True/False, Nombre_Obstaculo, Intervalo_Especifico)"""
+        
+        # 1. Colisiones de la punta (TCP) según los conjuntos pequeños precalculados
+        for nombre, lista_intervalos in self.intervalos_cacheados.items():
+            if not lista_intervalos: continue
+            
+            for sub_intervalo in lista_intervalos:
+                en_colision = True
+                for i, art in enumerate(['θ1', 'θ2', 'θ3', 'θ4']):
+                    if art in sub_intervalo:
+                        vmin, vmax = sub_intervalo[art]
+                        if not (vmin <= q_sol[i] <= vmax):
+                            en_colision = False
+                            break 
+                
+                # Si coincide con este pequeño conjunto, RETORNAMOS EL INTERVALO EXACTO
+                if en_colision:
+                    intervalo_limpio = {
+                        art: [round(float(val_min), 2), round(float(val_max), 2)] 
+                        for art, (val_min, val_max) in sub_intervalo.items()
+                    }
+                    return True, nombre, intervalo_limpio
+                    
+        # 2. Colisiones de las Juntas/Eslabones al vuelo (Soluciona el cilindro a 70°)
+        if hasattr(self.robot, 'get_joint_positions') and hasattr(self, 'obstaculos_geom'):
+            q4 = q_sol[3] if len(q_sol) > 3 else self.robot.theta4_internal
+            puntos = self.robot.get_joint_positions(q_sol[0], q_sol[1], q_sol[2], q4)
+            
+            # Revisamos las "líneas" o tubos que conectan cada articulación
+            for i in range(1, len(puntos) - 1):
+                p_A, p_B = np.array(puntos[i]), np.array(puntos[i+1])
+                distancia = np.linalg.norm(p_B - p_A)
+                if distancia < 1.0: continue
+                
+                # Muestreamos el eslabón cada 20 milímetros
+                num_muestras = max(3, int(distancia / 20.0))
+                for t in np.linspace(0, 1, num_muestras):
+                    pt = p_A + t * (p_B - p_A)
+                    for obs in self.obstaculos_geom:
+                        if self._punto_en_obstaculo(pt[0], pt[1], pt[2], obs):
+                            # Creamos un intervalo representativo al vuelo y lo retornamos
+                            margen = 3.0
+                            interv_junta = {
+                                'θ1': [q_sol[0]-margen, q_sol[0]+margen],
+                                'θ2': [q_sol[1]-margen, q_sol[1]+margen],
+                                'θ3': [q_sol[2]-margen, q_sol[2]+margen]
+                            }
+                            if len(q_sol)>3: interv_junta['θ4'] = [q_sol[3]-margen, q_sol[3]+margen]
+                            
+                            return True, f"{obs.get('name', 'Obs')} (Choque en Junta/Eslabón {i+1})", interv_junta
+
+        return False, None, None
+    
+    def trace_forward(self, q1, q2, q3, q4=None):
         """Pasa de Ángulos -> Posición Cartesiana y Orientación (RPY)"""
-        x, y, z, roll, pitch, yaw = self.robot.get_pose(q1, q2, q3, q4, use_tcp_norm = False)
+        x, y, z, roll, pitch, yaw = self.robot.get_pose(q1, q2, q3, q4)
         return {
             'Coordenadas': (x, y, z),
             'Rotacion_RPY': (roll, pitch, yaw)
         }
 
-    def trace_inverse(self, x, y, z, phi, obstaculos=None):
+    def trace_inverse(self, x, y, z, phi=None, theta4=None):
         """Pasa de Posición Cartesiana -> Posibles Ángulos (Codo Arriba/Abajo y Colisiones)"""
-        exito, soluciones = self.robot.InvKin(x, y, z, phi_val=phi)
+        exito, soluciones = self.robot.InvKin(x, y, z, phi_val=phi,theta4_in=theta4)
         
         if not exito:
             return {"Estado": "Error", "Mensaje": "Coordenadas fuera del alcance geométrico del robot."}
@@ -69,14 +118,15 @@ class Tracer:
             etiqueta = etiquetas[idx] if idx < len(etiquetas) else f"Solución {idx+1}"
             
             # Validar colisiones usando la caché de obstáculos
-            colision, obstaculo_nombre = self._esta_colisionando(sol)
+            colision, obstaculo_nombre, intervalo_causante = self._esta_colisionando(sol)
             estado_seguridad = "ALCANZABLE (Seguro)" if not colision else f"¡COLISIÓN! ({obstaculo_nombre})"
             
             resultados.append({
                 'Tipo': etiqueta,
                 'Configuracion': sol,
                 'Estado': estado_seguridad,
-                'Colision': colision
+                'Colision': colision,
+                'Intervalo Causante': intervalo_causante
             })
             
         return {"Estado": "Éxito", "Soluciones": resultados}
@@ -117,9 +167,9 @@ class Tracer:
 
             # Validar cada punto de la trayectoria generada
             if validar_colisiones:
-                colision, obs_nombre = self._esta_colisionando(q_actual)
+                colision, obstaculo_nombre, intervalo_causante = self._esta_colisionando(q_actual)
                 if colision:
-                    reporte_colisiones.append(f"Colisión en paso con {obs_nombre}")
+                    reporte_colisiones.append(f"Colisión en paso con {obstaculo_nombre} en intervalo: {intervalo_causante}")
                 else:
                     reporte_colisiones.append("Seguro")
 
@@ -152,79 +202,3 @@ class Tracer:
         """Delega la llamada de graficación a la clase cinemática subyacente con sus parámetros."""
         self.robot.plot(theta1, theta2, theta3, theta4=theta4, obstacles=obstacles)
 
-# ===============================================
-# EJECUCIÓN DE PRUEBA DESDE TRACER
-# ===============================================
-if __name__ == "__main__":
-    # 1. Instanciamos clases de otros archivos 
-    mi_robot = Kinematic(
-        l1=46, l2=106, l3=106, w1=0, w2=0, w3=0, lTool=96, wTool=0, thetaTool=0, phi=None, 
-        offset_t2=90.0, dir_t2=-1.0,  
-        offset_t3=0.0, dir_t3=1.0  
-    )
-    mi_limite = Limits(mi_robot)
-    mi_tracer = Tracer(mi_robot, mi_limite)
-
-    # 2. Definimos y mapeamos obstaculos
-    obstaculos = [
-        # Caja 1: A la izquierda, inclinada 45 grados en Yaw
-        {'type': 'box', 'center': [200, 100, 40], 'dims': [30, 80, 80], 'rpy': [0, 0, 45], 'name': 'Caja 1 Azul (Inclinada a 45)'},
-        
-        # Caja 2: A la derecha, inclinada 45 grados en Yaw
-        {'type': 'box', 'center': [200, -100, 40], 'dims': [30, 80, 80], 'rpy': [0, 0, -45], 'name': 'Caja 2 Verde (Inclinada a -45)'},
-        
-        # Caja 3: A la izquierda recta
-        {'type': 'box', 'center': [30, 110, 30], 'dims': [30, 80, 60], 'rpy': [0, 0, 90], 'name': 'Caja 3 Amarilla '},
-        
-        # Caja 4: A La derecha recta
-        {'type': 'box', 'center': [30, -110, 30], 'dims': [30, 80, 60], 'rpy': [0, 0, 90], 'name': 'Caja 4 Roja '},
-        
-        # Cilindro: Atrás del robot
-        {'type': 'cylinder', 'center': [260, 0, 0], 'radius': 25, 'height': 150, 'name': 'Columna Camara'}
-    ]
-    mi_tracer.mapear_obstaculos(obstaculos)
-
-    # 3. Prueba de Cinemática Directa (Forward),
-    print("--- 1. FORWARD KINEMATICS ---")
-    fwd = mi_tracer.trace_forward(0, 0, 0, 1,use_tcp_norm = False)
-    print(f"Posición Cartesiana : {[round(v, 2) for v in fwd['Coordenadas']]}")
-    print(f"Orientación RPY     : {[round(v, 2) for v in fwd['Rotacion_RPY']]}\n")
-
-    # 4. Prueba de Cinemática Inversa (Inverse) con Detección de Codo
-    print("--- 2. INVERSE KINEMATICS ---")
-    x, y, z, phi = 200, 0, 50, -45
-    inv = mi_tracer.trace_inverse(x, y, z, phi)
-    if inv['Estado'] == "Éxito":
-        for sol in inv['Soluciones']:
-            angulos = [f"{a:.1f}°" for a in sol['Configuracion']]
-            print(f"> {sol['Tipo']}: [{', '.join(angulos)}] -> {sol['Estado']}")
-    print("\n")
-
-    # 5. Prueba de Interpolación (Quintica)
-    print("--- 3. INTERPOLACIÓN DE TRAYECTORIA ---")
-    q_inicial = [0.0, 0.0, 0.0, 0.0]
-    q_final = [0, 45, 0, 0.0]
-    
-    # Probemos con interpolación quíntica (5th order)
-    trayectoria, colisiones = mi_tracer.interpolar_trayectoria(
-        q_start=q_inicial, 
-        q_end=q_final, 
-        steps=5,              # Solo 5 pasos para verlo fácil en consola
-        method='quintica', 
-        validar_colisiones=True
-    )
-    
-    for i, q in enumerate(trayectoria):
-        print(f"Paso {i+1} | Ángulos: {[round(a, 1) for a in q]} | Estado: {colisiones[i]}")
-        
-    # 6. Llamados de Graficación    
-    # Extraemos la última posición de la trayectoria si existe, sino usamos ceros
-    q_actual = trayectoria[-1] if 'trayectoria' in locals() and trayectoria else [0.0, 0.0, 0.0, 0.0]
-    
-    mi_tracer.graficar_trayectoria(
-        theta1=q_actual[0], 
-        theta2=q_actual[1], 
-        theta3=q_actual[2], 
-        theta4=q_actual[3], 
-        obstacles=obstaculos
-    )

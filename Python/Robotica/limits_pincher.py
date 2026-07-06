@@ -5,29 +5,29 @@ class Limits:
     def __init__(self, robot_kinematic: Kinematic):
         self.robot = robot_kinematic
     
-    def analyze_points(self, points, phi_val=None, theta4_in=None):
-        """Calcula la cinemática inversa para una lista de puntos (x, y, z)"""
-        th1_f, th2_f, th3_f, th4_f = [], [], [], []
+    def analyze_points(self, points, phi_val=None, theta4_in=None, margin=3.0):
+        """Calcula la cinemática inversa y crea una nube de micro-intervalos (vóxeles) en C-Space"""
+        c_space_intervals = []
 
         for pt in points:
             x, y, z = pt
             exito, listas_angulos = self.robot.InvKin(x, y, z, phi_val=phi_val, theta4_in=theta4_in)
             if exito:
-                # CORRECCIÓN: Iteramos sobre las múltiples soluciones que retorna InvKin
+                # Iteramos sobre las múltiples soluciones (separa naturalmente codo arriba y abajo)
                 for angles in listas_angulos: 
-                    th1_f.append(angles[0])
-                    th2_f.append(angles[1])
-                    th3_f.append(angles[2])
-                    if len(angles) == 4: th4_f.append(angles[3])
+                    # Creamos un micro-intervalo exclusivo para este punto específico
+                    
+                    intervalo_punto = {
+                        'θ1': [round(float(angles[0] - margin), 2), round(float(angles[0] + margin), 2)],
+                        'θ2': [round(float(angles[1] - margin), 2), round(float(angles[1] + margin), 2)],
+                        'θ3': [round(float(angles[2] - margin), 2), round(float(angles[2] + margin), 2)]
+                    }
+                    if len(angles) == 4: 
+                        intervalo_punto['θ4'] = [round(float(angles[3] - margin), 2), round(float(angles[3] + margin), 2)]
+                                        
+                    c_space_intervals.append(intervalo_punto)
 
-        intervals = {}
-        if th1_f:
-            intervals['θ1'] = [min(th1_f), max(th1_f)]
-            intervals['θ2'] = [min(th2_f), max(th2_f)]
-            intervals['θ3'] = [min(th3_f), max(th3_f)]
-        if th4_f:
-            intervals['θ4'] = [min(th4_f), max(th4_f)]
-        return intervals
+        return c_space_intervals
 
     def get_oriented_box_points(self, center, dims, rpy, step=5.0):
         """Genera la nube de puntos para una caja inclinada"""
