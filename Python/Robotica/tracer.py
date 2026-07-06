@@ -44,6 +44,11 @@ class Tracer:
 
     def _esta_colisionando(self, q_sol):
         """Devuelve (True/False, Nombre_Obstaculo, Intervalo_Especifico)"""
+        # 0. Revisar Límites Físicos de los Motores
+        dentro_limites, msg = self.limits.check_physical_limits(q_sol)
+        if not dentro_limites:
+            # Reportamos la violación del límite para que la trayectoria lo descarte
+            return True, msg, "Fuera de Rango Mecánico"
         
         # 1. Colisiones de la punta (TCP) según los conjuntos pequeños precalculados
         for nombre, lista_intervalos in self.intervalos_cacheados.items():
@@ -164,6 +169,7 @@ class Tracer:
             # Aplicar la escala al delta de posiciones
             q_actual = q_start + s * (q_end - q_start)
             trayectoria.append(q_actual.tolist())
+
 
             # Validar cada punto de la trayectoria generada
             if validar_colisiones:

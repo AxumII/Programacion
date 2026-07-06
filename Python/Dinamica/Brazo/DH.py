@@ -115,21 +115,21 @@ class A:
 
 if __name__ == "__main__":
     a_obj = A()
-    """
+    
     theta_num = [0, 56.09, -121.17]
     d_num     = [0, 10, 0]
     a_num     = [7, 106, 97]
-    alpha_num = [90, 0, 0]"""
+    alpha_num = [90, 0, 0]
     
     """theta_num = [  0,  0,  0,  0,  0, 0]
     d_num     = [265,  0,  0,470,101, 0]
     a_num     = [  0,444,110,  0, 80, 0]
     alpha_num = [-90,  0,-90, 90,-90, 0]
     """
-    theta_num = [  0,  0,  0,  0,  0, 0]
+    """theta_num = [  0,  0,  0,  0,  0, 0]
     d_num     = [265,  0,  0,470,  0,101]
     a_num     = [  0,444,110,  0,  0, 80]
-    alpha_num = [ 90,  0,-90, 90,-90, 0]
+    alpha_num = [ 90,  0,-90, 90,-90, 0]"""
     
     theta_sym = sp.symbols('theta1 theta2 theta3')
     d_sym = sp.symbols('l1 w2 0')  

@@ -65,3 +65,28 @@ class Limits:
     def graficar_limites(self, theta1=0.0, theta2=0.0, theta3=0.0, theta4=0.0, obstacles=None):
         """Delega la graficación a la clase principal de cinemática con sus respectivos parámetros."""
         self.robot.plot(theta1, theta2, theta3, theta4=theta4, obstacles=obstacles)
+        
+    def check_physical_limits(self, angles):
+        """
+        Verifica que los ángulos estén dentro de los límites mecánicos de los servos.
+        Retorna: (Booleano_es_valido, Mensaje_de_error)
+        """
+        # Array de límites mecánicos: (min, max) para cada articulación
+        limites_motores = [
+            (-150.0, 150.0), # θ1 (Base)
+            (-95.0, 95.0),   # θ2 (Hombro)
+            (-95.0, 95.0),   # θ3 (Codo)
+            (-95.0, 95.0),   # θ4 (Muñeca)
+            (-90.0, 90.0)    # θ5 (Gripper) -> Ajusta estos valores según tu hardware
+        ]
+        
+        # Iteramos dinámicamente sobre los ángulos que reciba la función
+        for i, ang in enumerate(angles):
+            # Nos aseguramos de no salirnos del índice si pasas menos de 5 motores
+            if i < len(limites_motores):
+                lim_min, lim_max = limites_motores[i]
+                
+                if not (lim_min <= ang <= lim_max):
+                    return False, f"Límite de motor excedido en θ{i+1}: {ang:.1f}° (Rango permitido: {lim_min}° a {lim_max}°)"
+                    
+        return True, "Dentro de límites"

@@ -6,7 +6,7 @@ from tracer import Tracer
 def ejemplo():
     # 1. Instanciamos clases de otros archivos 
     mi_robot = Kinematic(
-        l1=46, l2=106, l3=106, w1=0, w2=0, w3=0, lTool=96, wTool=0, thetaTool=0, phi=None, 
+        l1=153, l2=106, l3=106, w1=0, w2=0, w3=0, lTool=96, wTool=0, thetaTool=0, phi=None, 
         offset_t2=90.0, dir_t2=-1.0,  
         offset_t3=0.0, dir_t3=1.0  
     )
@@ -39,13 +39,13 @@ def ejemplo():
 
     # 3. Prueba de Cinemática Directa (Forward),
     print("--- 1. FORWARD KINEMATICS ---")
-    fwd = mi_tracer.trace_forward(0, 0, 0, 1)
+    fwd = mi_tracer.trace_forward(24.9,26.4,20.8,-19.6)
     print(f"Posición Cartesiana : {[round(v, 2) for v in fwd['Coordenadas']]}")
     print(f"Orientación RPY     : {[round(v, 2) for v in fwd['Rotacion_RPY']]}\n")
 
     # 4. Prueba de Cinemática Inversa (Inverse) con Detección de Codo
     print("--- 2. INVERSE KINEMATICS ---")
-    x, y, z, theta4 = 200, 100, 5, 0
+    x, y, z, theta4 = 200, 0, 100, 0
     inv = mi_tracer.trace_inverse(x, y, z, theta4 = theta4)
     if inv['Estado'] == "Éxito":
         for sol in inv['Soluciones']:
@@ -56,7 +56,7 @@ def ejemplo():
     # 5. Prueba de Interpolación (Quintica)
     print("--- 3. INTERPOLACIÓN DE TRAYECTORIA ---")
     q_inicial = [0.0, 0.0, 0.0, 0.0]
-    q_final = [27, 37, -90,0]
+    q_final = [24.9,26.4,20.8,-19.6]
     
     # Probemos con interpolación quíntica (5th order)
     trayectoria, colisiones = mi_tracer.interpolar_trayectoria(
