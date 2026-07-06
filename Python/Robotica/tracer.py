@@ -69,8 +69,8 @@ class Tracer:
                         art: [round(float(val_min), 2), round(float(val_max), 2)] 
                         for art, (val_min, val_max) in sub_intervalo.items()
                     }
-                    return True, nombre, intervalo_limpio
-                    
+                    # AÑADIDO: Especificamos explícitamente qué parte del robot colisionó
+                    return True, f"{nombre} (Choque en TCP/Efector Final)", intervalo_limpio
         # 2. Colisiones de las Juntas/Eslabones al vuelo (Soluciona el cilindro a 70°)
         if hasattr(self.robot, 'get_joint_positions') and hasattr(self, 'obstaculos_geom'):
             q4 = q_sol[3] if len(q_sol) > 3 else self.robot.theta4_internal
@@ -170,16 +170,39 @@ class Tracer:
             q_actual = q_start + s * (q_end - q_start)
             trayectoria.append(q_actual.tolist())
 
-
-            # Validar cada punto de la trayectoria generada
             if validar_colisiones:
                 colision, obstaculo_nombre, intervalo_causante = self._esta_colisionando(q_actual)
                 if colision:
-                    reporte_colisiones.append(f"Colisión en paso con {obstaculo_nombre} en intervalo: {intervalo_causante}")
+                    # Caso 1: Los motores intentan ir más allá de su límite físico
+                    if intervalo_causante == "Fuera de Rango Mecánico":
+                        reporte_colisiones.append(f"⚠️ LÍMITE MECÁNICO -> {obstaculo_nombre}")
+                    
+                    # Caso 2: Colisión física real en el espacio de trabajo
+                    else:
+                        # Extraemos "Qué chocó" y "Con qué" separando el string
+                        if "(Choque en" in obstaculo_nombre:
+                            partes = obstaculo_nombre.split(" (Choque en ")
+                            con_que = partes[0].strip()
+                            que_colisiono = partes[1].replace(")", "").strip()
+                        else:
+                            con_que = obstaculo_nombre
+                            que_colisiono = "Desconocido"
+                            
+                        # Calculamos DÓNDE estaba el TCP en ese instante (X, Y, Z)
+                        q4_val = q_actual[3] if len(q_actual) > 3 else None
+                        x, y, z, _, _, _ = self.robot.get_pose(q_actual[0], q_actual[1], q_actual[2], q4_val)
+                        
+                        reporte_colisiones.append(
+                            f"🛑 COLISIÓN | ¿Qué chocó?: {que_colisiono} | "
+                            f"¿Con qué?: {con_que} | "
+                            f"¿Dónde (XYZ del TCP)?: [X:{x:.1f}, Y:{y:.1f}, Z:{z:.1f}] | "
+                            f"Intervalo: {intervalo_causante}"
+                        )
                 else:
-                    reporte_colisiones.append("Seguro")
-
+                    reporte_colisiones.append("✅ Seguro")
         return trayectoria, reporte_colisiones
+                    
+            
 
     def interpolar_trayectoria_cartesiana(self, pose_start, pose_end, steps, method='lineal'):
         """

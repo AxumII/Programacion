@@ -33,7 +33,7 @@ def ejemplo():
         
         
         # Cilindro: Atrás del robot
-        {'type': 'cylinder', 'center': [260, 0, 0], 'radius': 25, 'height': 140, 'name': 'Columna Camara'}
+        {'type': 'cylinder', 'center': [260, 0, 0], 'radius': 25, 'height': 150, 'name': 'Columna Camara'}
     ]
     mi_tracer.mapear_obstaculos(obstaculos)
 
@@ -56,7 +56,7 @@ def ejemplo():
     # 5. Prueba de Interpolación (Quintica)
     print("--- 3. INTERPOLACIÓN DE TRAYECTORIA ---")
     q_inicial = [0.0, 0.0, 0.0, 0.0]
-    q_final = [24.9,26.4,20.8,-19.6]
+    q_final = [ 5, 94 ,-80, 0]
     
     # Probemos con interpolación quíntica (5th order)
     trayectoria, colisiones = mi_tracer.interpolar_trayectoria(
