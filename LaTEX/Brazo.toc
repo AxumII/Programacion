@@ -1,0 +1,20 @@
+\babel@toc {spanish}{}\relax 
+\contentsline {section}{\numberline {1}Introducción y Contexto}{1}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Solicitud Inicial}{1}{subsection.1.1}%
+\contentsline {section}{\numberline {2}Parámetros de Diseño en Términos de Ingeniería}{1}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Restricciones}{1}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Entregables}{1}{subsection.2.2}%
+\contentsline {section}{\numberline {3}Definición del Proyecto}{1}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Necesidad}{1}{subsection.3.1}%
+\contentsline {subsubsection}{\numberline {3.1.1}Estado Actual}{1}{subsubsection.3.1.1}%
+\contentsline {subsubsection}{\numberline {3.1.2}Estado Deseado}{2}{subsubsection.3.1.2}%
+\contentsline {subsection}{\numberline {3.2}Requerimientos}{2}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Parámetros de Diseño de Ingeniería}{3}{subsection.3.3}%
+\contentsline {subsubsection}{\numberline {3.3.1}Análisis de Motores}{3}{subsubsection.3.3.1}%
+\contentsline {paragraph}{Descripción Básica de los Motores Stepper}{3}{section*.2}%
+\contentsline {paragraph}{Desventajas}{3}{section*.3}%
+\contentsline {paragraph}{Ventajas}{3}{section*.4}%
+\contentsline {paragraph}{Detalle de las modalidades:}{4}{section*.5}%
+\contentsline {paragraph}{Caracterización Técnica y Dimensional del Estándar NEMA 17}{5}{section*.6}%
+\contentsline {paragraph}{Análisis de Torques en Motores Paso a Paso}{5}{section*.7}%
+\contentsline {subsubsection}{\numberline {3.3.2}Análisis Cinético}{6}{subsubsection.3.3.2}%

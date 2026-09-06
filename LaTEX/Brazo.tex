@@ -1,0 +1,211 @@
+\documentclass[12pt, a4paper]{article}
+
+% --- PAQUETES BÁSICOS ---
+\usepackage[utf8]{inputenc}        % Soporte para caracteres UTF-8
+\usepackage[spanish]{babel}       % Configuración del idioma español (títulos, fechas, etc.)
+\usepackage[margin=2.5cm]{geometry} % Configuración de márgenes
+\usepackage{graphicx}            % Para incluir imágenes
+\usepackage{amsmath}             % REQUERIDO para usar \text{} en entornos matemáticos
+\usepackage{hyperref}            % Enlaces hipertexto en el PDF e índice interactivo
+
+% --- CONFIGURACIÓN DE HIPERVÍNCULOS ---
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    pdftitle={Informe de Diseño: Brazo Robótico},
+    pdfpagemode=FullScreen,
+}
+
+% --- DATOS DEL DOCUMENTO ---
+\title{\textbf{Informe de Diseño: Manipulador Robótico Móvil}}
+\author{Nombre del Autor}
+\date{\today}
+
+\begin{document}
+
+% --- PORTADA / TÍTULO ---
+\maketitle
+\thispagestyle{empty} 
+\newpage
+
+% --- ÍNDICE GENERAL ---
+\pagenumbering{roman} 
+\tableofcontents
+\newpage
+
+% --- INICIO DEL CONTENIDO ---
+\pagenumbering{arabic} 
+
+\section{Introducción y Contexto}
+
+\subsection{Solicitud Inicial}
+El proyecto nace como respuesta a un requerimiento interno del laboratorio para actualizar y expandir el equipamiento destinado a prácticas de robótica móvil. Se solicitó el diseño de un brazo manipulador de 4 grados de libertad (GdL) que fuera fácilmente acoplable a bases móviles existentes, priorizando el bajo costo de fabricación y la facilidad de mantenimiento frente al desgaste derivado del uso continuo por parte de los estudiantes.
+
+\section{Parámetros de Diseño en Términos de Ingeniería}
+
+\subsection{Restricciones}
+\begin{itemize}
+    \item \textbf{Limitación por Actuadores:} Las restricciones globales son dictaminadas por el torque máximo de los actuadores seleccionados. Este valor define directamente la longitud máxima viable de los eslabones, el payload, el alcance operativo, el tipo de herramientas intercambiables y los métodos de compensación de gravedad.
+    \item \textbf{Materiales Estructurales:} La estructura está restringida a los insumos compatibles con la tecnología FDM de las impresoras 3D y maquinado CNC de la universidad. Esto limita la selección a termoplásticos como PLA, ABS, PETG y materiales maquinables.
+\end{itemize}
+
+\subsection{Entregables}
+\begin{itemize}
+    \item Manipulador Robótico Móvil ensamblado (4 GdL) modificable a (5 GdL).
+    \item Controlador funcional implementado con microcontroladores.
+    \item Código fuente documentado para el control del manipulador y cálculo cinemático.
+    \item Conjunto de herramientas finales intercambiables.
+    \item Manual de usuario, manual de mantenimiento, instrucciones de operación y consideraciones de seguridad.
+    \item Planos, archivos CAD y lista de materiales (BOM).
+\end{itemize}
+
+\section{Definición del Proyecto}
+
+\subsection{Necesidad}
+\subsubsection{Estado Actual}
+La robótica es un pilar fundamental en la actualidad, abarcando desde procesos de automatización industrial hasta aplicaciones de robótica móvil en diversos entornos, tales como exploración, manipulación en zonas inaccesibles, automatización de tareas pequeñas e investigación. Sin embargo, la accesibilidad y la asequibilidad de los manipuladores aún representan un desafío debido a factores como los altos costos de los brazos terminados, el precio elevado de ciertos servosistemas de calidad, la falta de capacitación y las limitaciones mecánicas y de precisión inherentes a los servosistemas de corriente directa de bajo coste. Por consiguiente, se presenta la necesidad de crear un prototipo de manipulador móvil robótico que sea personalizable, de fácil mantenimiento, de bajo coste y que ofrezca suficiente precisión y exactitud.
+
+\subsubsection{Estado Deseado}
+La solución propuesta que solventa esta necesidad corresponde a un prototipo de manipulador robótico tipo brazo articulado, con la posibilidad de ser acoplado a distintas plataformas móviles. Este manipulador debe poseer un alcance óptimo para la plataforma móvil.
+
+\subsection{Requerimientos}
+
+\textbf{Requerimientos Funcionales (Acciones y características operativas específicas)}
+\begin{itemize}
+    \item \textbf{Alcance espacial:} El manipulador debe poseer un alcance operativo radial apto para funcionar en la plataforma. 
+    \item \textbf{Capacidad de carga (Payload):} El sistema debe manipular herramientas garantizando estabilidad.
+    \item \textbf{Modularidad del efector final:} El extremo del brazo debe contar con una brida mecánica estandarizada para intercambiar rápidamente diversas herramientas.
+    \item \textbf{Integración móvil:} El diseño de la base debe contemplar un patrón de anclaje estandarizado para instalación en plataformas móviles.
+    \item \textbf{Control de trayectoria:} El algoritmo (interpolación espacial) y el hardware deben mitigar activamente el jitter y los sobreimpulsos dinámicos.
+    \item \textbf{Precisión:} Movimientos fluidos con métricas de repetibilidad y exactitud que permitan tareas reales de agarre y coordenadas pre-programadas.
+\end{itemize}
+
+\textbf{Requerimientos No Funcionales y de Desempeño (Restricciones técnicas, de calidad y de diseño)}
+\begin{itemize}
+    \item \textbf{Restricción presupuestal:} Uso intensivo de la metodología DIY y piezas COTS (Commercial Off-The-Shelf) para asegurar la viabilidad financiera del escalamiento (múltiples copias para el laboratorio).
+    \item \textbf{Precisión y mitigación de Backlash:} El diseño de transmisión (o la selección directa del actuador) debe reducir mecánicamente el juego para evitar los errores espaciales de 2 a 7 mm evidenciados en iteraciones previas (Axum I).
+    \item \textbf{Mantenibilidad:} Arquitectura mecánica enfocada en el fácil ensamblaje, cableado y conexiones.
+\end{itemize}
+
+\textbf{Requerimientos de Usuario y Entorno (Stakeholders)}
+\begin{itemize}
+    \item \textbf{Orientación pedagógica:} Código base comprensible, hardware expuesto pero seguro, y arquitectura abierta que invite a la modificación académica.
+    \item \textbf{Escalabilidad:} El entorno de procesamiento debe contar con suficientes puertos y poder de cómputo remanente para futuras mejoras.
+    \item \textbf{HMI (Interfaz Hombre-Máquina):} Integración de un sistema de operación intuitivo y visual, incluyendo paradas de emergencia por hardware y software.
+\end{itemize}
+
+\subsection{Parámetros de Diseño de Ingeniería}
+
+\subsubsection{Análisis de Motores}
+A partir de la revisión del estado del arte, se seleccionaron motores paso a paso bajo el estándar \textbf{NEMA 17}. Esta elección responde a las facilidades de intercambiabilidad que ofrece este estándar, la homologación de sus especificaciones eléctricas y mecánicas, y la disponibilidad de cajas de transmisión acoplables en el mercado.
+
+Los motores seleccionados cuentan con un rotor de 50 polos y operan mediante tecnología híbrida, combinando las características de los motores de imán permanente con el principio de reluctancia variable. Si bien esta configuración optimiza su desempeño general, presenta ciertas ventajas y desventajas que deben ser contempladas en el diseño:
+
+\paragraph{Descripción Básica de los Motores Stepper}
+
+\paragraph{Desventajas}
+\begin{itemize}
+    \item \textbf{Inercia rotacional elevada:} Causada por la masa combinada del rotor de hierro y los imanes permanentes.
+    \item \textbf{Relación masa-potencia:} Cuentan con un peso considerable frente a otras tecnologías de actuadores.
+    \item \textbf{Dependencia magnética:} El rendimiento general está supeditado a la calidad e intensidad de la magnetización del rotor.
+    \item \textbf{Sensibilidad térmica:} Su eficiencia y fuerza electromotriz se ven afectadas por incrementos en la temperatura de trabajo.
+    \item \textbf{Caída de torque a altas velocidades:} El torque dinámico decae de forma no lineal a medida que se incrementa la frecuencia de pasos (velocidad de rotación).
+\end{itemize}
+
+\paragraph{Ventajas}
+\begin{itemize}
+    \item \textbf{Torque de remanencia (\textit{detent torque}):} Ofrecen una ligera retención mecánica incluso estando desenergizados.
+    \item \textbf{Alta resolución y torque de sostenimiento (\textit{holding torque}):} Presentan una alta densidad de pasos por revolución y un torque estático configurable según la corriente suministrada.
+    \item \textbf{Estabilidad dinámica:} Cuentan con un margen de resonancia significativamente más distante comparado con motores de reluctancia pura.
+    \item \textbf{Escalabilidad dimensional:} Es posible incrementar el torque disponible aumentando únicamente la longitud axial del estator y rotor, manteniendo intactas la sección transversal y la brida de montaje NEMA 17.
+\end{itemize}
+
+Para la gestión de los motores paso a paso NEMA 17 se consideran tres esquemas principales de excitación del devanado estatórico. Cada modo presenta un compromiso (\textit{trade-off}) diferente entre la resolución angular, la continuidad del torque entregado, las vibraciones mecánicas y la complejidad de la etapa de potencia/control.
+
+En la Tabla~\ref{tab:control_stepper} se sintetizan las características principales de cada método de accionamiento:
+
+\begin{table}[htbp]
+\centering
+\caption{Comparación de esquemas de excitación para motores paso a paso NEMA 17.}
+\label{tab:control_stepper}
+\begin{tabular}{|l|p{3.5cm}|p{3.5cm}|p{4.2cm}|}
+\hline
+\textbf{Parámetro} & \textbf{Paso Completo (1 Fase)} & \textbf{Paso Completo (2 Fases)} & \textbf{Micropaso (\textit{Microstepping})} \\ \hline
+\textbf{Excitación} & Una bobina energizada por paso. & Dos bobinas energizadas simultáneamente. & Modulación de corriente seno/coseno en ambas bobinas. \\ \hline
+\textbf{Resolución} & Base (ej. $1.8^\circ$ / paso o 200 pasos/rev). & Base (ej. $1.8^\circ$ / paso), desplazado $0.9^\circ$. & Altamente incrementada (ej. $1/16$, $1/32$ hasta $1/256$ de paso). \\ \hline
+\textbf{Suavidad y Ruido} & Baja; alta vibración por resonancia. & Intermedia; presenta rizado dinámico. & Elevada; movimiento continuo y silencioso. \\ \hline
+\textbf{Torque de Salida} & Bajo ($\sim 70\%$ del nominal). & Máximo torque estático ($100\%$ nominal). & Torque dinámico suave, pero menor torque incremental por micropaso. \\ \hline
+\textbf{Lógica de Control} & Lógica binaria elemental (Secuencia en anillo). & Lógica binaria elemental (Secuencia en anillo). & Requiere modulación por ancho de pulso (PWM) y control de corriente. \\ \hline
+\end{tabular}
+\end{table}
+
+\paragraph{Detalle de las modalidades:}
+\begin{itemize}
+    \item \textbf{Paso Completo de 1 Fase (\textit{Wave Drive}):} Activa una sola bobina a la vez. Aunque consume menor potencia eléctrica, entrega el menor torque de retención disponible y genera picos altos de resonancia mecánica a bajas frecuencias.
+    \item \textbf{Paso Completo de 2 Fases (\textit{Full Step Drive}):} Mantiene ambas fases energizadas continuamente. Esto incrementa el torque de sostén en un factor de aproximadamente $\sqrt{2}$ respecto al modo de 1 fase, pero genera un rizado de torque significativo al alternar polos y aumenta la disipación térmica.
+    \item \textbf{Micropaso (\textit{Microstepping}):} Mediante modulación PWM controlada por corriente (frecuentemente implementada con drivers comerciales como A4988, DRV8825 o controladores silenciosos Trinamic TMC), se aplican señales de corriente con forma senoidal y cosenoidal escalonada en las fases $A$ y $B$. Esto permite posicionar el rotor en puntos intermedios entre los polos físicos, eliminando gran parte de las vibraciones armónicas y aumentando drásticamente la resolución espacial del efector final.
+\end{itemize}
+
+\paragraph{Caracterización Técnica y Dimensional del Estándar NEMA 17}
+El estándar \textbf{NEMA 17} (proveniente de la nomenclatura de la \textit{National Electrical Manufacturers Association}) define principalmente las dimensiones del plato de montaje frontal ($1.7 \times 1.7\text{ pulgadas}$ o $42.3 \times 42.3\text{ mm}$). Los parámetros mecánicos, eléctricos y electromagnéticos representativos para este tipo de actuador en aplicaciones de robótica de precisión se detallan en la Tabla~\ref{tab:nema17_specs}.
+
+\begin{table}[htbp]
+\centering
+\caption{Especificaciones mecánicas y eléctricas representativas de un motor NEMA 17 típico.}
+\label{tab:nema17_specs}
+\begin{tabular}{|l|l|p{6cm}|}
+\hline
+\textbf{Categoría} & \textbf{Parámetro} & \textbf{Valor Típico / Rango} \\ \hline
+\textbf{Mecánica} & Dimensiones del marco & $42.3\text{ mm} \times 42.3\text{ mm}$ (NEMA 17) \\ \hline
+ & Longitud del cuerpo ($L$) & $34\text{ mm} - 48\text{ mm}$ (depende del torque nominal) \\ \hline
+ & Diámetro del eje (\textit{Shaft}) & $\phi\,5.0\text{ mm}$ (frecuentemente con plano D-cut) \\ \hline
+ & Longitud sobresaliente del eje & $20\text{ mm} - 24\text{ mm}$ \\ \hline
+ & Patrón de montura & 4 agujeros M3 $\times 0.5$ (profundidad $\sim 4.5\text{ mm}$) \\ \hline
+ & Distancia entre agujeros & $31.0\text{ mm} \times 31.0\text{ mm}$ (cuadrante central) \\ \hline
+ & Diámetro del resalte central & $\phi\,22.0\text{ mm}$ (piloto de centrado $h = 2\text{ mm}$) \\ \hline
+ & Masa del motor & $280\text{ g} - 500\text{ g}$ \\ \hline
+\textbf{Eléctrica} & Configuración de fases & Bipolar (4 hilos) / Unipolar (6 hilos) \\ \hline
+ & Corriente nominal por fase & $1.2\text{ A} - 1.8\text{ A}$ RMS \\ \hline
+ & Resistencia por fase & $1.5\,\Omega - 3.3\,\Omega$ \\ \hline
+ & Inductancia por fase & $2.8\text{ mH} - 8.0\text{ mH}$ \\ \hline
+ & Tensión nominal teórica & $2.6\text{ V} - 4.0\text{ V}$ (alimentado por chopper PWM) \\ \hline
+\textbf{Magnética} & Ángulo de paso nativo & $1.8^\circ \pm 5\%$ (200 pasos/rev) \\ \hline
+ & Torque de sostén (\textit{Holding}) & $20\text{ N}\cdot\text{cm} - 80\text{ N}\cdot\text{cm}$ ($0.40 - 0.55\text{ N}\cdot\text{m}$) \\ \hline
+ & Torque de detención (\textit{Detent}) & $1.5\text{ N}\cdot\text{cm} - 2.5\text{ N}\cdot\text{cm}$ \\ \hline
+ & Inercia del rotor & $54\text{ g}\cdot\text{cm}^2 - 68\text{ g}\cdot\text{cm}^2$ \\ \hline
+ & Clase de aislamiento & Clase B ($130^\circ\text{C}$) \\ \hline
+\end{tabular}
+\end{table}
+
+\paragraph{Análisis de Torques en Motores Paso a Paso}
+Para el diseño mecatrónico y la validación de las trayectorias del manipulador, es indispensable analizar los diferentes regímenes de par mecánico que presenta un actuador paso a paso. El comportamiento dinámico de estos motores se rige por las curvas de respuesta ilustradas en la Figura~\ref{fig:torque_stepper}, definiendo los siguientes tipos de torque:
+
+\begin{description}
+    \item[\textbf{Torque de Mantenimiento (\textit{Holding Torque}, $T_H$):}] Es el par estático máximo que el motor puede suministrar cuando sus bobinas están nominalmente energizadas y el rotor se encuentra en reposo. Define la capacidad de la articulación para sostener una carga fija en el espacio (compensación de gravedad) sin perder el alineamiento electromagnético.
+    
+    \item[\textbf{Torque de Detención (\textit{Detent Torque}, $T_D$):}] Es el par de retención residual (típicamente entre el $5\%$ y el $20\%$ del $T_H$) presente cuando el motor \textbf{no} está energizado. Se debe a la atracción magnética natural entre los imanes permanentes del rotor híbrido y los dientes del estator. Este torque sigue una función periódica respecto al ángulo del rotor y es el responsable de mantener la estructura en su lugar cuando el sistema se apaga.
+    
+    \item[\textbf{Torque de Arranque (\textit{Pull-in Torque}):}] Es el par dinámico máximo con el cual el motor puede arrancar, detenerse o invertir su sentido de giro \textbf{instantáneamente} (sin rampa de aceleración previa) a una frecuencia de pasos determinada sin perder el sincronismo. A esta zona se le conoce como región de respuesta o \textit{Start/Stop region}.
+    
+    \item[\textbf{Torque de Desplazamiento (\textit{Pull-out Torque}):}] Representa el límite absoluto de par dinámico que el motor puede entregar a una velocidad dada \textbf{después} de haber sido acelerado gradualmente. Debido a la constante de tiempo inductiva de las bobinas, la corriente no alcanza su valor nominal a altas frecuencias de conmutación, provocando la caída exponencial del torque mostrada en la curva. Si el torque de carga supera este límite, el motor entra en pérdida de pasos (\textit{stall}).
+    
+    \item[\textbf{Rango de Aceleración (\textit{Slew Range}):}] Es la región operativa comprendida entre las curvas de \textit{Pull-in} y \textit{Pull-out}. Para operar en esta zona y aprovechar velocidades altas, el controlador cinemático debe implementar perfiles de aceleración y desaceleración progresivos (ej. perfiles trapezoidales o en forma de "S").
+\end{description}
+
+\begin{figure}[htbp]
+    \centering
+    % La opción 'draft' dibuja un recuadro sin requerir que la imagen exista físicamente
+    \includegraphics[draft, width=0.8\textwidth]{image_07a738.png}
+    \caption{Curvas características de par dinámico frente a la frecuencia de pasos (\textit{stepping rate}) de un motor paso a paso, ilustrating las regiones de arranque y aceleración progresiva.}
+    \label{fig:torque_stepper}
+\end{figure}
+
+
+
+
+\subsubsection{Análisis Cinético}
+En esta sección se abordará el modelo cinético y dinámico del manipulador para evaluar los momentos de inercia y las fuerzas actuantes en cada articulación durante las trayectorias operativas.
+
+\end{document}
