@@ -79,15 +79,12 @@ class desb:
 
         #Sistema de Referencia en B
         
-<<<<<<< HEAD
         Ixz_B, Iyz_B = In_B 
         Ay =    (((-1*Ixz_B * self.alpha ) + (Iyz_B * self.w_t**2 )) / self.L)
         Ax =    -1*(((-1*Iyz_B * self.alpha ) + (-1*Ixz_B * self.w_t**2 )) / self.L)
-=======
         M = np.array([[1,1], [0,self.L]])
         S = np.array([self.W_peso,self.W_peso*self.L_ctr ])
         return  np.linalg.solve(M,S)
->>>>>>> 4deb2acecce37bfc164f5670703a8c371ed9e553
 
         B = [Bx,By]
         A = [Ax,Ay]
