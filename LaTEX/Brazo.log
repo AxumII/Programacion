@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (MiKTeX 26.5) (preloaded format=pdflatex 2026.9.6)  6 SEP 2026 12:46
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (MiKTeX 26.5) (preloaded format=pdflatex 2026.9.6)  7 SEP 2026 00:07
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -264,39 +264,62 @@ Package: uniquecounter 2019/12/15 v1.4 Provide unlimited unique counter (HO)
 Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 284.
 )
 \Hy@SectionHShift=\skip54
+) (C:\Users\axump\AppData\Local\Programs\MiKTeX\tex/latex/tools\tabularx.sty
+Package: tabularx 2023/12/11 v2.12a `tabularx' package (DPC)
+ (C:\Users\axump\AppData\Local\Programs\MiKTeX\tex/latex/tools\array.sty
+Package: array 2026/02/24 v2.7b Tabular extension package (FMi)
+\col@sep=\dimen175
+\ar@mcellbox=\box55
+\extrarowheight=\dimen176
+\NC@list=\toks27
+\extratabsurround=\skip55
+\backup@length=\skip56
+\ar@cellbox=\box56
 )
-Package hyperref Info: Option `colorlinks' set `true' on input line 19.
+\TX@col@width=\dimen177
+\TX@old@table=\dimen178
+\TX@old@col=\dimen179
+\TX@target=\dimen180
+\TX@delta=\dimen181
+\TX@cols=\count314
+\TX@ftn=\toks28
+)
+Package hyperref Info: Option `colorlinks' set `true' on input line 21.
  (C:\Users\axump\AppData\Local\Programs\MiKTeX\tex/latex/l3kernel\l3backend-pdftex.def
 File: l3backend-pdftex.def 2026-08-10 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count314
+\l__color_backend_stack_int=\count315
 ) (Brazo.aux
 LaTeX Info: Redefining \. on input line 11.
 LaTeX Info: Redefining \% on input line 11.
 Package babel Info: 'spanish' activates 'spanish' shorthands.
 (babel)             Reported on input line 11.
+
+
+LaTeX Warning: Label `fig:curvas_dinamicas_30_1' multiply defined.
+
 )
 \openout1 = `Brazo.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 26.
-LaTeX Font Info:    ... okay on input line 26.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 26.
-LaTeX Font Info:    ... okay on input line 26.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 26.
-LaTeX Font Info:    ... okay on input line 26.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 26.
-LaTeX Font Info:    ... okay on input line 26.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 26.
-LaTeX Font Info:    ... okay on input line 26.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 26.
-LaTeX Font Info:    ... okay on input line 26.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 26.
-LaTeX Font Info:    ... okay on input line 26.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 26.
-LaTeX Font Info:    ... okay on input line 26.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 26.
-LaTeX Font Info:    ... okay on input line 26.
-LaTeX Info: Redefining \. on input line 26.
-LaTeX Info: Redefining \% on input line 26.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 27.
+LaTeX Font Info:    ... okay on input line 27.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 27.
+LaTeX Font Info:    ... okay on input line 27.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 27.
+LaTeX Font Info:    ... okay on input line 27.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 27.
+LaTeX Font Info:    ... okay on input line 27.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 27.
+LaTeX Font Info:    ... okay on input line 27.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 27.
+LaTeX Font Info:    ... okay on input line 27.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 27.
+LaTeX Font Info:    ... okay on input line 27.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 27.
+LaTeX Font Info:    ... okay on input line 27.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 27.
+LaTeX Font Info:    ... okay on input line 27.
+LaTeX Info: Redefining \. on input line 27.
+LaTeX Info: Redefining \% on input line 27.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -334,17 +357,17 @@ LaTeX Info: Redefining \% on input line 26.
 
 (C:\Users\axump\AppData\Local\Programs\MiKTeX\tex/context/base/mkii\supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count315
-\scratchdimen=\dimen175
-\scratchbox=\box55
-\nofMPsegments=\count316
-\nofMParguments=\count317
-\everyMPshowfont=\toks27
-\MPscratchCnt=\count318
-\MPscratchDim=\dimen176
-\MPnumerator=\count319
-\makeMPintoPDFobject=\count320
-\everyMPtoPDFconversion=\toks28
+\scratchcounter=\count316
+\scratchdimen=\dimen182
+\scratchbox=\box57
+\nofMPsegments=\count317
+\nofMParguments=\count318
+\everyMPshowfont=\toks29
+\MPscratchCnt=\count319
+\MPscratchDim=\dimen183
+\MPnumerator=\count320
+\makeMPintoPDFobject=\count321
+\everyMPtoPDFconversion=\toks30
 ) (C:\Users\axump\AppData\Local\Programs\MiKTeX\tex/latex/epstopdf-pkg\epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
 Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 485.
@@ -357,7 +380,7 @@ File: color.cfg 2016/01/02 v1.6 sample color configuration
 )
 Package color Info: Driver file: pdftex.def on input line 149.
  (C:\Users\axump\AppData\Local\Programs\MiKTeX\tex/latex/graphics\mathcolor.ltx))
-Package hyperref Info: Link coloring ON on input line 26.
+Package hyperref Info: Link coloring ON on input line 27.
  (Brazo.out) (Brazo.out)
 \@outlinefile=\write3
 \openout3 = `Brazo.out'.
@@ -376,111 +399,39 @@ LaTeX Info: Redefining \% on input line 1.
 pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.69 
+l.67 
       [1] [2] [3]
-Underfull \hbox (badness 10000) in paragraph at lines 135--135
-[]\OT1/cmr/bx/n/12 Paso Com-ple-to
+<T_in_out.png, id=108, 947.79094pt x 328.97906pt>
+File: T_in_out.png Graphic file (type png)
+<use T_in_out.png>
+Package pdftex.def Info: T_in_out.png  used on input line 178.
+(pdftex.def)             Requested size: 364.19667pt x 126.41386pt.
+ [4] [5 <./T_in_out.png>]
+Overfull \hbox (23.8893pt too wide) in paragraph at lines 202--204
+\OT1/cmr/m/n/12 da trans-mi-si^^Son po-see un error an-gu-lar in-de-pen-dien-te aco-ta-do en el in-ter-va-lo $[\OMS/cmsy/m/n/12 ^^@\OT1/cmr/m/n/12 ^^A\OML/cmm/m/it/12 ^^R[]; \OT1/cmr/m/n/12 +^^A\OML/cmm/m/it/12 ^^R[]\OT1/cmr/m/n/12 ]$,
  []
 
-
-Underfull \hbox (badness 10000) in paragraph at lines 135--135
-[]\OT1/cmr/bx/n/12 Paso Com-ple-to
- []
-
-
-Underfull \hbox (badness 4859) in paragraph at lines 137--137
-[]\OT1/cmr/m/n/12 Base (ej. $1[]8[]$ /
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 137--137
-\OT1/cmr/m/n/12 pa-so), des-pla-za-do
- []
-
-
-Underfull \hbox (badness 4779) in paragraph at lines 138--138
-[]\OT1/cmr/m/n/12 Baja; al-ta vi-bra-
- []
-
-
-Underfull \hbox (badness 1874) in paragraph at lines 138--138
-\OT1/cmr/m/n/12 ci^^Son por re-so-nan-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 138--138
-[]\OT1/cmr/m/n/12 Elevada; mo-vi-mien-to
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 139--139
-[]\OT1/cmr/m/n/12 M^^Saxi-mo tor-que
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 139--139
-\OT1/cmr/m/n/12 est^^Sati-co ($100 %[]$
- []
-
-
-Underfull \hbox (badness 3758) in paragraph at lines 140--140
-\OT1/cmr/m/n/12 men-tal (Se-cuen-cia
- []
-
-
-Underfull \hbox (badness 3758) in paragraph at lines 140--140
-\OT1/cmr/m/n/12 men-tal (Se-cuen-cia
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 140--140
-[]\OT1/cmr/m/n/12 Requiere mo-du-la-ci^^Son
- []
-
-
-Underfull \hbox (badness 5359) in paragraph at lines 140--140
-\OT1/cmr/m/n/12 por an-cho de pul-so
- []
-
-
-Underfull \hbox (badness 1424) in paragraph at lines 140--140
-\OT1/cmr/m/n/12 (PWM) y con-trol de
- []
-
-
-Overfull \hbox (16.8989pt too wide) in paragraph at lines 133--142
- [][] 
- []
-
-
-Overfull \hbox (4.09967pt too wide) in paragraph at lines 148--149
-\OT1/cmr/m/n/12 rrien-te (fre-cuen-te-men-te im-ple-men-ta-da con dri-vers co-mer-cia-les co-mo A4988, DRV8825
- []
-
-[4]
-Underfull \hbox (badness 6641) in paragraph at lines 163--163
-[]$\OML/cmm/m/it/12 ^^^ \OT1/cmr/m/n/12 5[]0[]$ (fre-cuen-te-men-te con
- []
-
-
-Underfull \hbox (badness 1968) in paragraph at lines 167--167
-[]$\OML/cmm/m/it/12 ^^^ \OT1/cmr/m/n/12 22[]0[]$ (pi-lo-to de cen-tra-do
- []
-
-
-Underfull \hbox (badness 1043) in paragraph at lines 173--173
-[]$\OT1/cmr/m/n/12 2[]6[] \OMS/cmsy/m/n/12 ^^@ \OT1/cmr/m/n/12 4[]0[]$ (ali-men-ta-do por
- []
-
-[5]
-Overfull \hbox (1.28773pt too wide) in paragraph at lines 192--193
-[]\OT1/cmr/m/n/12 Representa el l^^S^^Pmi-te ab-so-lu-to de par
- []
-
-
-LaTeX Warning: File `image_07a738.png' not found on input line 200.
-
-[6] [7] (Brazo.aux
+<Tvsw_30_1.png, id=134, 1387.584pt x 704.6325pt>
+File: Tvsw_30_1.png Graphic file (type png)
+<use Tvsw_30_1.png>
+Package pdftex.def Info: Tvsw_30_1.png  used on input line 232.
+(pdftex.def)             Requested size: 409.71692pt x 208.05832pt.
+<Tvsw_15_1.png, id=135, 1387.584pt x 704.6325pt>
+File: Tvsw_15_1.png Graphic file (type png)
+<use Tvsw_15_1.png>
+Package pdftex.def Info: Tvsw_15_1.png  used on input line 239.
+(pdftex.def)             Requested size: 409.71692pt x 208.05832pt.
+<TvsL4gof.png, id=136, 1387.584pt x 704.6325pt>
+File: TvsL4gof.png Graphic file (type png)
+<use TvsL4gof.png>
+Package pdftex.def Info: TvsL4gof.png  used on input line 249.
+(pdftex.def)             Requested size: 455.24411pt x 231.17471pt.
+<TvsL5gof.png, id=137, 1387.584pt x 704.6325pt>
+File: TvsL5gof.png Graphic file (type png)
+<use TvsL5gof.png>
+Package pdftex.def Info: TvsL5gof.png  used on input line 256.
+(pdftex.def)             Requested size: 455.24411pt x 231.17471pt.
+[6] [7 <./Tvsw_30_1.png> <./Tvsw_15_1.png>] [8 <./TvsL4gof.png> <./TvsL5gof.png>] (Brazo.aux
 LaTeX Info: Redefining \. on input line 11.
 LaTeX Info: Redefining \% on input line 11.
 )
@@ -488,21 +439,25 @@ LaTeX Info: Redefining \% on input line 11.
 LaTeX2e <2026-06-01>
 L3 programming layer <2026-08-10>
  ***********
+
+
+LaTeX Warning: There were multiply-defined labels.
+
 Package rerunfilecheck Info: File `Brazo.out' has not changed.
-(rerunfilecheck)             Checksum: DE91CF1BD556A632BA488F0F844B40CE;2104.
+(rerunfilecheck)             Checksum: DE9305A13C7335673D67EEC27B83BB22;2883.
  ) 
 Here is how much of TeX's memory you used:
- 11488 strings out of 467441
- 185507 string characters out of 5407592
- 634385 words of memory out of 5000000
- 40637 multiletter control sequences out of 15000+600000
- 634431 words of font info for 63 fonts, out of 8000000 for 9000
+ 11642 strings out of 467441
+ 187835 string characters out of 5407592
+ 638577 words of memory out of 5000000
+ 40773 multiletter control sequences out of 15000+600000
+ 634883 words of font info for 64 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 74i,13n,79p,914b,546s stack positions out of 10000i,1000n,20000p,200000b,200000s
-<C:/Users/axump/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx12.pfb><C:/Users/axump/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbxti10.pfb><C:/Users/axump/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmcsc10.pfb><C:/Users/axump/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi12.pfb><C:/Users/axump/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/axump/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Users/axump/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/axump/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/axump/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy8.pfb><C:/Users/axump/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmti12.pfb><C:/Users/axump/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmtt12.pfb>
-Output written on Brazo.pdf (9 pages, 164545 bytes).
+ 74i,13n,79p,914b,541s stack positions out of 10000i,1000n,20000p,200000b,200000s
+<C:/Users/axump/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx12.pfb><C:/Users/axump/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbxti10.pfb><C:/Users/axump/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmcsc10.pfb><C:/Users/axump/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users/axump/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi12.pfb><C:/Users/axump/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/axump/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Users/axump/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/axump/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/axump/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy8.pfb><C:/Users/axump/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmti12.pfb>
+Output written on Brazo.pdf (10 pages, 1138200 bytes).
 PDF statistics:
- 184 PDF objects out of 1000 (max. 8388607)
- 32 named destinations out of 1000 (max. 500000)
- 105 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 223 PDF objects out of 1000 (max. 8388607)
+ 43 named destinations out of 1000 (max. 500000)
+ 146 words of extra memory for PDF output out of 10000 (max. 10000000)
 
