@@ -5,7 +5,7 @@ L1, L2, L3, L4 = 0.132, 0.3043, 0.218, 0.103
 # Constantes de offset lateral (m)
 W1, W2, W3, W4 = 0.00475, -0.027, -0.030, -0.003
 
-def caso4gof(alpha_target=1.0, m_load=0):
+def caso4gof(alpha_target=5.0, m_load=0):
     m_5840_31zy = 400/1000
     m_jgy370 = 180/1000
 
