@@ -1,0 +1,97 @@
+\documentclass[12pt, a4paper]{article}
+
+% --- PAQUETES BÁSICOS ---
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{tabularx} % Añadido para tablas auto-ajustables
+\usepackage{array}    % Añadido para mejor formato en columnas
+
+% --- CONFIGURACIÓN DE HIPERVÍNCULOS ---
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    pdftitle={Resumen ESP32 y ESP32S3},
+    pdfpagemode=FullScreen,
+}
+
+\title{\textbf{Resumen uso ESP32 y ESP32S3}}
+\author{Jairo David Diaz Luna}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty} 
+\newpage
+
+\pagenumbering{roman} 
+\tableofcontents
+\newpage
+
+\pagenumbering{arabic} 
+
+\section{Introducción}
+
+\section{Pines}
+
+\section{Procesador}
+\subsection{Caracteristucas}
+\subsubsection{Accumulator Register ACCX}
+Consta de un banco de 16 registros, util para operaciones MAC de matrices en memoria y ejecutarlas eficientemente ademas redondeando floats evitando desbordamientos 
+dado a que posee registros de 40 bits con 4 canales , permitiendo que sea mas complejo desbordar realizando multiplicaciones iterativamente.
+Finalmente realiza un bit-shift al final y reduce la salida a los tipos de variable manejados por la CPU.
+\paragraph{Multiply Accumulate MAC}
+Calcula un producto de dos numeros y lo suma a un acumulador.
+Recordando la estructura de un float32: 
+Signo (1 bit): Determina si es positivo o negativo.
+Exponente (8 bits): Define la magnitud o escala del número (cuántas posiciones se mueve el punto decimal).
+Mantisa o Fracción (23 bits): Almacena los dígitos significativos reales. El hardware asume un "1" implícito a la izquierda, por lo que internamente el procesador opera con 24 bits de precisión.
+
+El algoritmo de multiplicacion consta en: 
+\begin{enumerate}
+    \item El hardware toma $A$ (16 bits) y $B$ (16 bits). Los multiplica. El resultado exacto es $C$ (32 bits). Ese $C$ se guarda en el acumulador de 40 bits.
+    \item El hardware toma datos nuevos $D$ (16 bits) y $E$ (16 bits). Los multiplica. El resultado es un nuevo valor $F$ (32 bits).
+    \item El hardware toma ese nuevo $F$ y se lo suma a lo que ya estaba en el acumulador ($C$).
+\end{enumerate}
+Por cada ciclo de acumulacion por acarreo se incrementa un bit, implica que $2^n$ multiplicaciones requieren solo $n$ bits de acarreo. 
+
+\subsubsection{Quantized Accumulator QAAC (ESP32S3)}
+Exclusivo de la ESP32S3, consta del ACCX mencionado pero con cuatro canales, siendo cuadruple. Util para modelos de matrices iterativas, como redes neuronales multicapa o metodos iterativos de ecuaciones. 
+
+\subsubsection{Arithmetic Logic Unit}
+Bloque combinacional que ejecuta tanto multiplicaciones, adiciones, operaciones logicas AND, OR y NOT y registros QR.
+
+\subsubsection{Registros}
+Los Xtensa poseen varios registros, tanto generales como vectoriales.
+Los generales son
+\begin{enumerate}
+    \item AR usado para proposito general siendo 16 regsitros de 32 bits.
+    \item FR usado solo para float32 siendo 16 registros. 
+\end{enumerate}
+Los vectoriales son
+\begin{enumerate}
+    \item QR usado para proposito general en paralelo siendo 8 registros de 128 bits
+    \item SAR usado para bitshifting siendo 1 de 6 bits.
+    \item ACCX y QAAC los usados de acumuladores de operaciones MAC.
+    \item FFT usado para operaciones de FFT. 
+    \item UA_State usado para guardar direcciones siendo un registro de 128 bits
+\end{enumerate}
+
+\subsection{Ultra Low Power Processor ULP}
+Se encarga de las tareas de bajo consumo y de despertar al procesador principal. 
+Este posee 8Kb de memoria RTC, reloj lento de 17.5 MHz.
+Permite controlar perifericos como los dos ADC internos que posee, protocolo I2C, gestion de puertos Input/Output y sensores internos pasivos como temperatura o las entradas de modulos touch.
+
+\section{XDXD}
+
+\section{XDXD}
+
+\section{XDXD}
+
+\end{document}
