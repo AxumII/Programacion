@@ -1,0 +1,129 @@
+\documentclass[11pt, a4paper]{article}
+
+% --- PAQUETES REQUERIDOS ---
+\usepackage[a4paper, margin=2.5cm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern} % Recomendado para evitar problemas con T1
+\usepackage[spanish]{babel}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{float}
+
+\setlist[itemize]{label=-}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=cyan,
+    pdftitle={DM224\_P1\_PR01 --- Analisis de Sistema Mecatronico}
+}
+
+\title{\textbf{Diseño Mecatrónico 2025\_1S}\\ \Large Análisis de un Sistema Mecatrónico \\ \vspace{0.5cm} \large \textbf{Entrega No. 2: Informe de Ingeniería Inversa}}
+\author{
+    Sebastian Poveda Ramírez \\ 
+    Jairo David Díaz Luna \\ 
+    Sebastián Céspedes Rico
+}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+\newpage
+
+\tableofcontents
+\newpage
+
+\section{Exploración Inicial}
+Tras la lectura y revisión de los manuales de usuario y de servicio, así como de los videos comerciales, se ha realizado un desensamble (virtual/real) de la máquina. 
+
+\subsection{Subensambles Principales}
+\begin{itemize}
+    \item \textbf{Unidad de Inyección:} [Describir componentes como tolva, husillo, barril, resistencias].
+    \item \textbf{Unidad de Cierre:} [Describir rodilleras, plato fijo, plato móvil, barras expulsoras].
+    \item \textbf{Bancada y Sistema Hidráulico/Eléctrico:} [Describir el chasis, bombas, motores principales].
+\end{itemize}
+
+\section{Fundamentación Tecnológica de Funcionamiento}
+El apliador consta de una plataforma movil, impulsada por un motor electrico de 24V y 0.7KW, el cual genera el movimiento. Ademas posee otro motor de 24V y 2KW que impulsa a una bomba hidraulica por medio de tranmisiones de cadenas de carga tipo Flyer para el sistema de elevacion.
+
+\section{Análisis de Funcionamiento}
+Se ha analizado el apilador de la serie S, un montacargas eléctrico motorizado diseñado para elevar, descender y maniobrar cargas de hasta 2000 lbs mediante tracción y elevación accionadas por energía eléctrica.
+
+\subsection{Componentes y Subsistemas}
+
+\begin{table}[H]
+    \centering
+    \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash\bfseries}p{4cm} X}
+        \toprule
+        Subsistema & Descripción / Componentes \\
+        \midrule
+        Sistema Mecánico & Bastidor rígido con rodapié perimetral, mástil de elevación con malla protectora, horquillas (de metal forjado ajustables o de metal formado fijas) y cadenas de carga tipo Flyer. \textbf{Partes estándar:} Ruedas de tracción y carga de poliuretano, ruedas estabilizadoras, rodamientos libres de mantenimiento, piñones de cadena y tornillería[cite: 1]. \textbf{Partes de diseño:} Chasis principal, conjunto del timón de control[cite: 1]. \\
+        \midrule
+        Actuadores & \textbf{Alimentación:} Sistema de 24V operado por 2 baterías de ciclo profundo de 12V/70Ah[cite: 1]. \textbf{Componentes:} Motor de tracción de DC (24V/0.7KW), motor de elevación (24V/2.0KW), bomba hidráulica, freno de disco electromagnético (DC24V/28W), válvulas solenoides normalmente cerradas (DC24V/16W) y bocina. \\
+        \midrule
+        Sensores & Interruptores de límite (para control de altura máxima y detención), microinterruptores (para elevación, descenso y freno), ensamblaje del acelerador de mariposa y medidor de energía (Power meter). \\
+        \midrule
+        Señales & \textbf{Analógicas:} 0 a 5 voltios (señal proveniente del ensamblaje del acelerador para regular la velocidad de forma infinita)[cite: 1]. \textbf{Digitales:} 24 voltios (activación de contactores de avance/retroceso y bobinas de elevación/descenso), códigos de parpadeo LED del controlador de motor para el diagnóstico de fallas[cite: 1]. \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\subsection{Procesamiento de Información e HMI}
+\begin{itemize}
+    \item \textbf{Módulos de Control:} El equipo es gestionado por un controlador de motor DC (modelo 1207A-4102) patentado que evita arranques inseguros[cite: 1]. El sistema eléctrico incluye contactores direccionales (DC88-1), contactores para los motores de elevación y tracción (MZJ200S), y fusibles de protección distribuidos en el circuito de control (10A), el circuito de tracción (100A) y el circuito hidráulico (150A)[cite: 1].
+    \item \textbf{HMI (Interfaz Hombre-Máquina):} Consta de un cabezal de control en el timón equipado con: un interruptor de mariposa operado con el pulgar para controlar la dirección y la velocidad infinita, botones laterales para la elevación y descenso accionables con la punta de los dedos, un botón rojo de seguridad de reversa (belly switch) para evitar atrapamientos, un botón de bocina superior, un botón pulsador rojo de parada de emergencia (E-switch), un interruptor de llave para el encendido y un indicador del nivel de carga de la batería[cite: 1].
+\end{itemize}
+
+\section{Optimización del Diseño}
+Se analizaron los siguientes paradigmas de diseño en la máquina estudiada:
+
+\begin{itemize}
+    \item \textbf{Diseño para el Mantenimiento (DFMaint):} [Describir cómo las cubiertas son fácilmente removibles, accesibilidad a las boquillas de lubricación automática o filtros de aceite].
+    \item \textbf{Diseño para el Medio Ambiente (DFE):} [Describir el uso de mantas térmicas en el barril para ahorro energético o sistemas de servomotor que reducen el consumo eléctrico].
+    \item \textbf{Diseño para la Manufactura (DFM):} [Describir cómo el chasis usa perfiles estándar soldados o piezas modulares que facilitan el ensamblaje en fábrica].
+\end{itemize}
+
+\section{Industrialización}
+
+\subsection{Diferencia entre Componente y Pieza}
+[Redactar la definición teórica: Una \textit{pieza} es el elemento indivisible fabricado de un solo bloque de material, mientras que un \textit{componente} es un conjunto funcional que puede estar formado por múltiples piezas].
+
+\subsection{Listado de Materiales y Procesos de Manufactura}
+
+Se analizaron 15 piezas clave del mecanismo según su función, determinando su material y el proceso de manufactura asociado.
+
+\vspace{0.5cm}
+\begin{table}[h!]
+    \centering
+    \renewcommand{\arraystretch}{1.3}
+    \small
+    \begin{tabularx}{\textwidth}{c X l l}
+        \toprule
+        \textbf{No.} & \textbf{Nombre de la Parte} & \textbf{Material Estimado} & \textbf{Proceso de Manufactura} \\
+        \midrule
+        1 & Husillo de plastificación & Acero aleado nitrurado & Torneado, fresado y tratamiento \\
+        2 & Plato fijo & Fundición nodular & Fundición en arena y maquinado \\
+        3 & Barras guía (Tie bars) & Acero cromado de alta resist. & Torneado cilíndrico, rectificado \\
+        4 & Tolva de alimentación & Lámina de acero inox & Corte por láser, plegado, soldadura \\
+        5 & Resistencias calefactoras & Cerámica y Nicromo & Extrusión cerámica, embobinado \\
+        6 & Chasis / Bancada & Acero estructural (A36) & Corte, soldadura por arco \\
+        7 & Boquilla de inyección & Acero herramienta (H13) & Torneado CNC, tratamiento térm. \\
+        8 & Pasadores de rodillera & Acero cementado & Torneado, cementación \\
+        9 & Cárter de aceite & Polímero (o lámina) & Inyección (o embutido) \\
+        10 & Soportes antivibración & Caucho vulcanizado & Moldeo por compresión \\
+        11 & Engranaje del motor & Acero aleado (ej. 4340) & Tallado de engranajes (Hobbing) \\
+        12 & Cubiertas de seguridad & Policarbonato / Acrílico & Termoformado o corte láser \\
+        13 & Tubería hidráulica & Acero sin costura & Trefilado, doblado en frío \\
+        14 & Filtro de succión & Malla de bronce/inoxidable & Tejido metálico, estampado \\
+        15 & Botonera del HMI & Polímero ABS & Inyección de plástico \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\end{document}
