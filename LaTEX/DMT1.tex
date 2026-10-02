@@ -1,0 +1,395 @@
+\documentclass[12pt, a4paper]{article}
+
+% --- PAQUETES BÁSICOS ---
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{tabularx} % Añadido para tablas auto-ajustables
+\usepackage{array}    % Añadido para mejor formato en columnas
+\usepackage{booktabs}
+
+% --- CONFIGURACIÓN DE HIPERVÍNCULOS ---
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    pdftitle={Informe de Diseño - Etapa 1},
+    pdfpagemode=FullScreen,
+}
+
+\title{\textbf{Informe de Diseño: Etapa 1}\\ \large Diseño Mecánico del Eje del Mezclador}
+\author{Sebastian Poveda Ramírez \\ Jairo David Díaz Luna \\ Sebastián Céspedes Rico}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty} 
+\newpage
+
+\pagenumbering{roman} 
+\tableofcontents
+\newpage
+
+\pagenumbering{arabic} 
+
+
+\section{Introducción}
+El presente documento contiene el informe correspondiente a la **Etapa 1** del diseño mecánico del eje para el sistema de mezclado. Se evalúan los factores de seguridad, cargas operativas, requerimientos de potencia, análisis de esfuerzos dinámicos y criterios de selección del material idóneo para una vida útil garantizada de 10 años.
+
+\section{Descripción del mecanismo a utilizar}
+El mecanismo propuesto consta de un sistema de mezclado basado en un eje principal al cual se acoplan los demás componentes: rotores, paletas, rodamientos y mecanismos de transmisión. Además, toda la estructura está fijada a la viga de un soporte que, a su vez, sostiene el motor. Para el alcance de este análisis preliminar, no se considerará en detalle el dimensionamiento interno del motor. 
+
+Los parámetros geométricos básicos de los cuales dependen las demás dimensiones del sistema son: 
+
+\begin{itemize}
+    \item Altura del barril: $h = 0.89 \text{ m}$
+    \item Diámetro del barril: $d = 0.49 \text{ m}$
+\end{itemize}
+
+\subsection{Cargas Axiales y Peso Propio del Mecanismo del Eje}
+Es pertinente aclarar que la carga axial del sistema es soportada exclusivamente por el rodamiento inferior; en consecuencia, todo el peso ejercido por el eje, los rotores y las paletas recae sobre este elemento. El peso exacto del eje no se calculará en esta etapa debido a que aún se requieren definir criterios de diseño adicionales. Sin embargo, esta carga axial total deberá ser considerada posteriormente para la selección adecuada del rodamiento, garantizando que soporte esfuerzos combinados (radiales y axiales).
+
+\subsection{Cálculo de Cargas Actuantes}
+\subsubsection{Torque Resistente del Fluido}
+El modelo de agitación propuesto consta de un eje, con dos manzanas acopladas a este por chavetas y con cuatro paletas de dimensiones idénticas cada una de las manzanas. Para simplificar el análisis, se desprecia el efecto hidrodinámico de las barras que fijan las paletas al eje central.
+
+Para determinar el torque resistente ejercido por el fluido, se establecen los siguientes parámetros de diseño, teniendo en cuenta que la altura del aspa ($h_{aspa}$) está en función de la altura del barril ($h$):
+\begin{itemize}
+    \item Fuerza de arrastre específica de las paletas: $F = 40000 \text{ N/m}^2$
+    \item Radio del borde interior de la paleta: $r_{in} = 0.25d = 0.1225 \text{ m}$
+    \item Radio del borde exterior de la paleta: $r_{out} = 0.45d = 0.2205 \text{ m}$
+    \item Altura de la paleta: $h_{aspa} = 0.05 + 0.04 \cdot h = 0.05 + 0.04(0.89) = 0.0856 \text{ m}$
+\end{itemize}
+
+El torque individual generado por el arrastre en una sola paleta ($\tau_{aspa}$) se obtiene integrando la fuerza a lo largo de su longitud radial. Resolviendo la integral y sustituyendo los valores calculados, se tiene el siguiente desarrollo:
+
+\begin{align}
+    \tau_{aspa} &= \int_{r_{in}}^{r_{out}} (F \cdot h_{aspa} \cdot r) \, dr = \frac{F \cdot h_{aspa}}{2} \left( r_{out}^2 - r_{in}^2 \right) \\[6pt]
+    \tau_{aspa} &= \frac{40000 \cdot 0.0856}{2} \left( (0.2205)^2 - (0.1225)^2 \right) \\[6pt]
+    \tau_{aspa} &= 1712 \cdot (0.048620 - 0.015006) \\[6pt]
+    \tau_{aspa} &= 1712 \cdot 0.033614 \\[6pt]
+    \tau_{aspa} &= 57.55 \quad [\text{N}\cdot\text{m}]
+\end{align}
+
+Dado que el sistema cuenta con un total de 8 paletas (4 en cada uno de los dos rotores), el torque total aplicado sobre el eje ($\tau_{eje}$) se calcula multiplicando el torque individual por el número total de álabes:
+
+\begin{align}
+    \tau_{eje} &= 8 \cdot \tau_{aspa} \\[6pt]
+    \tau_{eje} &= 8 \cdot 57.55 \\[6pt]
+    \tau_{eje} &= 460.40 \quad [\text{N}\cdot\text{m}]
+\end{align}
+
+\subsubsection{Reacciones en la Transmisión (Correa)}
+
+Para accionar el sistema se utiliza una transmisión por correas planas. Según los parámetros de diseño, la relación de fuerzas de tensión en los ramales de la correa es de 4:1[cite: 3]. Asimismo, el diámetro de la polea conducida ($d_p$) acoplada al eje principal está definido como el 30\% del diámetro del tanque ($d$)[cite: 3]:
+
+\begin{equation}
+    d_p = 0.3 \cdot d = 0.3 \cdot (0.49 \text{ m}) = 0.147 \text{ m}
+\end{equation}
+
+El torque neto ($\tau_{eje}$) que actúa sobre la polea se rige por la diferencia entre la tensión del ramal tenso ($F_1$) y el ramal flojo ($F_0$). Sustituyendo la relación de tensiones ($F_1 = 4F_0$), se obtiene:
+
+\begin{equation}
+    \tau_{eje} = (F_1 - F_0) \frac{d_p}{2} = (4F_0 - F_0) \frac{d_p}{2} = 3F_0 \frac{d_p}{2}
+\end{equation}
+
+Despejando la ecuación para encontrar la magnitud de la tensión del ramal flojo ($F_0$) y sustituyendo el torque previamente calculado ($\tau_{eje} = 460.40 \text{ N}\cdot\text{m}$):
+
+\begin{align}
+    F_0 &= \frac{2 \cdot \tau_{eje}}{3 \cdot d_p} \\[6pt]
+    F_0 &= \frac{2 \cdot 460.40}{3 \cdot 0.147} = \frac{920.80}{0.441} = 2087.98 \text{ N}
+\end{align}
+
+La fuerza radial total ($F_{polea}$) que la transmisión ejerce transversalmente sobre el extremo superior del eje corresponde a la suma directa de las tensiones en la correa, asumiendo que ambos ramales son paralelos:
+
+\begin{align}
+    F_{polea} &= F_1 + F_0 = 4F_0 + F_0 = 5 \cdot F_0 \\[6pt]
+    F_{polea} &= 5 \cdot 2087.98 = 10439.90 \text{ N}
+\end{align}
+
+\subsubsection{Reacciones en los Apoyos (Rodamientos)}
+
+De acuerdo con las dimensiones del mecanismo, el eje central se encuentra suspendido mediante un conjunto de dos rodamientos. Para el cálculo de las reacciones, el plano de tracción de la correa se establece como el eje $X$. Geométricamente, el rodamiento superior se localiza a una distancia de $0.15h$ por debajo de la polea. A su vez, el rodamiento inferior se encuentra separado a una distancia de $0.30h$ por debajo del rodamiento superior. 
+
+Asumiendo una distribución radial de las cargas (ignorando el peso propio para el cálculo estrictamente transversal), el sistema estático se resuelve planteando primero la sumatoria de momentos respecto al centro del rodamiento superior para encontrar la reacción radial en el rodamiento inferior ($R_{inf}$):
+
+\begin{align}
+    \sum M_{sup} &= 0 \nonumber \\[6pt]
+    (F_{polea} \cdot 0.15h) - (R_{inf} \cdot 0.30h) &= 0 \nonumber \\[6pt]
+    R_{inf} &= F_{polea} \left( \frac{0.15h}{0.30h} \right) \\[6pt]
+    R_{inf} &= 0.5 \cdot F_{polea} \\[6pt]
+    R_{inf} &= 0.5 \cdot 10439.90 = 5219.95 \text{ N}
+\end{align}
+
+Posteriormente, aplicando la sumatoria de fuerzas sobre el eje transversal $X$, se determina la magnitud de la reacción en el rodamiento superior ($R_{sup}$):
+
+\begin{align}
+    \sum F_x &= 0 \nonumber \\[6pt]
+    F_{polea} + R_{sup} + R_{inf} &= 0 \nonumber \\[6pt]
+    R_{sup} &= - \left( F_{polea} + R_{inf} \right) \\[6pt]
+    R_{sup} &= - 1.5 \cdot F_{polea} \\[6pt]
+    R_{sup} &= - 1.5 \cdot 10439.90 = -15659.85 \text{ N}
+\end{align}
+
+El signo negativo del resultado indica que el rodamiento superior ejerce una fuerza de reacción en sentido opuesto a la tracción generada por la correa. Para la componente ortogonal en el eje $Y$, al asumir un fluido homogéneo y aspas simétricas ideales, la fuerza radial neta es despreciable ($R_y = 0$).
+
+\section{Diagramas de Cuerpo Libre y Cálculo de Cargas}
+\subsection{Diagramas de Cuerpo Libre (DCL)}
+Dados los datos anteriores, se muestra el siguiente diagrama de cuerpo libre que muestra las fuerzas y torques mostrados.
+
+\section{Potencia Mecánica Requerida}
+\subsection{Potencia Mecanica Requerida}
+La potencia mecanica ($P$) en este caso relaciona el torque requerido en el eje con la velocidad angular deseada en el eje.
+Para aplicar la ecuación fundamental de potencia, es necesario convertir la velocidad rotacional 200 \text{RPM} a velocidad angular en radianes por segundo ($\text{rad/s}$):
+
+\begin{equation}
+    \omega = \frac{2\pi \cdot N}{60} = \frac{2\pi \cdot 200}{60} = 20.944 \text{ rad/s}
+\end{equation}
+
+Con la velocidad angular obtenida y el torque de diseño previamente determinado ($\tau_{eje} = 460.40 \text{ N}\cdot\text{m}$), la potencia mecánica requerida en el eje se calcula como:
+
+\begin{align}
+    P &= \tau_{eje} \cdot \omega \\[6pt]
+    P &= 460.40 \cdot 20.944 \\[6pt]
+    P &= 9642.62 \text{ W}
+\end{align}
+
+Esta magnitud representa la potencia neta exigida en el eje del agitador, equivalente a aproximadamente $9.6\text{ kW}$. Es importante añadir que en una implementacion fisica real, se debe tener en cuenta la eficiencia real de la transmision.
+
+\section{Análisis de Momentos Flectores y Torques}
+\subsection{Graficas de Momentos Flectores}
+Gráficas de momento flector \texorpdfstring{$M(t)$}{M(t)} y torque \texorpdfstring{$T(t)$}{T(t)} en función del tiempo para la sección crítica ubicada a la altura del rodamiento superior.
+
+\subsection{Evaluación por Tipos de Falla y Criterios de Seguridad}
+
+El diseño del eje principal y los componentes estructurales de la mezcladora debe garantizar la integridad mecánica bajo las cargas de operación. Dado que el sistema está sometido a un estado de esfuerzos combinados (flexión debido a la carga transversal de la polea y torsión debido al torque resistente del fluido), la evaluación se divide en falla estática y falla dinámica.
+
+\subsubsection{Falla Estática por Fluencia}
+Para prevenir la deformación plástica del material, se emplea la Teoría de la Energía de Distorsión (Criterio de Von Mises), ideal para materiales dúctiles como el acero de ejes de transmisión. El esfuerzo equivalente de Von Mises ($\sigma_{VM}$) en la sección crítica del eje se calcula a partir del esfuerzo normal máximo por flexión ($\sigma$) y el esfuerzo cortante por torsión ($\tau$):
+
+\begin{equation}
+    \sigma_{VM} = \sqrt{\sigma^2 + 3\tau^2}
+\end{equation}
+
+El factor de seguridad estático ($N_s$) se define como la relación entre el límite de fluencia del material seleccionado ($S_y$) y el esfuerzo equivalente máximo actuante:
+
+\begin{equation}
+    N_s = \frac{S_y}{\sigma_{VM}}
+\end{equation}
+
+Para este mecanismo, se establece un factor de seguridad estático de diseño de $N_s \geq 2.0$. Este margen contempla sobrecargas imprevistas, fluctuaciones severas en la densidad del fluido durante el mezclado o posibles atascos transitorios de las aspas en el arranque.
+
+\subsubsection{Falla Dinámica por Fatiga}
+Al ser una máquina rotativa, el eje experimenta esfuerzos alternantes. Específicamente, la carga radial estática ejercida por la transmisión ($F_{polea}$) genera esfuerzos de flexión completamente invertidos debido a la rotación del eje, mientras que el torque induce un esfuerzo cortante que se asume como medio o constante durante la operación a régimen nominal.
+
+Para la evaluación por fatiga, se implementa el criterio de falla de Goodman modificado, el cual relaciona los esfuerzos alternantes ($\sigma_a$) y medios ($\sigma_m$) con el límite de resistencia a la fatiga corregido del componente ($S_e$) y el esfuerzo último a la tracción del material ($S_{ut}$):
+
+\begin{equation}
+    \frac{1}{N_f} = \frac{\sigma_a}{S_e} + \frac{\sigma_m}{S_{ut}}
+\end{equation}
+
+Donde $N_f$ representa el factor de seguridad contra la falla por fatiga de vida infinita. Dadas las vibraciones inherentes al proceso de agitación de fluidos, se establece un factor de seguridad a fatiga mínimo de $N_f \geq 1.5$. Si el cálculo arroja un valor inferior, será imperativo redimensionar el diámetro del eje en los puntos críticos de concentración de esfuerzos (como los cambios de sección en los apoyos de los rodamientos).
+
+\subsection{Criterios de Selección del Acero Inoxidable}
+En general todas las aleaciones austeniticas y martensiticas presentes son viables para la creacion de ejes, asi que para este ejercicio se decidio por realizar dos analisis, tomando dos casos extremos en relacion a las resistencias a la tension.
+Los casos a tomar son: 
+\begin{itemize}
+    \item \textbf{Caso 1: Acero Inoxidable AISI 420 (Con Tratamiento Térmico)}
+    
+    Representa el límite superior de resistencia debido a su estructura martensítica templada. Sus propiedades mecánicas son:
+    \begin{itemize}
+        \item Límite de fluencia ($S_y$, al 0.2\% de deformación): $1344 \text{ MPa}$
+        \item Resistencia última a la tensión ($S_{ut}$): $1586 \text{ MPa}$
+        \item Elongación (en 2 pulgadas): $8\%$
+        \item Dureza: $500 \text{ HB}$ (Brinell)
+    \end{itemize}
+
+    \item \textbf{Caso 2: Acero Inoxidable AISI 304 (Recocido)}
+    
+    Representa el límite de alta ductilidad y excelente resistencia a la corrosión, típico de los aceros austeníticos. Sus propiedades mecánicas son:
+    \begin{itemize}
+        \item Límite de fluencia ($S_y$, al 0.2\% de deformación): $241 \text{ MPa}$
+        \item Resistencia última a la tensión ($S_{ut}$): $586 \text{ MPa}$
+        \item Elongación (en 2 pulgadas): $50\%$
+        \item Dureza: $85 \text{ HRB}$ (Rockwell B)
+    \end{itemize}
+\end{itemize}
+
+\section{Dimensionamiento de elementos}
+\subsection{Eje}
+
+Para el dimensionamiento preliminar del eje principal macizo, se evalúa la sección crítica sometida a torsión pura debido al torque requerido para accionar el sistema de agitación ($\tau_{eje} = 460.40 \text{ N}\cdot\text{m}$). Se establece un factor de seguridad de diseño de $FS = 2.0$.
+
+De acuerdo con el criterio de falla por Energía de Distorsión (Von Mises), el límite de fluencia al esfuerzo cortante ($S_{ys}$) para un material dúctil equivale aproximadamente al 57.7\% de su límite de fluencia a la tracción ($S_y$). Con base en este límite, el esfuerzo cortante permisible ($\tau_{perm}$) que el material puede soportar sin sufrir deformación plástica se define como:
+
+\begin{equation}
+    S_{ys} = 0.577 \cdot S_y \quad \Rightarrow \quad \tau_{perm} = \frac{S_{ys}}{FS}
+\end{equation}
+
+El esfuerzo cortante máximo en un eje circular macizo ocurre en su superficie exterior y está gobernado por la relación entre el torque aplicado ($\tau_{eje}$), el radio de la sección ($r$) y el momento polar de inercia ($J = \frac{\pi \cdot r^4}{2}$). Sustituyendo $J$ en la ecuación general del esfuerzo cortante, se obtiene el esfuerzo máximo, el cual se iguala al permisible para despejar el radio mínimo requerido:
+
+\begin{equation}
+    \tau = \frac{\tau_{eje} \cdot r}{J} = \frac{2 \cdot \tau_{eje}}{\pi \cdot r^3} \quad \Rightarrow \quad r = \sqrt[3]{\frac{2 \cdot \tau_{eje}}{\pi \cdot \tau_{perm}}}
+\end{equation}
+
+A continuación, se evalúa este dimensionamiento para los dos materiales seleccionados previamente:
+
+\textbf{Caso 1: Acero Inoxidable AISI 420 (Con Tratamiento Térmico)} \\
+Tomando el límite de fluencia $S_y = 1344 \text{ MPa}$:
+
+\begin{align}
+    S_{ys} &= 0.577 \cdot 1344 \text{ MPa} = 775.49 \text{ MPa} \\[6pt]
+    \tau_{perm} &= \frac{775.49 \text{ MPa}}{2.0} = 387.75 \text{ MPa} \\[6pt]
+    r_{420} &= \sqrt[3]{\frac{2 \cdot 460.40 \text{ N}\cdot\text{m}}{\pi \cdot (387.75 \times 10^6 \text{ Pa})}} = \sqrt[3]{7.559 \times 10^{-7} \text{ m}^3} \\[6pt]
+    r_{420} &= 0.00911 \text{ m} = 9.11 \text{ mm}
+\end{align}
+El radio mínimo teórico calculado para el acero 420 es de $9.11 \text{ mm}$, lo que equivale a un diámetro mínimo requerido de $18.22 \text{ mm}$.
+
+\vspace{0.5cm}
+
+\textbf{Caso 2: Acero Inoxidable AISI 304 (Recocido)} \\
+Tomando el límite de fluencia $S_y = 241 \text{ MPa}$:
+
+\begin{align}
+    S_{ys} &= 0.577 \cdot 241 \text{ MPa} = 139.06 \text{ MPa} \\[6pt]
+    \tau_{perm} &= \frac{139.06 \text{ MPa}}{2.0} = 69.53 \text{ MPa} \\[6pt]
+    r_{304} &= \sqrt[3]{\frac{2 \cdot 460.40 \text{ N}\cdot\text{m}}{\pi \cdot (69.53 \times 10^6 \text{ Pa})}} = \sqrt[3]{4.215 \times 10^{-6} \text{ m}^3} \\[6pt]
+    r_{304} &= 0.01615 \text{ m} = 16.15 \text{ mm}
+\end{align}
+El radio mínimo teórico calculado para el acero 304 es de $16.15 \text{ mm}$, lo que equivale a un diámetro mínimo requerido de $32.30 \text{ mm}$.
+
+Al comparar ambos escenarios, se evidencia que el uso del acero AISI 420 tratado térmicamente permite reducir considerablemente el tamaño del eje frente a la torsión. Dado a la evaluacion de ambos escenarios, se concluye que usando otros aceros, de acuerdo a los calculos presentados y reemplazando las resistencias dadas, el eje siempre va a ser mayor a 9mm  e inferior a 16mm.
+
+\subsection{Chaveta}
+La chaveta es el elemento de máquinas encargado de transmitir el torque desde la polea conducida hacia el eje principal y del eje principal a las manzanas junto a las aspas. Su dimensionamiento transversal está normalizado en función del diámetro del eje, mientras que su longitud debe ser calculada para evitar la falla mecánica. 
+
+Para este análisis, se asume la selección del eje de acero AISI 304 siendo este el mas debil, por lo que si funciona para este caso, se puede extrapolar a los demas, normalizado a un diámetro comercial de $D = 35 \text{ mm}$. Según la norma \textbf{DIN 6885-1} para ejes entre 30 y 38 mm, corresponde una chaveta plana de sección rectangular con las siguientes dimensiones:
+\begin{itemize}
+    \item Ancho: $b = 10 \text{ mm} = 0.010 \text{ m}$
+    \item Altura: $h = 8 \text{ mm} = 0.008 \text{ m}$
+\end{itemize}
+
+Se selecciona un acero estándar de bajo carbono para la chaveta (ej. AISI 1020), con un límite de fluencia $S_{yc} = 250 \text{ MPa}$ y se mantiene el factor de seguridad $FS = 2.0$. La fuerza tangencial ($F$) que el cubo de la polea ejerce sobre la chaveta se deriva del torque total del sistema ($\tau_{eje} = 460.40 \text{ N}\cdot\text{m}$):
+
+\begin{equation}
+    F = \frac{\tau_{eje}}{r_{eje}} = \frac{2 \cdot \tau_{eje}}{D} = \frac{2 \cdot 460.40}{0.035} = 26308.57 \text{ N}
+\end{equation}
+
+El diseño de la longitud mínima de la chaveta ($L$) requiere evaluar dos criterios de falla: corte por cizalladura y aplastamiento (compresión). 
+
+\subsubsection*{Criterio 1: Falla por Corte (Cizalladura)}
+La fuerza tangencial tiende a cizallar la chaveta en la interfaz entre el eje y la polea. El esfuerzo cortante permisible ($\tau_{perm}$) se calcula mediante la teoría de Von Mises. La longitud mínima por corte ($L_c$) se despeja garantizando que el esfuerzo actuante no supere al permisible:
+
+\begin{align}
+    \tau_{perm} &= \frac{0.577 \cdot S_{yc}}{FS} = \frac{0.577 \cdot (250 \times 10^6 \text{ Pa})}{2.0} = 72.125 \text{ MPa} \\[6pt]
+    L_c &= \frac{F}{b \cdot \tau_{perm}} \\[6pt]
+    L_c &= \frac{26308.57}{0.010 \cdot (72.125 \times 10^6)} = 0.03648 \text{ m} = 36.48 \text{ mm}
+\end{align}
+
+\subsubsection*{Criterio 2: Falla por Aplastamiento}
+La fuerza tangencial comprime la mitad superior de la chaveta contra la ranura de la polea y la mitad inferior contra el eje. El esfuerzo de compresión permisible ($\sigma_{perm}$) se evalúa directamente con el límite de fluencia. La longitud mínima por aplastamiento ($L_a$) se obtiene considerando que el área de contacto es $(h/2) \cdot L$:
+
+\begin{align}
+    \sigma_{perm} &= \frac{S_{yc}}{FS} = \frac{250 \times 10^6 \text{ Pa}}{2.0} = 125.0 \text{ MPa} \\[6pt]
+    L_a &= \frac{F}{(h/2) \cdot \sigma_{perm}} \\[6pt]
+    L_a &= \frac{26308.57}{0.004 \cdot (125.0 \times 10^6)} = 0.05262 \text{ m} = 52.62 \text{ mm}
+\end{align}
+
+\subsubsection*{Selección Final}
+Para garantizar la integridad del ensamble, la longitud real de la chaveta debe ser mayor o igual al valor más crítico obtenido en ambos criterios. Dado que el aplastamiento exige $52.62 \text{ mm}$, se selecciona una longitud estándar comercial normalizada superior, definiendo una chaveta final de:
+
+\begin{equation}
+    10 \text{ mm} \times 8 \text{ mm} \times 56 \text{ mm}
+\end{equation}
+
+\subsection{Viga}
+\subsection{Aspas}
+
+
+\section{Diagrama S-N y Análisis de Fatiga}
+\subsection{Ciclos de vida}
+
+Para la creación de los diagramas S-N y el análisis de fatiga, inicialmente se deben determinar los ciclos de carga a los que operará la maquinaria. De acuerdo con las condiciones del proceso por lotes (batch), el ciclo de trabajo de la mezcladora se descompone de la siguiente manera:
+\begin{itemize}
+    \item Llenado del tanque (hasta $0.8h$): $5 \text{ minutos}$.
+    \item Agitación del producto (carga máxima): $15 \text{ minutos}$.
+    \item Vaciado del tanque: $10 \text{ minutos}$.
+\end{itemize}
+
+El tiempo total de un lote es de $30 \text{ minutos}$. Dado que la máquina opera 16 horas diarias ($960 \text{ minutos/día}$), el número de lotes procesados por día es:
+
+\begin{equation}
+    N_{lotes} = \frac{960 \text{ min/día}}{30 \text{ min/lote}} = 32 \text{ lotes/día}
+\end{equation}
+
+El eje de agitación experimenta su carga de fatiga principal (flexión rotativa por la polea y torsión) durante la fase de agitación. Como se estableció previamente, la velocidad angular del eje principal es de $50 \text{ rpm}$ (derivada de la entrada a $200 \text{ rpm}$ y la reducción $4:1$). Los ciclos de esfuerzo (revoluciones) que sufre el eje por cada lote son:
+
+\begin{equation}
+    \text{Ciclos por lote} = 50 \text{ rpm} \times 15 \text{ minutos} = 750 \text{ revoluciones}
+\end{equation}
+
+Multiplicando esto por la operación diaria y asumiendo un régimen de trabajo industrial estándar de 300 días al año, la cantidad de ciclos anuales ($n_{anual}$) es:
+
+\begin{align}
+    n_{diario} &= 32 \text{ lotes/día} \times 750 \text{ rev/lote} = 24,000 \text{ ciclos/día} \\[6pt]
+    n_{anual} &= 24,000 \text{ ciclos/día} \times 300 \text{ días/año} = 7.2 \times 10^6 \text{ ciclos/año}
+\end{align}
+
+Como los ciclos superan el millón ($10^6$) en menos de un año de operación, el diseño del eje debe realizarse obligatoriamente bajo el \textbf{criterio de vida infinita} en el diagrama S-N.
+
+\subsection{Cálculos de Fatiga}
+
+Para los cálculos de fatiga empleando el criterio de Goodman modificado, se requieren las propiedades mecánicas reales de los materiales seleccionados y la geometría del diseño preliminar. 
+
+Retomando los dos casos de estudio propuestos para los aceros inoxidables, se tienen las siguientes resistencias últimas a la tensión ($S_{ut}$) y los diámetros comerciales normalizados ($D$) obtenidos del análisis estático por fluencia:
+
+\begin{itemize}
+    \item \textbf{Caso 1: Acero Inoxidable AISI 420 (Tratado térmicamente)}
+    \begin{itemize}
+        \item Resistencia última ($S_{ut}$): $1586 \text{ MPa}$
+        \item Límite de fluencia ($S_y$): $1344 \text{ MPa}$
+        \item Diámetro del eje normalizado ($D_{420}$): $20 \text{ mm}$
+    \end{itemize}
+
+    \item \textbf{Caso 2: Acero Inoxidable AISI 304 (Recocido)}
+    \begin{itemize}
+        \item Resistencia última ($S_{ut}$): $586 \text{ MPa}$
+        \item Límite de fluencia ($S_y$): $241 \text{ MPa}$
+        \item Diámetro del eje normalizado ($D_{304}$): $35 \text{ mm}$
+    \end{itemize}
+\end{itemize}
+
+El primer paso para construir el diagrama S-N es determinar el límite de resistencia a la fatiga teórico (límite de viga rotatoria, $S_e'$). Según las teorías estándar de fatiga en aceros:
+\begin{itemize}
+    \item Si $S_{ut} \leq 1400 \text{ MPa}$, entonces $S_e' = 0.5 \cdot S_{ut}$.
+    \item Si $S_{ut} > 1400 \text{ MPa}$, entonces $S_e' = 700 \text{ MPa}$.
+\end{itemize}
+
+Aplicando este criterio a los materiales de estudio:
+\begin{align}
+    S_{e,420}' &= 700 \text{ MPa} \quad (\text{por superar los } 1400 \text{ MPa}) \\[6pt]
+    S_{e,304}' &= 0.5 \cdot 586 \text{ MPa} = 293 \text{ MPa}
+\end{align}
+
+Para encontrar el límite de resistencia a la fatiga real del componente ($S_e$) que se ubicará en el diagrama S-N (a $10^6$ ciclos), es necesario afectar este valor teórico por los factores de corrección de Marin:
+
+\begin{equation}
+    S_e = k_a \cdot k_b \cdot k_c \cdot k_d \cdot k_e \cdot k_f \cdot S_e'
+\end{equation}
+
+Donde se deberán calcular específicamente para cada eje:
+\begin{itemize}
+    \item $k_a$: Factor de condición superficial (depende de $S_{ut}$ y del acabado, ej. mecanizado).
+    \item $k_b$: Factor de tamaño (depende directamente de los diámetros $D_{420} = 20 \text{ mm}$ y $D_{304} = 35 \text{ mm}$).
+    \item $k_c$: Factor de carga ($1.0$ por ser flexión y torsión combinadas evaluadas con Von Mises, o ajustado según criterio).
+    \item $k_d$: Factor de temperatura (asumido $1.0$ para $30^\circ\text{C}$).
+    \item $k_e$: Factor de confiabilidad (según el porcentaje de fiabilidad exigido en el diseño).
+\end{itemize}
+
+
+\end{document}
