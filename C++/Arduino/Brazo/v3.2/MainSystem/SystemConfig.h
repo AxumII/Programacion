@@ -1,0 +1,65 @@
+#ifndef SYSTEM_CONFIG_H
+#define SYSTEM_CONFIG_H
+
+#include <Arduino.h>
+#include <Wire.h>
+#include <ArduinoEigenDense.h>
+
+class SystemConfig {
+    private:
+        byte _dimA, _dimP, _dimL, _dimD;
+        byte* _pinAnalogI;
+        byte* _pinDigitalIO;
+        byte* _pinPulsadores;
+        byte* _pinLEDs;
+        byte* _pinRows; 
+        byte* _pinCols;
+        byte* _pinI2C;
+        byte* _pinSPI;
+        
+        uint32_t _bauds;
+
+        static volatile uint32_t _statePulsadores;
+        static byte* _ptrPulsadores;
+        static byte _numPulsadores;
+        static byte* _pinJoy1; 
+        static byte* _pinJoy2; 
+        hw_timer_t* timerDebounce = NULL;
+
+        unsigned long _joyTimer;
+        const int _joyDelay;
+        int timeout = 1000;
+        
+    public:
+        bool _SPIStatus = false;
+        bool _SerialStatus = false;
+        bool _I2CStatus = false;
+        bool _PCA9685Status = false;
+        
+        SystemConfig(byte dimA, byte dimP, byte dimL, byte dimD,
+                     byte* pA, byte* pP, byte* pL, byte* pD, 
+                     byte* pF, byte* pC, uint32_t b, 
+                     byte* pI, byte* pS, byte* j1, byte* j2);
+
+        bool start();
+        Eigen::VectorXi I2CScan();
+        static void IRAM_ATTR debounceISR();
+
+        bool readPulsador(byte index);
+        void setLED(byte index, bool state);
+
+        byte getJoystickPin(byte joyNum, byte axis);
+        byte getAnalogPin(byte index);
+        
+        int getJoystickAxis(byte joystick, char axis);
+        bool getJoySwState(byte joyNum);
+        float joystickAnalogProportional(int axisValue);
+        
+        int joystickAsSelector(int axisValue);
+        int joystickAsFasterSelector(int axisValue);
+
+        uint32_t getP();
+        void clearP();            
+};
+
+#endif

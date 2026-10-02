@@ -1,4 +1,3 @@
-
 #include <Arduino.h>
 #include "SystemConfig.h"
 #include "ControlManager.h"
@@ -12,8 +11,8 @@ byte analogInputPin[]  = {10};
 byte PWMLeftPin[]      = {7, 5, 16, 18};
 byte PWMRightPin[]     = {6, 4, 15, 17};
 byte i2cPin[]          = {8, 9}; 
-byte QEncoderAPin[]    = {14, 12, 47, 19};
-byte QEncoderBPin[]    = {13, 11, 48, 20};
+byte QEncoderAPin[]    = {13, 11, 48, 20};
+byte QEncoderBPin[]    = {14, 12, 47, 19};
 
 byte* digitalInputPin  = nullptr;
 byte digitalOutputPin[] = {2};
@@ -61,7 +60,8 @@ SystemConfig sistema(
     0, nullptr, 
     0, nullptr, 
     0, nullptr, 
-    sizeof(digitalOutputPin), digitalOutputPin 
+    sizeof(digitalOutputPin), digitalOutputPin,
+     
 );
 
 Kinematic* cinBrazo = nullptr;
