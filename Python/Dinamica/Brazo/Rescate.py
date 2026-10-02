@@ -288,10 +288,10 @@ if __name__ == "__main__":
     # PLANTILLA CORREGIDA: Se desplaza el motor de J2 a J1, y el de J3 a J2.
     # Al reubicar la masa, el tipo de material estructural cobra mayor protagonismo visual en la gráfica.
     robot_def_ejemplo = [
-        {'axis': 'z', 'offset': [0.00475, 0.0, 0.132], 'm_servo': 0.500, 'm_link': calc_link_mass('PLA', 0.150), 'com_link': [0, 0, 0.150/2], 't_rated': 10.0, 'motor_mount_joint': 0, 'pulley_ratio': 1.0, 'pulley_eff': 0.9},
-        {'axis': 'y', 'offset': [L_ejemplo, -0.027, 0.0], 'm_servo': 0.500, 'm_link': calc_link_mass('PLA', L_ejemplo), 'com_link': [L_ejemplo/2, 0, 0], 't_rated': 50.0, 'motor_mount_joint': 1, 'pulley_ratio': 1.0, 'pulley_eff': 0.9},
-        {'axis': 'y', 'offset': [0.7*L_ejemplo, -0.030, 0.0], 'm_servo': 0.300, 'm_link': calc_link_mass('PLA', 0.7*L_ejemplo), 'com_link': [0.7*L_ejemplo/2, 0, 0], 't_rated': 15.0, 'motor_mount_joint': 1, 'pulley_ratio': 1.0, 'pulley_eff': 0.9}, # Motor movido a J1
-        {'axis': 'y', 'offset': [0.3*L_ejemplo, -0.003, 0.0], 'm_servo': 0.300, 'm_link': calc_link_mass('PLA', 0.3*L_ejemplo), 'com_link': [0.3*L_ejemplo/2, 0, 0], 't_rated': 15.0, 'motor_mount_joint': 2, 'pulley_ratio': 1.0, 'pulley_eff': 1.0}  # Motor movido a J2
+        {'axis': 'z', 'offset': [0.00475, 0.0, 0.132], 'm_servo': 0.500, 'm_link': calc_link_mass('PLA', 0.150), 'com_link': [0, 0, 0.150/2], 't_rated': 120, 'motor_mount_joint': 0, 'pulley_ratio': 1.0, 'pulley_eff': 0.9},
+        {'axis': 'y', 'offset': [L_ejemplo, -0.027, 0.0], 'm_servo': 0.500, 'm_link': calc_link_mass('PLA', L_ejemplo), 'com_link': [L_ejemplo/2, 0, 0], 't_rated': 120, 'motor_mount_joint': 1, 'pulley_ratio': 1.0, 'pulley_eff': 0.9},
+        {'axis': 'y', 'offset': [0.7*L_ejemplo, -0.030, 0.0], 'm_servo': 0.500, 'm_link': calc_link_mass('PLA', 0.7*L_ejemplo), 'com_link': [0.7*L_ejemplo/2, 0, 0], 't_rated': 50, 'motor_mount_joint': 1, 'pulley_ratio': 1.0, 'pulley_eff': 0.9}, # Motor movido a J1
+        {'axis': 'y', 'offset': [0.3*L_ejemplo, -0.003, 0.0], 'm_servo': 0.500, 'm_link': calc_link_mass('PLA', 0.3*L_ejemplo), 'com_link': [0.3*L_ejemplo/2, 0, 0], 't_rated': 50, 'motor_mount_joint': 2, 'pulley_ratio': 1.0, 'pulley_eff': 1.0}  # Motor movido a J2
     ]
     
     arm_test = RobotDOF_3D(joints=robot_def_ejemplo, alpha_target=5.0, m_load=0.2, m_tool=0.150)
