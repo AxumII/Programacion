@@ -25,6 +25,8 @@ def translation(v):
 # 2. Propiedades de Materiales
 # ==========================================
 DENSITIES = {'PLA': 1250.0, 'ABS': 1040.0, 'Aluminio': 2700.0}
+# AÑADIDO: Módulos de elasticidad (Pa) para cálculo de deflexión (PLA/ABS asumen infill/anisotropía reduciendo el módulo efectivo)
+E_MODULI = {'PLA': 2.0e9, 'ABS': 1.5e9, 'Aluminio': 69.0e9} 
 
 def get_material_properties(material, b, h):
     area_m2 = b * h
@@ -36,11 +38,20 @@ def calc_link_mass(material, length_m):
     densidad_efectiva = DENSITIES['Aluminio'] if material == 'Aluminio' else DENSITIES[material] * 0.30 
     return area_m2 * length_m * densidad_efectiva
 
+# AÑADIDO: Cálculo del Momento de Inercia (I) para la sección transversal
+def get_inertia(material, b, h):
+    # I = (b * h^3) / 12 (asumiendo sección rectangular sólida o efectiva)
+    if material == 'Aluminio':
+        return (0.008 * 0.040**3) / 12
+    else:
+        # Para impresión 3D, el infill reduce la inercia efectiva. Aproximación simplificada:
+        return (0.030 * 0.050**3) / 12 * 0.5 
+
 # ==========================================
 # 3. Clase Principal (Física Reubicación Poleas)
 # ==========================================
 class RobotDOF_3D:
-    def __init__(self, joints, alpha_target, m_load=0.0, m_tool=0.0):
+    def __init__(self, joints, alpha_target, m_load=0.0, m_tool=0.0, material='PLA'):
         self.joints = joints
         self.N = len(joints)
         self.alpha_target = alpha_target
@@ -51,6 +62,11 @@ class RobotDOF_3D:
         self.kgcm2Nm = 0.0980665 
         self.Nm2kgcm = 10.197    
         self.F_g = np.array([0, 0, -self.g])
+        
+        # AÑADIDO: Parámetros para brida y deflexión
+        self.material = material
+        self.r_brida = 0.015 # 15 mm de radio para los tornillos M4
+        self.n_tornillos = 6
 
     def forward_kinematics(self, thetas):
         T = np.eye(4)
@@ -94,15 +110,23 @@ class RobotDOF_3D:
         inertia_array = np.zeros(self.N)
         alpha_max_permitida = np.zeros(self.N)
         
+        # AÑADIDO: Arreglos para momentos flectores, pesos acumulados y deflexión
+        f_axial_tornillo = np.zeros(self.N)
+        f_cortante_tornillo = np.zeros(self.N)
+        deflexiones = np.zeros(self.N)
+        
         for i in range(self.N):
             tau_3d_static = np.zeros(3)
+            peso_acumulado_3d = np.zeros(3) # AÑADIDO: Fuerza cortante total en la articulación
             inertia_i = 0.0
             P_axis = positions[i]
             u_axis = z_axes[i]
             
             for j in range(i, self.N):
                 r_vec_com = com_positions[j] - P_axis
-                tau_3d_static += np.cross(r_vec_com, self.joints[j]['m_link'] * self.F_g)
+                f_peso_j = self.joints[j]['m_link'] * self.F_g
+                tau_3d_static += np.cross(r_vec_com, f_peso_j)
+                peso_acumulado_3d += f_peso_j # AÑADIDO
                 r_parallel_com = np.dot(r_vec_com, u_axis) * u_axis
                 r_perp_com = np.linalg.norm(r_vec_com - r_parallel_com)
                 inertia_i += self.joints[j]['m_link'] * (r_perp_com**2)
@@ -112,20 +136,47 @@ class RobotDOF_3D:
                 if mount_idx >= i:
                     m_mot = joint.get('m_motor', joint.get('m_servo', 0.0))
                     r_vec_mot = motor_positions[k] - P_axis
-                    tau_3d_static += np.cross(r_vec_mot, m_mot * self.F_g)
+                    f_peso_mot = m_mot * self.F_g
+                    tau_3d_static += np.cross(r_vec_mot, f_peso_mot)
+                    peso_acumulado_3d += f_peso_mot # AÑADIDO
                     r_parallel_mot = np.dot(r_vec_mot, u_axis) * u_axis
                     r_perp_mot = np.linalg.norm(r_vec_mot - r_parallel_mot)
                     inertia_i += m_mot * (r_perp_mot**2)
             
             if self.m_tip_total > 0:
                 r_vec_load = p_tip - P_axis
-                tau_3d_static += np.cross(r_vec_load, self.m_tip_total * self.F_g)
+                f_peso_load = self.m_tip_total * self.F_g
+                tau_3d_static += np.cross(r_vec_load, f_peso_load)
+                peso_acumulado_3d += f_peso_load # AÑADIDO
                 r_parallel_load = np.dot(r_vec_load, u_axis) * u_axis
                 r_perp_load = np.linalg.norm(r_vec_load - r_parallel_load)
                 inertia_i += self.m_tip_total * (r_perp_load**2)
             
-            t_static[i] = abs(np.dot(tau_3d_static, u_axis))
+            # El torque del motor es la proyección del torque 3D sobre el eje de giro
+            torque_motor_nm = np.dot(tau_3d_static, u_axis)
+            t_static[i] = abs(torque_motor_nm)
             t_dynamic_target[i] = inertia_i * self.alpha_target
+            
+            # AÑADIDO: Cálculos para los tornillos M4
+            # Momento flector: componente del torque perpendicular al eje del motor
+            torque_flector_3d = tau_3d_static - (torque_motor_nm * u_axis)
+            m_bend = np.linalg.norm(torque_flector_3d)
+            
+            # Fuerza Axial en el tornillo más traccionado: F_ax = M / (3 * R_brida) [Distribución circular 6 tornillos]
+            f_axial_tornillo[i] = m_bend / (3 * self.r_brida) if self.r_brida > 0 else 0
+            
+            # Fuerza Cortante en el tornillo: Combina el peso directo y la cizalladura por el torque del motor
+            f_peso_magnitud = np.linalg.norm(peso_acumulado_3d)
+            f_cortante_peso = f_peso_magnitud / self.n_tornillos
+            f_cortante_torque = abs(torque_motor_nm) / (self.r_brida * self.n_tornillos)
+            f_cortante_tornillo[i] = np.sqrt(f_cortante_peso**2 + f_cortante_torque**2)
+            
+            # AÑADIDO: Cálculo aproximado de deflexión para esta articulación (Viga en voladizo: d = F*L^3 / 3EI)
+            # Aproximamos usando la distancia total hasta la punta (L_eff)
+            L_eff = np.linalg.norm(p_tip - P_axis)
+            E = E_MODULI[self.material]
+            I = get_inertia(self.material, 0.030, 0.050)
+            deflexiones[i] = (f_peso_magnitud * (L_eff**3)) / (3 * E * I)
             
             ratio = self.joints[i].get('pulley_ratio', 1.0)
             eff = self.joints[i].get('pulley_eff', 1.0)
@@ -135,11 +186,12 @@ class RobotDOF_3D:
             t_margin_static = t_rated_joint_Nm - t_static[i]
             alpha_max_permitida[i] = (t_margin_static / inertia_i) if (t_margin_static > 0 and inertia_i > 0) else 0.0
                 
-        return t_static, t_dynamic_target, inertia_array, alpha_max_permitida, motor_positions
+        # Modificado el return para incluir los nuevos cálculos
+        return t_static, t_dynamic_target, inertia_array, alpha_max_permitida, motor_positions, f_axial_tornillo, f_cortante_tornillo, deflexiones
 
     def analyze_pose(self, thetas_deg, show_plot=True):
         thetas = np.radians(thetas_deg)
-        t_static, t_dyn_target, inertias, alphas, motor_pos = self.calculate_torques_and_limits(thetas)
+        t_static, t_dyn_target, inertias, alphas, motor_pos, f_axial, f_cortante, defls = self.calculate_torques_and_limits(thetas)
         
         metrics = []
         for i in range(self.N):
@@ -155,17 +207,18 @@ class RobotDOF_3D:
             metrics.append({
                 "Joint (Eje)": f"J{i} ({self.joints[i]['axis'].upper()})",
                 "Motor En": f"J{ubicacion}",
-                "Polea": f"{ratio}:1",
                 "Capacidad [kgcm]": round(t_joint_capacity, 1),
-                "T. Requerido [kgcm]": round(t_total_kgcm, 2),
-                "Acel MAX [rad/s²]": round(alphas[i], 2),
+                "T. Req [kgcm]": round(t_total_kgcm, 2),
+                "F. Axial M4 [N]": round(f_axial[i], 2),       # AÑADIDO
+                "F. Cortante M4 [N]": round(f_cortante[i], 2), # AÑADIDO
+                "Deflexión Aprox [mm]": round(defls[i]*1000, 2), # AÑADIDO
                 "Factor Seg": round(fs, 2)
             })
             
         df = pd.DataFrame(metrics).set_index("Joint (Eje)")
-        print(f"\n" + "="*85)
-        print(f"ANÁLISIS DE MASAS DESPLAZADAS | Herramienta: {self.m_tool*1000}g | Carga: {self.m_load*1000}g")
-        print("="*85)
+        print(f"\n" + "="*95)
+        print(f"ANÁLISIS DE MASAS Y TORNILLERÍA M4 | Herramienta: {self.m_tool*1000}g | Carga: {self.m_load*1000}g")
+        print("="*95)
         print(df.to_string())
 
         if show_plot:
@@ -213,10 +266,19 @@ def evaluar_barrido_multi_material(robot_template, materiales=['PLA', 'ABS', 'Al
     fig, axes = plt.subplots(1, len(materiales), figsize=(18, 6), sharey=True)
     if len(materiales) == 1: axes = [axes]
     
+    # AÑADIDO: Configuración para la SEGUNDA figura de Deflexión y Tornillos
+    fig2, axes2 = plt.subplots(2, len(materiales), figsize=(18, 10), sharex=True)
+    if len(materiales) == 1: axes2 = np.array([axes2]).T
+    
     max_torque_global = 0 # Para escalar el Y-axis correctamente
         
     for idx, material in enumerate(materiales):
         t_j0, t_j1, t_j2, t_j3 = [], [], [], []
+        
+        # AÑADIDO: Listas para almacenar datos mecánicos
+        f_axial_j1, f_cort_j1 = [], []
+        deflexion_punta = []
+        
         b, h = (0.008, 0.040) if material == 'Aluminio' else (0.030, 0.050)
         area, den_ef = get_material_properties(material, b, h)
         
@@ -239,47 +301,75 @@ def evaluar_barrido_multi_material(robot_template, materiales=['PLA', 'ABS', 'Al
             robot_def[3]['m_link'] = area * L4 * den_ef
             robot_def[3]['com_link'][0] = L4/2
             
-            arm = RobotDOF_3D(joints=robot_def, alpha_target=alpha_target, m_load=m_load, m_tool=m_tool)
-            thetas_max = np.radians([0, 0, 0, 0])
-            t_static, _, _, _, _ = arm.calculate_torques_and_limits(thetas_max)
+            # Se le pasa el material a la instancia
+            arm = RobotDOF_3D(joints=robot_def, alpha_target=alpha_target, m_load=m_load, m_tool=m_tool, material=material)
+            thetas_max = np.radians([0, 0, 0, 0]) # Condición de brazo extendido (peor caso)
+            t_static, _, _, _, _, f_ax, f_cort, defls = arm.calculate_torques_and_limits(thetas_max)
             
             t_j0.append(t_static[0] * arm.Nm2kgcm)
             t_j1.append(t_static[1] * arm.Nm2kgcm)
             t_j2.append(t_static[2] * arm.Nm2kgcm)
             t_j3.append(t_static[3] * arm.Nm2kgcm)
+            
+            # AÑADIDO: Guardar cargas del hombro (J1) que es el caso más crítico, y la suma de deflexiones
+            f_axial_j1.append(f_ax[1])
+            f_cort_j1.append(f_cort[1])
+            # Deflexión aproximada acumulada (suma de aportes de cada junta)
+            deflexion_punta.append(sum(defls) * 1000) # En milímetros
 
+        # --- GRÁFICA 1: TORQUES (Original) ---
         ax = axes[idx]
         ax.plot(longitudes_hombro * 1000, t_j0, 'k:', linewidth=2, label='Req. J0 (Base)')
         ax.plot(longitudes_hombro * 1000, t_j1, 'b-', linewidth=2, label='Req. J1 (Hombro)')
         ax.plot(longitudes_hombro * 1000, t_j2, 'r-', linewidth=2, label='Req. J2 (Codo)')
         ax.plot(longitudes_hombro * 1000, t_j3, 'g-', linewidth=2, label='Req. J3 (Muñeca)')
         
-        # Extraer TODOS los límites dinámicamente y agregarlos a la leyenda
         nombres = ['J0', 'J1', 'J2', 'J3']
         colores = ['grey', 'cyan', 'orange', 'lightgreen']
         for i in range(4):
             t_base = robot_template[i].get('t_motor', robot_template[i].get('t_rated', 0.0))
             cap = t_base * robot_template[i].get('pulley_ratio', 1.0) * robot_template[i].get('pulley_eff', 1.0)
-            # Solo dibujamos la línea si cae dentro de un rango razonable, pero SIEMPRE la agregamos a la leyenda
             ax.axhline(y=cap, color=colores[i], linestyle='--', alpha=0.5, label=f'Límite {nombres[i]} ({cap:.1f} kgcm)')
 
-        # Encontrar el pico máximo real requerido para escalar el zoom
         max_torque_global = max(max_torque_global, max(t_j1))
         
         ax.set_title(f'Material: {material}')
         ax.set_xlabel('Longitud Hombro ($L$) [mm]')
         if idx == 0: ax.set_ylabel('Torque Estático REQUERIDO [kgcm]')
         ax.grid(True, linestyle=':')
-        
-        # Leyenda reubicada para no tapar los datos (usando fontsize ajustado)
         ax.legend(fontsize=7, loc='upper left')
         
-    # Aplicar el Zoom inteligente (enfoca los datos reales y previene el aplastamiento de las curvas)
+        # --- AÑADIDO GRÁFICA 2: DEFLEXIÓN Y CARGAS M4 ---
+        ax_defl = axes2[0, idx]
+        ax_fuerza = axes2[1, idx]
+        
+        ax_defl.plot(longitudes_hombro * 1000, deflexion_punta, color='purple', linewidth=2)
+        ax_defl.set_title(f'Material: {material}')
+        ax_defl.grid(True, linestyle=':')
+        if idx == 0: ax_defl.set_ylabel('Deflexión en la Punta [mm]')
+        
+        ax_fuerza.plot(longitudes_hombro * 1000, f_axial_j1, 'r-', label='Fuerza Axial M4 (Arrastre)')
+        ax_fuerza.plot(longitudes_hombro * 1000, f_cort_j1, 'b--', label='Fuerza Cortante M4 (Cizalla)')
+        
+        # Referencia visual de falla por cortante intercapa en un hilo de plástico (~150N a 250N por tornillo)
+        if material != 'Aluminio':
+            ax_fuerza.axhline(y=200, color='red', linestyle=':', alpha=0.7, label='Límite Aprox. PETG/PLA (200N)')
+            
+        ax_fuerza.grid(True, linestyle=':')
+        ax_fuerza.set_xlabel('Longitud Hombro ($L$) [mm]')
+        if idx == 0: ax_fuerza.set_ylabel('Fuerza por Tornillo J1 [N]')
+        ax_fuerza.legend(fontsize=8, loc='upper left')
+
+    # Aplicar el Zoom inteligente a la Gráfica 1
     for ax in axes:
         ax.set_ylim(-2, max_torque_global * 1.25)
 
-    plt.suptitle(f'Efecto del Desplazamiento de Masa vs Envergadura\n(Herramienta: {m_tool*1000}g | Carga Útil: {m_load*1000}g)', fontsize=14)
-    plt.tight_layout()
+    fig.suptitle(f'Efecto del Desplazamiento de Masa vs Envergadura\n(Herramienta: {m_tool*1000}g | Carga Útil: {m_load*1000}g)', fontsize=14)
+    fig.tight_layout()
+    
+    fig2.suptitle(f'Análisis Mecánico: Deflexión del Brazo y Cargas en Tornillos de la Brida (J1)', fontsize=14)
+    fig2.tight_layout()
+    
     plt.show()
 
 if __name__ == "__main__":
@@ -294,7 +384,7 @@ if __name__ == "__main__":
         {'axis': 'y', 'offset': [0.3*L_ejemplo, -0.003, 0.0], 'm_servo': 0.300, 'm_link': calc_link_mass('PLA', 0.3*L_ejemplo), 'com_link': [0.3*L_ejemplo/2, 0, 0], 't_rated': 15.0, 'motor_mount_joint': 2, 'pulley_ratio': 1.0, 'pulley_eff': 1.0}  # Motor movido a J2
     ]
     
-    arm_test = RobotDOF_3D(joints=robot_def_ejemplo, alpha_target=5.0, m_load=0.2, m_tool=0.150)
+    arm_test = RobotDOF_3D(joints=robot_def_ejemplo, alpha_target=5.0, m_load=0.2, m_tool=0.150, material='PLA')
     arm_test.analyze_pose([0.0, 0.0, 0.0, 0.0], show_plot=True)
     
     evaluar_barrido_multi_material(robot_template=robot_def_ejemplo, materiales=['PLA', 'ABS', 'Aluminio'], m_load=0.2, m_tool=0.150, alpha_target=5.0)
