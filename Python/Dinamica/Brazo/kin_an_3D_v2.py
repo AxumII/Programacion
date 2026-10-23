@@ -285,8 +285,8 @@ if __name__ == "__main__":
     robot_def_sin_poleas = [
         {'axis': 'z', 'offset': [0.00475, 0.0, 0.132], 'm_servo': 0.500, 'm_link': calc_link_mass('PLA', 0.150), 'com_link': [0, 0, 0.150/2], 't_rated': 15.0, 'motor_mount_joint': 0, 'pulley_ratio': 1.0, 'pulley_eff': 1.0},
         {'axis': 'y', 'offset': [L_ejemplo, -0.027, 0.0], 'm_servo': 0.500, 'm_link': calc_link_mass('PLA', L_ejemplo), 'com_link': [L_ejemplo/2, 0, 0], 't_rated': 50.0, 'motor_mount_joint': 1, 'pulley_ratio': 1.0, 'pulley_eff': 1.0},
-        {'axis': 'y', 'offset': [0.7*L_ejemplo, -0.030, 0.0], 'm_servo': 0.300, 'm_link': calc_link_mass('PLA', 0.7*L_ejemplo), 'com_link': [0.7*L_ejemplo/2, 0, 0], 't_rated': 25.0, 'motor_mount_joint': 2, 'pulley_ratio': 1.0, 'pulley_eff': 1.0}, 
-        {'axis': 'y', 'offset': [0.3*L_ejemplo, -0.003, 0.0], 'm_servo': 0.300, 'm_link': calc_link_mass('PLA', 0.3*L_ejemplo), 'com_link': [0.3*L_ejemplo/2, 0, 0], 't_rated': 15.0, 'motor_mount_joint': 3, 'pulley_ratio': 1.0, 'pulley_eff': 1.0}  
+        {'axis': 'y', 'offset': [0.7*L_ejemplo, -0.030, 0.0], 'm_servo': 0.500, 'm_link': calc_link_mass('PLA', 0.7*L_ejemplo), 'com_link': [0.7*L_ejemplo/2, 0, 0], 't_rated': 25.0, 'motor_mount_joint': 2, 'pulley_ratio': 1.0, 'pulley_eff': 1.0}, 
+        {'axis': 'y', 'offset': [0.3*L_ejemplo, -0.003, 0.0], 'm_servo': 0.500, 'm_link': calc_link_mass('PLA', 0.3*L_ejemplo), 'com_link': [0.3*L_ejemplo/2, 0, 0], 't_rated': 15.0, 'motor_mount_joint': 3, 'pulley_ratio': 1.0, 'pulley_eff': 1.0}  
     ]
 
     arm_sin_poleas = RobotDOF_3D(joints=robot_def_sin_poleas, alpha_target=5.0, m_load=0.2, m_tool=0.150)
