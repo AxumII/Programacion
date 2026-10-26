@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (MiKTeX 26.5) (preloaded format=pdflatex 2026.9.6)  7 SEP 2026 00:07
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (MiKTeX 26.5) (preloaded format=pdflatex 2026.9.6)  25 OCT 2026 21:58
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -166,7 +166,16 @@ LaTeX Info: Redefining \Relbar on input line 970.
 \mathdisplay@stack=\toks26
 LaTeX Info: Redefining \[ on input line 2965.
 LaTeX Info: Redefining \] on input line 2966.
-) (C:\Users\axump\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hyperref.sty
+) (C:\Users\axump\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\amssymb.sty
+Package: amssymb 2013/01/14 v3.01 AMS font symbols
+ (C:\Users\axump\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\amsfonts.sty
+Package: amsfonts 2013/01/14 v3.01 Basic AMSFonts support
+\symAMSa=\mathgroup4
+\symAMSb=\mathgroup5
+LaTeX Font Info:    Redeclaring math symbol \hbar on input line 98.
+LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
+(Font)                  U/euf/m/n --> U/euf/b/n on input line 106.
+)) (C:\Users\axump\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hyperref.sty
 Package: hyperref 2026-06-17 v7.01r Hypertext links for LaTeX
  (C:\Users\axump\AppData\Local\Programs\MiKTeX\tex/latex/kvsetkeys\kvsetkeys.sty
 Package: kvsetkeys 2022-10-05 v1.19 Key value parser (HO)
@@ -283,43 +292,46 @@ Package: array 2026/02/24 v2.7b Tabular extension package (FMi)
 \TX@delta=\dimen181
 \TX@cols=\count314
 \TX@ftn=\toks28
+) (C:\Users\axump\AppData\Local\Programs\MiKTeX\tex/latex/float\float.sty
+Package: float 2001/11/08 v1.3d Float enhancements (AL)
+\c@float@type=\count315
+\float@exts=\toks29
+\float@box=\box57
+\@float@everytoks=\toks30
+\@floatcapt=\box58
 )
-Package hyperref Info: Option `colorlinks' set `true' on input line 21.
+Package hyperref Info: Option `colorlinks' set `true' on input line 23.
  (C:\Users\axump\AppData\Local\Programs\MiKTeX\tex/latex/l3kernel\l3backend-pdftex.def
 File: l3backend-pdftex.def 2026-08-10 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count315
+\l__color_backend_stack_int=\count316
 ) (Brazo.aux
 LaTeX Info: Redefining \. on input line 11.
 LaTeX Info: Redefining \% on input line 11.
 Package babel Info: 'spanish' activates 'spanish' shorthands.
 (babel)             Reported on input line 11.
-
-
-LaTeX Warning: Label `fig:curvas_dinamicas_30_1' multiply defined.
-
 )
 \openout1 = `Brazo.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 27.
-LaTeX Font Info:    ... okay on input line 27.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 27.
-LaTeX Font Info:    ... okay on input line 27.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 27.
-LaTeX Font Info:    ... okay on input line 27.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 27.
-LaTeX Font Info:    ... okay on input line 27.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 27.
-LaTeX Font Info:    ... okay on input line 27.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 27.
-LaTeX Font Info:    ... okay on input line 27.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 27.
-LaTeX Font Info:    ... okay on input line 27.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 27.
-LaTeX Font Info:    ... okay on input line 27.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 27.
-LaTeX Font Info:    ... okay on input line 27.
-LaTeX Info: Redefining \. on input line 27.
-LaTeX Info: Redefining \% on input line 27.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 29.
+LaTeX Font Info:    ... okay on input line 29.
+LaTeX Info: Redefining \. on input line 29.
+LaTeX Info: Redefining \% on input line 29.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -357,17 +369,17 @@ LaTeX Info: Redefining \% on input line 27.
 
 (C:\Users\axump\AppData\Local\Programs\MiKTeX\tex/context/base/mkii\supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count316
+\scratchcounter=\count317
 \scratchdimen=\dimen182
-\scratchbox=\box57
-\nofMPsegments=\count317
-\nofMParguments=\count318
-\everyMPshowfont=\toks29
-\MPscratchCnt=\count319
+\scratchbox=\box59
+\nofMPsegments=\count318
+\nofMParguments=\count319
+\everyMPshowfont=\toks31
+\MPscratchCnt=\count320
 \MPscratchDim=\dimen183
-\MPnumerator=\count320
-\makeMPintoPDFobject=\count321
-\everyMPtoPDFconversion=\toks30
+\MPnumerator=\count321
+\makeMPintoPDFobject=\count322
+\everyMPtoPDFconversion=\toks32
 ) (C:\Users\axump\AppData\Local\Programs\MiKTeX\tex/latex/epstopdf-pkg\epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
 Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 485.
@@ -380,7 +392,7 @@ File: color.cfg 2016/01/02 v1.6 sample color configuration
 )
 Package color Info: Driver file: pdftex.def on input line 149.
  (C:\Users\axump\AppData\Local\Programs\MiKTeX\tex/latex/graphics\mathcolor.ltx))
-Package hyperref Info: Link coloring ON on input line 27.
+Package hyperref Info: Link coloring ON on input line 29.
  (Brazo.out) (Brazo.out)
 \@outlinefile=\write3
 \openout3 = `Brazo.out'.
@@ -391,7 +403,14 @@ Package babel Info: Main language set to 'spanish'.
 {C:/Users/axump/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}] (Brazo.toc
 LaTeX Info: Redefining \. on input line 1.
 LaTeX Info: Redefining \% on input line 1.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 3.
+ (C:\Users\axump\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsa.fd
+File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
+LaTeX Font Info:    Trying to load font information for U+msb on input line 3.
+ (C:\Users\axump\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsb.fd
+File: umsb.fd 2013/01/14 v3.01 AMS symbols B
+))
 \tf@toc=\write4
 \openout4 = `Brazo.toc'.
 
@@ -399,39 +418,60 @@ LaTeX Info: Redefining \% on input line 1.
 pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.67 
-      [1] [2] [3]
-<T_in_out.png, id=108, 947.79094pt x 328.97906pt>
-File: T_in_out.png Graphic file (type png)
-<use T_in_out.png>
-Package pdftex.def Info: T_in_out.png  used on input line 178.
-(pdftex.def)             Requested size: 364.19667pt x 126.41386pt.
- [4] [5 <./T_in_out.png>]
-Overfull \hbox (23.8893pt too wide) in paragraph at lines 202--204
-\OT1/cmr/m/n/12 da trans-mi-si^^Son po-see un error an-gu-lar in-de-pen-dien-te aco-ta-do en el in-ter-va-lo $[\OMS/cmsy/m/n/12 ^^@\OT1/cmr/m/n/12 ^^A\OML/cmm/m/it/12 ^^R[]; \OT1/cmr/m/n/12 +^^A\OML/cmm/m/it/12 ^^R[]\OT1/cmr/m/n/12 ]$,
- []
-
-<Tvsw_30_1.png, id=134, 1387.584pt x 704.6325pt>
+l.69 
+      [1] [2] [3] [4
+pdfTeX warning (ext4): destination with the same identifier (name{table.1}) has been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.163 \end{equation}
+                    
+pdfTeX warning (ext4): destination with the same identifier (name{table.2}) has been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.163 \end{equation}
+                    ]
+<Tvsw_30_1.png, id=129, 1387.584pt x 704.6325pt>
 File: Tvsw_30_1.png Graphic file (type png)
 <use Tvsw_30_1.png>
-Package pdftex.def Info: Tvsw_30_1.png  used on input line 232.
+Package pdftex.def Info: Tvsw_30_1.png  used on input line 174.
 (pdftex.def)             Requested size: 409.71692pt x 208.05832pt.
-<Tvsw_15_1.png, id=135, 1387.584pt x 704.6325pt>
+<Tvsw_15_1.png, id=131, 1387.584pt x 704.6325pt>
 File: Tvsw_15_1.png Graphic file (type png)
 <use Tvsw_15_1.png>
-Package pdftex.def Info: Tvsw_15_1.png  used on input line 239.
+Package pdftex.def Info: Tvsw_15_1.png  used on input line 181.
 (pdftex.def)             Requested size: 409.71692pt x 208.05832pt.
-<TvsL4gof.png, id=136, 1387.584pt x 704.6325pt>
+ [5
+pdfTeX warning (ext4): destination with the same identifier (name{figure.1}) has been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.189 \begin{equation}
+                      
+pdfTeX warning (ext4): destination with the same identifier (name{figure.2}) has been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.189 \begin{equation}
+                       <./Tvsw_30_1.png> <./Tvsw_15_1.png>] [6] [7]
+<TvsL4gof.png, id=167, 1387.584pt x 704.6325pt>
 File: TvsL4gof.png Graphic file (type png)
 <use TvsL4gof.png>
-Package pdftex.def Info: TvsL4gof.png  used on input line 249.
-(pdftex.def)             Requested size: 455.24411pt x 231.17471pt.
-<TvsL5gof.png, id=137, 1387.584pt x 704.6325pt>
+Package pdftex.def Info: TvsL4gof.png  used on input line 282.
+(pdftex.def)             Requested size: 409.71692pt x 208.05832pt.
+<TvsL5gof.png, id=168, 1387.584pt x 704.6325pt>
 File: TvsL5gof.png Graphic file (type png)
 <use TvsL5gof.png>
-Package pdftex.def Info: TvsL5gof.png  used on input line 256.
-(pdftex.def)             Requested size: 455.24411pt x 231.17471pt.
-[6] [7 <./Tvsw_30_1.png> <./Tvsw_15_1.png>] [8 <./TvsL4gof.png> <./TvsL5gof.png>] (Brazo.aux
+Package pdftex.def Info: TvsL5gof.png  used on input line 289.
+(pdftex.def)             Requested size: 409.71692pt x 208.05832pt.
+ [8
+pdfTeX warning (ext4): destination with the same identifier (name{figure.3}) has been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.296 
+      
+pdfTeX warning (ext4): destination with the same identifier (name{figure.4}) has been already used, duplicate ignored
+<argument> ...shipout:D \box_use:N \l_shipout_box 
+                                                  \__shipout_drop_firstpage_...
+l.296 
+       <./TvsL4gof.png> <./TvsL5gof.png>] [9] [10] (Brazo.aux
 LaTeX Info: Redefining \. on input line 11.
 LaTeX Info: Redefining \% on input line 11.
 )
@@ -439,25 +479,21 @@ LaTeX Info: Redefining \% on input line 11.
 LaTeX2e <2026-06-01>
 L3 programming layer <2026-08-10>
  ***********
-
-
-LaTeX Warning: There were multiply-defined labels.
-
 Package rerunfilecheck Info: File `Brazo.out' has not changed.
-(rerunfilecheck)             Checksum: DE9305A13C7335673D67EEC27B83BB22;2883.
+(rerunfilecheck)             Checksum: 9DC9870C3A9EBCAAD1AD5EEFC64FC2E1;3331.
  ) 
 Here is how much of TeX's memory you used:
- 11642 strings out of 467441
- 187835 string characters out of 5407592
- 638577 words of memory out of 5000000
- 40773 multiletter control sequences out of 15000+600000
- 634883 words of font info for 64 fonts, out of 8000000 for 9000
+ 12259 strings out of 467441
+ 195319 string characters out of 5407592
+ 643721 words of memory out of 5000000
+ 41345 multiletter control sequences out of 15000+600000
+ 636118 words of font info for 70 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 74i,13n,79p,914b,541s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 74i,11n,79p,914b,486s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <C:/Users/axump/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx12.pfb><C:/Users/axump/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbxti10.pfb><C:/Users/axump/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmcsc10.pfb><C:/Users/axump/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users/axump/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi12.pfb><C:/Users/axump/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/axump/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Users/axump/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/axump/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/axump/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy8.pfb><C:/Users/axump/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmti12.pfb>
-Output written on Brazo.pdf (10 pages, 1138200 bytes).
+Output written on Brazo.pdf (12 pages, 1027961 bytes).
 PDF statistics:
- 223 PDF objects out of 1000 (max. 8388607)
- 43 named destinations out of 1000 (max. 500000)
- 146 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 258 PDF objects out of 1000 (max. 8388607)
+ 67 named destinations out of 1000 (max. 500000)
+ 149 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -10,13 +10,18 @@
 \contentsline {subsubsection}{\numberline {3.1.2}Estado Deseado}{2}{subsubsection.3.1.2}%
 \contentsline {subsection}{\numberline {3.2}Requerimientos}{2}{subsection.3.2}%
 \contentsline {subsection}{\numberline {3.3}Parámetros de Diseño de Ingeniería}{3}{subsection.3.3}%
-\contentsline {subsubsection}{\numberline {3.3.1}Análisis de Motores}{3}{subsubsection.3.3.1}%
+\contentsline {subsubsection}{\numberline {3.3.1}Análisis de Motores y Actuadores}{3}{subsubsection.3.3.1}%
 \contentsline {paragraph}{Desventajas}{3}{section*.2}%
 \contentsline {paragraph}{Ventajas}{3}{section*.3}%
-\contentsline {paragraph}{Caracterización Técnica y Dimensional del Estándar NEMA 17}{4}{section*.4}%
-\contentsline {paragraph}{Análisis de Torques en Motores Paso a Paso}{4}{section*.5}%
-\contentsline {paragraph}{Dinámica de Corriente Limitada por Voltaje}{4}{section*.6}%
-\contentsline {subsubsection}{\numberline {3.3.2}Análisis Cinético y Dinámica Inversa}{6}{subsubsection.3.3.2}%
-\contentsline {paragraph}{Propagación del Error Espacial por Backlash}{6}{section*.7}%
-\contentsline {subsubsection}{\numberline {3.3.3}Parámetros de Motores y Transmisiones Seleccionados}{6}{subsubsection.3.3.3}%
-\contentsline {subsubsection}{\numberline {3.3.4}Cálculos de Motores y Transmisiones Seleccionados}{6}{subsubsection.3.3.4}%
+\contentsline {subsubsection}{\numberline {3.3.2}Análisis Eléctrico, Cinemático y Dinámico de los Actuadores}{4}{subsubsection.3.3.2}%
+\contentsline {paragraph}{1. Comportamiento Eléctrico y Dinámica de Corriente}{4}{section*.4}%
+\contentsline {paragraph}{2. Mapeo de Incertidumbre Espacial por Backlash}{6}{section*.5}%
+\contentsline {paragraph}{3. Requerimientos de Torque Dinámico y Aceleración}{6}{section*.6}%
+\contentsline {subsubsection}{\numberline {3.3.3}Cinemática del Manipulador (5-DOF)}{6}{subsubsection.3.3.3}%
+\contentsline {paragraph}{Cinemática Directa (Convención Denavit-Hartenberg)}{6}{section*.7}%
+\contentsline {paragraph}{Cinemática Inversa}{7}{section*.8}%
+\contentsline {paragraph}{Jacobiano Analítico y Control Diferencial}{7}{section*.9}%
+\contentsline {subsubsection}{\numberline {3.3.4}Análisis Dinámico de Cargas Gravitacionales}{7}{subsubsection.3.3.4}%
+\contentsline {subsubsection}{\numberline {3.3.5}Análisis de Deformación Estructural y Cargas en Bridas}{9}{subsubsection.3.3.5}%
+\contentsline {paragraph}{Deflexión del Brazo y Cálculo de Inercia de Piezas Impresas (FDM)}{9}{section*.10}%
+\contentsline {paragraph}{Esfuerzos en Tornillería de Brida (Motor-Eslabón)}{9}{section*.11}%
