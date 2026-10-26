@@ -333,7 +333,7 @@ if __name__ == "__main__":
     mot_TS4230M5D = StepperMotor("TS4230M5D", I_ph=2.0, R=1.65, L=0.0036, T_H=0.52, J_m=54e-7, m_motor=0.50)
     mot_TS4230M5D.apply_transmission(ratio=30.0, eff=0.96, backlash_arcmin=3.0, J_trans=40e-7)
 
-    mot_TS4230M2D = StepperMotor("TS4230M2D", I_ph=1.0, R=2.3, L=0.0031, T_H=0.12, J_m=54e-7, m_motor=0.29)
+    mot_TS4230M2D = StepperMotor("TS4230M2D", I_ph=1.0, R=2.3, L=0.0031, T_H=0.12, J_m=54e-7, m_motor=0.45)
     mot_TS4230M2D.apply_transmission(ratio=30.0, eff=0.96, backlash_arcmin=3.0, J_trans=20e-7)
 
     # 2. Análisis Estático Cartesiano L = 0.25m
