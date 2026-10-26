@@ -249,31 +249,46 @@ float SystemConfig::getCurrent(int id) {
 // MOTORES
 // =================================================================
 
-void SystemConfig::applyMotor(int id, float porcentaje, char dir) {
+void SystemConfig::applyMotor(int id, float porcentaje, MotorDir dir) {
     if (id < 0 || id >= _dimPWMLeft || id >= _dimPWMRight) return;
 
     porcentaje = constrain(porcentaje, 0.0f, 100.0f);
-    int maxPWM = (1 << _pwmRes) - 1; 
-    int valPWM = (int)((porcentaje / 100.0f) * maxPWM);
 
-    int pin_izq = (_invMotor && _invMotor[id]) ? _pinPWMRight[id] : _pinPWMLeft[id];
-    int pin_der = (_invMotor && _invMotor[id]) ? _pinPWMLeft[id] : _pinPWMRight[id];
+    // Mapeo dinámico: IDs 0,1,2 van a MCPWM_UNIT_0. IDs 3,4,5 van a MCPWM_UNIT_1.
+    mcpwm_unit_t mcpwm_num = (id < 3) ? MCPWM_UNIT_0 : MCPWM_UNIT_1;
+    mcpwm_timer_t timer_num = static_cast<mcpwm_timer_t>(id % 3);
 
-    if (porcentaje == 0.0f || dir == 'S') {
-        ledcWrite(pin_izq, 0);
-        ledcWrite(pin_der, 0);
-        
+    // Lógica de inversión de giro basada en el estado de hardware
+    MotorDir actual_dir = dir;
+    if (_invMotor && _invMotor[id]) {
+        if (dir == MotorDir::FORWARD) actual_dir = MotorDir::REVERSE;
+        else if (dir == MotorDir::REVERSE) actual_dir = MotorDir::FORWARD;
+    }
+
+    // Ejecución del movimiento en el hardware
+    if (porcentaje == 0.0f || actual_dir == MotorDir::STOP) {
+        // Frenar motor: Ambas señales a LOW
+        mcpwm_set_signal_low(mcpwm_num, timer_num, MCPWM_OPR_A);
+        mcpwm_set_signal_low(mcpwm_num, timer_num, MCPWM_OPR_B);
+
+        // Guardar la posición del encoder en la EEPROM/Preferencias al detenerse
         long currentCount = (long)_encoders[id].getCount();
         if (currentCount != _lastSavedEncoders[id]) {
             _preferencias.putLong(("E_" + String(id)).c_str(), currentCount);
             _lastSavedEncoders[id] = currentCount;
         }
-    } else if (dir == 'H' || dir == 'R') {
-        ledcWrite(pin_izq, 0);
-        ledcWrite(pin_der, valPWM);
-    } else if (dir == 'A' || dir == 'L') {
-        ledcWrite(pin_der, 0);
-        ledcWrite(pin_izq, valPWM);
+    } 
+    else if (actual_dir == MotorDir::FORWARD) {
+        // Canal A en LOW, PWM en Canal B
+        mcpwm_set_signal_low(mcpwm_num, timer_num, MCPWM_OPR_A);
+        mcpwm_set_duty(mcpwm_num, timer_num, MCPWM_OPR_B, porcentaje);
+        mcpwm_set_duty_type(mcpwm_num, timer_num, MCPWM_OPR_B, MCPWM_DUTY_MODE_0);
+    } 
+    else if (actual_dir == MotorDir::REVERSE) {
+        // Canal B en LOW, PWM en Canal A
+        mcpwm_set_signal_low(mcpwm_num, timer_num, MCPWM_OPR_B);
+        mcpwm_set_duty(mcpwm_num, timer_num, MCPWM_OPR_A, porcentaje);
+        mcpwm_set_duty_type(mcpwm_num, timer_num, MCPWM_OPR_A, MCPWM_DUTY_MODE_0);
     }
 }
 // =================================================================

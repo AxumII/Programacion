@@ -18,9 +18,7 @@ ControlManager::ControlManager(Kinematic* kinPtr, SystemConfig* sysPtr) {
     _dt_tune_us = 5000; // 200 Hz 
 
     _max_vel_rad = 30.0f * (M_PI / 180.0f); 
-    _max_pwm = 100.0f;       
-    _max_int_pwm = 80.0f;  
-
+    _max_pwm = 100.0f;      
 
     _encoder_res_rad_step_jgy = M_PI*(1/(4*11*1000))
     _encoder_res_rad_step_31zy = M_PI*(1/(4*5*1154))
@@ -43,6 +41,9 @@ ControlManager::ControlManager(Kinematic* kinPtr, SystemConfig* sysPtr) {
     for(int i = 0; i < 4; i++) {
         _x_est[i] << 0.0f, 0.0f; 
         _P_cov[i] << 1.0f, 0.0f, 0.0f, 1.0f;
+
+    //Parametros Slotine Li
+
     }
 }
 
@@ -79,7 +80,6 @@ void ControlManager::updateSensors() {
     }
     if (sensor_v_fuente) *sensor_v_fuente = _sys->getSourceVoltage(); 
 }
-
 
 void ControlManager::setMotor(int id, float pwm, MotorDir dir) {
     if (!_sys) return;
@@ -129,3 +129,20 @@ void ControlManager::setProtectionMotor(float dt) {
         Serial.println("\n[!] ALARMA: Pared virtual alcanzada. Trayectoria cancelada por seguridad.");
     }
 }
+
+
+// =================================================================
+// Controladores Maestro en Cascada
+// =================================================================
+
+
+// =================================================================
+// AngleLoop Slotine Li (Control Articular e IK Continua)
+// =================================================================
+bool ControlManager::AngleLoop(float dt){
+    
+}
+
+// =================================================================
+// AngleLoop PD (Control Articular e IK Continua)
+// =================================================================

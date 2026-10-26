@@ -6,9 +6,11 @@
 \usepackage[margin=2.5cm]{geometry}
 \usepackage{graphicx}
 \usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{hyperref}
-\usepackage{tabularx} % Añadido para tablas auto-ajustables
-\usepackage{array}    % Añadido para mejor formato en columnas
+\usepackage{tabularx} 
+\usepackage{array}    
+\usepackage{float}    
 
 % --- CONFIGURACIÓN DE HIPERVÍNCULOS ---
 \hypersetup{
@@ -20,8 +22,8 @@
     pdfpagemode=FullScreen,
 }
 
-\title{\textbf{Informe de Diseño: Manipulador Robótico Móvil}}
-\author{Nombre del Autor}
+\title{\textbf{Informe de Diseño: Manipulador Robótico}}
+\author{Jairo David Diaz Luna}
 \date{\today}
 
 \begin{document}
@@ -39,7 +41,7 @@
 \section{Introducción y Contexto}
 
 \subsection{Solicitud Inicial}
-El proyecto nace como respuesta a un requerimiento interno del laboratorio para actualizar y expandir el equipamiento destinado a prácticas de robótica móvil. Se solicitó el diseño de un brazo manipulador de 4 grados de libertad (GdL) que fuera fácilmente acoplable a bases móviles existentes, priorizando el bajo costo de fabricación y la facilidad de mantenimiento frente al desgaste derivado del uso continuo por parte de los estudiantes.
+El proyecto nace como respuesta a un requerimiento interno del laboratorio para actualizar y expandir el equipamiento destinado a prácticas de robótica móvil. Se solicitó el diseño de un brazo manipulador de 5 grados de libertad (GdL) que fuera fácilmente acoplable a bases móviles existentes, priorizando el bajo costo de fabricación y la facilidad de mantenimiento frente al desgaste derivado del uso continuo por parte de los estudiantes.
 
 \section{Parámetros de Diseño en Términos de Ingeniería}
 
@@ -51,7 +53,7 @@ El proyecto nace como respuesta a un requerimiento interno del laboratorio para 
 
 \subsection{Entregables}
 \begin{itemize}
-    \item Manipulador Robótico Móvil ensamblado (4 GdL) modificable a (5 GdL).
+    \item Manipulador Robótico Móvil ensamblado (5 GdL).
     \item Controlador funcional implementado con microcontroladores.
     \item Código fuente documentado para el control del manipulador y cálculo cinemático.
     \item Conjunto de herramientas finales intercambiables.
@@ -87,40 +89,29 @@ La solución propuesta que solventa esta necesidad corresponde a un prototipo de
     \item \textbf{Mantenibilidad:} Arquitectura mecánica enfocada en el fácil ensamblaje, cableado y conexiones.
 \end{itemize}
 
-\textbf{Requerimientos de Usuario y Entorno}
-\begin{itemize}
-    \item \textbf{Orientación pedagógica:} Código base comprensible, hardware expuesto pero seguro, y arquitectura abierta que invite a la modificación académica.
-    \item \textbf{Escalabilidad:} El entorno de procesamiento debe contar con suficientes puertos y poder de cómputo remanente para futuras mejoras.
-    \item \textbf{HMI (Interfaz Hombre-Máquina):} Integración de un sistema de operación intuitivo y visual, incluyendo paradas de emergencia por hardware y software.
-\end{itemize}
-
 \subsection{Parámetros de Diseño de Ingeniería}
 
-\subsubsection{Análisis de Motores}
-A partir de la revisión del estado del arte, se seleccionaron motores paso a paso bajo el estándar \textbf{NEMA 17}. Esta elección responde a las facilidades de intercambiabilidad que ofrece este estándar, la homologación de sus especificaciones eléctricas y mecánicas, y la disponibilidad de cajas de transmisión acoplables en el mercado.
+\subsubsection{Análisis de Motores y Actuadores}
+A partir de la revisión del estado del arte, se seleccionaron motores paso a paso bajo el estándar \textbf{NEMA 17}. Esta elección responde a las facilidades de intercambiabilidad que ofrece este estándar, la homologación de sus especificaciones eléctricas y mecánicas, y la disponibilidad de cajas de transmisión acoplables en el mercado. Para garantizar la precisión y minimizar el espacio, se optó por un diseño de \textbf{acople directo}, evitando el uso de correas y poleas dentadas.
 
-Los motores seleccionados cuentan con un rotor de 50 polos y operan mediante tecnología híbrida, combinando las características de los motores de imán permanente con el principio de reluctancia variable. Si bien esta configuración optimiza su desempeño general, presenta ciertas ventajas y desventajas que deben ser contempladas en el diseño:
+Los motores seleccionados cuentan con un rotor de 50 polos y operan mediante tecnología híbrida, combinando las características de los motores de imán permanente con el principio de reluctancia variable. 
 
 \paragraph{Desventajas}
 \begin{itemize}
     \item \textbf{Inercia rotacional elevada:} Causada por la masa combinada del rotor de hierro y los imanes permanentes.
     \item \textbf{Relación masa-potencia:} Cuentan con un peso considerable frente a otras tecnologías de actuadores.
-    \item \textbf{Dependencia magnética:} El rendimiento general está supeditado a la calidad e intensidad de la magnetización del rotor.
-    \item \textbf{Sensibilidad térmica:} Su eficiencia y fuerza electromotriz se ven afectadas por incrementos en la temperatura de trabajo.
-    \item \textbf{Caída de torque a altas velocidades:} El torque dinámico decae de forma no lineal a medida que se incrementa la frecuencia de pasos (velocidad de rotación).
+    \item \textbf{Caída de torque a altas velocidades:} El torque dinámico decae de forma no lineal a medida que se incrementa la frecuencia de pasos.
 \end{itemize}
 
 \paragraph{Ventajas}
 \begin{itemize}
     \item \textbf{Torque de remanencia (\textit{detent torque}):} Ofrecen una ligera retención mecánica incluso estando desenergizados.
     \item \textbf{Alta resolución y torque de sostenimiento (\textit{holding torque}):} Presentan una alta densidad de pasos por revolución y un torque estático configurable según la corriente suministrada.
-    \item \textbf{Estabilidad dinámica:} Cuentan con un margen de resonancia significativamente más distante comparado con motores de reluctancia pura.
-    \item \textbf{Escalabilidad dimensional:} Es posible incrementar el torque disponible aumentando únicamente la longitud axial del estator y rotor, manteniendo intactas la sección transversal y la brida de montaje NEMA 17.
 \end{itemize}
 
-En la Tabla~\ref{tab:control_stepper} se sintetizan las características principales de cada método de accionamiento. Se usa Tabularx para evitar desbordamientos.
+En la Tabla~\ref{tab:control_stepper} se sintetizan las características principales de cada método de accionamiento. 
 
-\begin{table}[htbp]
+\begin{table}[H]
 \centering
 \caption{Comparación de esquemas de excitación para motores paso a paso NEMA 17.}
 \label{tab:control_stepper}
@@ -131,81 +122,12 @@ En la Tabla~\ref{tab:control_stepper} se sintetizan las características princip
 \textbf{Resolución} & Base (ej. $1.8^\circ$ / paso o 200 pasos/rev). & Base (ej. $1.8^\circ$ / paso), desplazado $0.9^\circ$. & Altamente incrementada (ej. $1/16$, $1/32$ hasta $1/256$ de paso). \\ \hline
 \textbf{Suavidad y Ruido} & Baja; alta vibración por resonancia. & Intermedia; presenta rizado dinámico. & Elevada; movimiento continuo y silencioso. \\ \hline
 \textbf{Torque de Salida} & Bajo ($\sim 70\%$ del nominal). & Máximo torque estático ($100\%$ nominal). & Torque dinámico suave, pero menor torque incremental por micropaso. \\ \hline
-\textbf{Lógica de Control} & Lógica binaria elemental (Secuencia en anillo). & Lógica binaria elemental (Secuencia en anillo). & Requiere modulación por ancho de pulso (PWM) y control de corriente. \\ \hline
 \end{tabularx}
 \end{table}
 
-\paragraph{Caracterización Técnica y Dimensional del Estándar NEMA 17}
-El estándar \textbf{NEMA 17} define principalmente las dimensiones del plato de montaje frontal ($42.3 \times 42.3\text{ mm}$). Los parámetros representativos se detallan en la Tabla~\ref{tab:nema17_specs}.
-
-\begin{table}[htbp]
-\centering
-\caption{Especificaciones mecánicas y eléctricas representativas de un motor NEMA 17 típico.}
-\label{tab:nema17_specs}
-\begin{tabularx}{\textwidth}{|l|l|>{\raggedright\arraybackslash}X|}
-\hline
-\textbf{Categoría} & \textbf{Parámetro} & \textbf{Valor Típico / Rango} \\ \hline
-\textbf{Mecánica} & Dimensiones del marco & $42.3\text{ mm} \times 42.3\text{ mm}$ (NEMA 17) \\ \hline
- & Longitud del cuerpo ($L$) & $34\text{ mm} - 48\text{ mm}$ (depende del torque nominal) \\ \hline
- & Diámetro del eje (\textit{Shaft}) & $\phi\,5.0\text{ mm}$ (frecuentemente con plano D-cut) \\ \hline
- & Longitud sobresaliente del eje & $20\text{ mm} - 24\text{ mm}$ \\ \hline
- & Patrón de montura & 4 agujeros M3 $\times 0.5$ (profundidad $\sim 4.5\text{ mm}$) \\ \hline
- & Masa del motor & $280\text{ g} - 500\text{ g}$ \\ \hline
-\textbf{Eléctrica} & Configuración de fases & Bipolar (4 hilos) / Unipolar (6 hilos) \\ \hline
- & Corriente nominal por fase & $1.2\text{ A} - 1.8\text{ A}$ RMS \\ \hline
- & Resistencia por fase & $1.5\,\Omega - 3.3\,\Omega$ \\ \hline
- & Inductancia por fase & $2.8\text{ mH} - 8.0\text{ mH}$ \\ \hline
-\textbf{Magnética} & Ángulo de paso nativo & $1.8^\circ \pm 5\%$ (200 pasos/rev) \\ \hline
- & Torque de sostén (\textit{Holding}) & $20\text{ N}\cdot\text{cm} - 80\text{ N}\cdot\text{cm}$ ($0.40 - 0.55\text{ N}\cdot\text{m}$) \\ \hline
- & Inercia del rotor & $54\text{ g}\cdot\text{cm}^2 - 68\text{ g}\cdot\text{cm}^2$ \\ \hline
-\end{tabularx}
-\end{table}
-
-\paragraph{Análisis de Torques en Motores Paso a Paso}
-Para el diseño mecatrónico y la validación de las trayectorias del manipulador, es indispensable analizar los diferentes regímenes de par mecánico que presenta un actuador paso a paso.
-
-\begin{description}
-    \item[\textbf{Torque de Mantenimiento (\textit{Holding Torque}, $T_H$):}] Es el par estático máximo.
-    \item[\textbf{Torque de Detención (\textit{Detent Torque}, $T_D$):}] Es el par de retención residual cuando el motor no está energizado.
-    \item[\textbf{Torque de Arranque (\textit{Pull-in Torque}):}] Es el par dinámico máximo de arranque instantáneo.
-    \item[\textbf{Torque de Desplazamiento (\textit{Pull-out Torque}):}] Límite absoluto de par dinámico.
-    \item[\textbf{Rango de Aceleración (\textit{Slew Range}):}] Región operativa entre Pull-in y Pull-out.
-\end{description}
-
-\begin{figure}[htbp]
-    \centering
-    % Se mantiene la opción draft para que compile sin la imagen
-    \includegraphics[width=0.8\textwidth]{T_in_out.png}
-    \caption{Curvas características de par dinámico frente a la frecuencia de pasos.}
-    \label{fig:torque_stepper}
-\end{figure}
-
-\paragraph{Dinámica de Corriente Limitada por Voltaje}
-El torque a altas velocidades decae porque la inductancia y la FCEM impiden que la corriente alcance el valor nominal $I_{ph}$.
-\begin{equation}
-    I_{env}(\omega_m) = \frac{V - K_t \omega_m}{\sqrt{R^2 + (N_r \omega_m L)^2}}
-\end{equation}
-
-\subsubsection{Análisis Cinético y Dinámica Inversa}
-El modelo dinámico del manipulador evalúa los torques requeridos en cada articulación para vencer la gravedad y las fuerzas inerciales durante una trayectoria. 
-
-\begin{equation}
-    \tau_{g,i} = \left| \sum_{j=i}^{n} \left( \mathbf{r}_{L,j} \times m_{L,j} \mathbf{g} \right) + \sum_{k \in \{mot \ge i\}} \left( \mathbf{r}_{mot,k} \times m_{mot,k} \mathbf{g} \right) + \left( \mathbf{r}_{tip} \times m_{tip} \mathbf{g} \right) \right| \cdot \mathbf{z}_i
-\end{equation}
-
-\paragraph{Propagación del Error Espacial por Backlash}
-Las cajas reductoras mecánicas introducen inherentemente un juego mecánico o \textit{backlash} angular ($\Delta\theta$) en cada articulación.
-\begin{equation}
-    \Delta\mathbf{p} \approx \mathbf{J}(\mathbf{\Theta}) \cdot \Delta\mathbf{\Theta}
-\end{equation}
-
-\textbf{Mapeo de Incertidumbre y Envolvente Convexa (\textit{Convex Hull}):} 
-Dado que cada transmisión posee un error angular independiente acotado en el intervalo $[-\Delta\theta_{max}, +\Delta\theta_{max}]$, la posición real del efector final no converge en un punto único, sino dentro de un volumen de incertidumbre.
-
-\subsubsection{Parámetros de Motores y Transmisiones Seleccionados}
 Los parámetros electromecánicos nominales de los motores base seleccionados se consolidan en el Cuadro~\ref{tab:motores_seleccionados}:
 
-\begin{table}[htbp]
+\begin{table}[H]
 \centering
 \caption{Especificaciones nominales de los motores paso a paso NEMA 17 seleccionados.}
 \label{tab:motores_seleccionados}
@@ -224,42 +146,195 @@ Los parámetros electromecánicos nominales de los motores base seleccionados se
 }
 \end{table}
 
-\subsubsection{Cálculos de Motores y Transmisiones Seleccionados}
+\subsubsection{Análisis Eléctrico, Cinemático y Dinámico de los Actuadores}
 
-Para comparar los motores y como afectan las perdidas se crearon las siguientes graficas
-\begin{figure}[htbp]
+Para asegurar que los motores seleccionados (e.g., TS4215Y3N y TS4230Y3N acoplados a cajas reductoras) cumplan con las exigencias del manipulador sin incurrir en pérdidas de paso (stall), se desarrolló un entorno de simulación computacional (en Python) que evalúa el sistema desde tres perspectivas fundamentales.
+
+\paragraph{1. Comportamiento Eléctrico y Dinámica de Corriente}
+El torque entregado por un motor paso a paso decae a altas velocidades debido a que la inductancia de las bobinas ($L$) y la fuerza contraelectromotriz (FCEM, $E_{emf}$) impiden que la corriente alcance el valor nominal ($I_{ph}$) dentro de cada ciclo de paso. 
+
+La constante de par se estima como $K_t = T_H / I_{ph}$. La tensión inducida por el giro del rotor (con 50 polos magnéticos, $p=50$) a una velocidad $\omega_{mech}$ es:
+\begin{equation}
+    E_{emf} = K_t \cdot \omega_{mech}
+\end{equation}
+La impedancia por fase, dependiente de la frecuencia eléctrica ($f_{elec} = \frac{RPM}{60} \cdot p$), es $Z = \sqrt{R^2 + (2\pi f_{elec} L)^2}$. La corriente estabilizada ($I_{steady}$) para un voltaje de alimentación $V$ (e.g., 24V) se ve limitada por:
+\begin{equation}
+    I_{steady} = \frac{V - E_{emf}}{Z}
+\end{equation}
+El torque ideal dinámico generado por el motor es $T_{ideal} = K_t \cdot I_{act}$, donde $I_{act}$ es la corriente real alcanzada considerando la constante de tiempo transitoria $\tau = L/R$. A este torque se le sustraen las pérdidas electromagnéticas (corrientes de Foucault). El par final en el eje de salida de la articulación se escala por la relación de reducción (Ratio) y la eficiencia mecánica ($\eta \approx 0.96$):
+\begin{equation}
+    T_{dyn\_out} = (T_{ideal} - T_{loss}) \cdot Ratio \cdot \eta
+\end{equation}
+
+Las Figuras \ref{fig:curvas_dinamicas_30_1} y \ref{fig:curvas_dinamicas_15_1} ilustran cómo este decaimiento define el límite superior de velocidad del robot antes de perder sincronicidad.
+
+\begin{figure}[H]
     \centering
-    \includegraphics[ width=0.9\textwidth]{Tvsw_30_1.png}
-    \caption{Curvas dinámicas (Pull-out y Pull-in) y balance de potencias.}
+    % Se mantiene la opción original proporcionada en tus primeros mensajes
+    \includegraphics[width=0.9\textwidth]{Tvsw_30_1.png}
+    \caption{Curvas dinámicas (Pull-out y Pull-in) y balance de potencias para relación 30:1.}
     \label{fig:curvas_dinamicas_30_1}
 \end{figure}
 
-\begin{figure}[htbp]
+\begin{figure}[H]
     \centering
-    \includegraphics[ width=0.9\textwidth]{Tvsw_15_1.png}
-    \caption{Curvas dinámicas (Pull-out y Pull-in) y balance de potencias.}
-    \label{fig:curvas_dinamicas_30_1}
+    \includegraphics[width=0.9\textwidth]{Tvsw_15_1.png}
+    \caption{Curvas dinámicas (Pull-out y Pull-in) y balance de potencias para relación 15:1.}
+    \label{fig:curvas_dinamicas_15_1}
 \end{figure}
 
+\paragraph{2. Mapeo de Incertidumbre Espacial por Backlash}
+Dado que el diseño descarta las poleas en favor de un acople directo mediante cajas reductoras planetarias, es imperativo modelar el juego mecánico (\textit{backlash}) angular ($\Delta\theta$) que estas introducen en cada articulación.
+El error propagado hacia la punta del manipulador se aproxima mediante el Jacobiano:
+\begin{equation}
+    \Delta\mathbf{p} \approx \mathbf{J}(\mathbf{\Theta}) \cdot \Delta\mathbf{\Theta}
+\end{equation}
+Debido a que cada transmisión posee un error angular independiente acotado en el intervalo $[-\Delta\theta_{max}, +\Delta\theta_{max}]$ (e.g., $\pm 3/60$ grados), la posición real del efector final no converge en un punto único. La simulación genera una **Envolvente Convexa (\textit{Convex Hull})**, demostrando que el desfase en el espacio operativo ($X,Y$) puede abarcar un área poligonal significativa dependiendo de la extensión de los eslabones.
 
+\paragraph{3. Requerimientos de Torque Dinámico y Aceleración}
+Para validar las especificaciones mecánicas durante una trayectoria, se evalúa la matriz de inercia y los torques requeridos para acelerar el brazo. Tomando un modelo simplificado planar para dos eslabones, los torques inerciales en las articulaciones ($\mathbf{T}_{link}$) se calculan como:
+\begin{equation}
+    \begin{bmatrix} T_{1} \\ T_{2} \end{bmatrix} = 
+    \begin{bmatrix} M_{11} & M_{12} \\ M_{21} & M_{22} \end{bmatrix} 
+    \begin{bmatrix} \ddot{\theta}_1 \\ \ddot{\theta}_2 \end{bmatrix}
+\end{equation}
+Donde los elementos de la matriz de masa $\mathbf{M}$ consideran la masa y longitud de cada eslabón ($m_i, l_i$) y sus momentos de inercia ($I_i$). A este torque requerido por la estructura se le debe sumar la inercia propia de las cajas de engranajes ($J_{gb}$) vista desde el motor:
+\begin{equation}
+    T_{motor\_req} = \frac{T_{link} + (J_{gb} \cdot Ratio^2 \cdot \mathbf{\ddot{\Theta}})}{Ratio \cdot \eta}
+\end{equation}
+Esta formulación garantiza que los motores seleccionados puedan suplir tanto la carga estática (sostenimiento) como la exigencia dinámica (aceleración $\ddot{\theta}$).
 
-Para validar la viabilidad del diseño estructural bajo distintas longitudes focales, se simuló el escalamiento del brazo empleando motores paso a paso de la serie TS4230.
-\begin{figure}[htbp]
+\subsubsection{Cinemática del Manipulador (5-DOF)}
+El control posicional del brazo robótico se fundamenta en un modelo matemático que relaciona el espacio articular (los ángulos $\theta_1, \theta_2, \theta_3, \theta_4, \theta_5$) con el espacio operativo o cartesiano ($X, Y, Z$ y orientación). El brazo modelado contempla parámetros de longitud de eslabones ($l_1, l_2, l_3, l_4, l_5$) y desplazamientos o excentricidades laterales (\textit{offsets} $w_1, w_2, w_3, w_4, w_5$). La inclusión del quinto grado de libertad corresponde a la rotación axial de la herramienta (Yaw), permitiendo una manipulación más versátil.
+
+\paragraph{Cinemática Directa (Convención Denavit-Hartenberg)}
+Para la cinemática directa, se emplea una formulación basada en matrices de transformación homogénea utilizando los parámetros de Denavit-Hartenberg. La matriz de transformación de la articulación $i$, denotada como $\mathbf{M}_i$, se calcula como:
+\begin{equation}
+    \mathbf{M}_i = 
+    \begin{bmatrix}
+        \cos\theta_i & -\cos\alpha_i\sin\theta_i & \sin\alpha_i\sin\theta_i & a_i\cos\theta_i \\
+        \sin\theta_i & \cos\alpha_i\cos\theta_i & -\sin\alpha_i\cos\theta_i & a_i\sin\theta_i \\
+        0 & \sin\alpha_i & \cos\alpha_i & d_i \\
+        0 & 0 & 0 & 1
+    \end{bmatrix}
+\end{equation}
+
+La pose final del efector con respecto a la base del robot se halla mediante la multiplicación secuencial de las matrices de cada eslabón:
+\begin{equation}
+    \mathbf{T}_{total} = \mathbf{M}_1(\theta_1) \cdot \mathbf{M}_2(\theta_2) \cdot \mathbf{M}_3(\theta_3) \cdot \mathbf{M}_4(\theta_4) \cdot \mathbf{M}_5(\theta_5)
+\end{equation}
+
+\paragraph{Cinemática Inversa}
+La cinemática inversa calcula los ángulos de los motores necesarios para alcanzar una pose deseada. El sistema de 5-DOF hereda la resolución espacial del modelo de 4-DOF y añade un cálculo para la orientación final del efector.
+
+\textbf{1. Cálculo de la articulación base ($\theta_1$):} 
+Considerando las excentricidades laterales ($W = w_2 + w_3 + w_4 + w_5$), se corrige geométricamente proyectando el punto meta:
+\begin{equation}
+    \theta_1 = \text{atan2}(y, x) + \text{atan2}\left(W, \sqrt{x^2 + y^2 - W^2}\right)
+\end{equation}
+El problema espacial en 3D se colapsa a un plano radial (2D) definiendo las coordenadas relativas:
+\begin{equation}
+    z_{rel} = z - l_1 \quad ; \quad R = x\cos(\theta_1) + y\sin(\theta_1) - w_1
+\end{equation}
+
+\textbf{2. Resolución Planar (Pitch: $\theta_2, \theta_3, \theta_4$):}
+Asumiendo un ángulo de aproximación deseado $\phi$ (Pitch) para la muñeca respecto al plano horizontal, se desacopla la posición de la articulación de la muñeca ($R_j, z_j$):
+\begin{equation}
+    R_j = R - l_4 \cos(\phi) \quad ; \quad z_j = z_{rel} - l_4 \sin(\phi)
+\end{equation}
+Se resuelve el sistema para los eslabones $l_2$ y $l_3$:
+\begin{equation}
+    D = \frac{R_j^2 + z_j^2 - l_2^2 - l_3^2}{2 l_2 l_3} \quad \implies \quad \theta_3 = \text{atan2}\left(s\sqrt{1 - D^2}, D\right)
+\end{equation}
+\begin{equation}
+    \theta_2 = \text{atan2}(z_j, R_j) - \text{atan2}(l_3 \sin\theta_3, l_2 + l_3 \cos\theta_3)
+\end{equation}
+La compensación del Pitch de la muñeca es:
+\begin{equation}
+    \theta_4 = \phi - (\theta_2 + \theta_3)
+\end{equation}
+
+\textbf{3. Orientación Axial (Yaw: $\theta_5$):}
+El quinto grado de libertad (Yaw) controla la rotación de la herramienta sobre su propio eje. Dependiendo de la matriz de rotación objetivo $\mathbf{R}_{obj}$, $\theta_5$ se extrae analizando el vector normal del efector. En aplicaciones pick-and-place, este ángulo se suele comandar directamente según la orientación de la pieza a manipular.
+
+\paragraph{Jacobiano Analítico y Control Diferencial}
+El control diferencial relaciona las velocidades articulares $\mathbf{\dot{\Theta}}$ con las velocidades espaciales $\mathbf{\dot{P}}$. 
+
+1. \textbf{Jacobiano de 3x5 (Control de Posición XYZ):} 
+Derivando parcialmente las ecuaciones de proyección cartesiana, obtenemos una matriz $\mathbf{J}_{3\times5}$, donde las tres primeras columnas rigen la posición, y la última columna (asociada a $\theta_5$) no afecta la posición del TCP (Tool Center Point) si el giro es puramente axial, resultando en ceros para traslación.
+
+2. \textbf{Jacobiano de 5x5 (Posición + Orientación Pitch y Yaw):} 
+Se añaden filas para contemplar la velocidad angular de la muñeca ($\dot{\phi}$) y la rotación de la herramienta ($\dot{\theta}_5$). 
+Para evadir singularidades, el sistema implementa la \textbf{Pseudoinversa de Moore-Penrose} calculada a través de la Descomposición en Valores Singulares (SVD).
+
+\subsubsection{Análisis Dinámico de Cargas Gravitacionales}
+Complementando el análisis inercial de la sección de motores, se evalúan los torques estáticos requeridos en cada articulación para vencer la gravedad impuesta por la masa de los eslabones, los actuadores y el payload. Dado el diseño de \textbf{acople directo}, cada motor soporta obligatoriamente la masa acumulada de los componentes ubicados distalmente. 
+
+El torque estático en la articulación $i$ se define por el producto cruz entre el vector de distancia al centro de masa y el vector de fuerza gravitacional:
+\begin{equation}
+    \tau_{g,i} = \left| \sum_{j=i}^{5} \left( \mathbf{r}_{L,j} \times m_{L,j} \mathbf{g} \right) + \sum_{k=i+1}^{5} \left( \mathbf{r}_{mot,k} \times m_{mot,k} \mathbf{g} \right) + \left( \mathbf{r}_{tip} \times m_{tip} \mathbf{g} \right) \right| \cdot \mathbf{z}_i
+\end{equation}
+
+Debido a que no se emplean mecanismos de transmisión remota (poleas), la inercia experimentada por las articulaciones proximales (Base y Hombro) es considerable, demandando la integración mandatoria de las cajas reductoras planetarias previamente simuladas para no exceder el $Holding Torque$ máximo nominal de los NEMA 17.
+
+\begin{figure}[H]
     \centering
-    \includegraphics[ width=\textwidth]{TvsL4gof.png}
-    \caption{Barrido paramétrico (4-DOF): Requerimiento de torque en articulaciones.}
+    \includegraphics[width=0.9\textwidth]{TvsL4gof.png}
+    \caption{Barrido paramétrico: Requerimiento de torque en articulaciones en función de la longitud del hombro. Se aprecia cómo la articulación J1 (Hombro) es el caso crítico.}
     \label{fig:barrido_4dof}
 \end{figure}
 
-\begin{figure}[htbp]
+\begin{figure}[H]
     \centering
-    \includegraphics[ width=\textwidth]{TvsL5gof.png}
-    \caption{Barrido paramétrico (5-DOF): Requerimiento de torque incluyendo el eje de rotación de muñeca.}
+    \includegraphics[width=0.9\textwidth]{TvsL5gof.png}
+    \caption{Barrido paramétrico (5-DOF): Requerimiento de torque incluyendo el eje de rotación de muñeca. Las cajas reductoras resultan indispensables para mantener el torque de J1 dentro de un factor de seguridad aceptable.}
     \label{fig:barrido_5dof}
 \end{figure}
 
-Las Figuras \ref{fig:barrido_4dof} y \ref{fig:barrido_5dof} demuestran cómo la densidad del material incrementa drásticamente las inercias distales. 
+\subsubsection{Análisis de Deformación Estructural y Cargas en Bridas}
+Los eslabones del manipulador serán fabricados mediante deposición de hilo fundido (FDM) utilizando PETG (Polietilentereftalato Glicol), un termoplástico reconocido por su tenacidad y resistencia a la fatiga. Sin embargo, una pieza impresa en 3D es una estructura compuesta y anisotrópica. 
 
+\paragraph{Deflexión del Brazo y Cálculo de Inercia de Piezas Impresas (FDM)}
+El comportamiento a flexión de un eslabón se modela aproximándolo a una viga en voladizo. La deformación máxima en la punta ($\delta_{max}$) se calcula como:
+\begin{equation}
+    \delta_{max} = \frac{P \cdot L^3}{3 \cdot E_{PETG} \cdot I_{eff}}
+\end{equation}
+Donde $P$ es la carga, $L$ la longitud efectiva, y $E_{PETG} \approx 2.1$ GPa.
 
+\textbf{Cálculo del Momento de Inercia Efectivo ($I_{eff}$):}
+A diferencia de un sólido isotrópico, el eslabón impreso posee "conchas" exteriores sólidas (perímetros/paredes) y un núcleo interno con un patrón geométrico dictado por el porcentaje de relleno ($m\%$). 
+Para una sección rectangular de base $b$ y altura $h$, el espesor total de la pared sólida $t$ depende del número de perímetros $n$ y el ancho de extrusión $e_w$ ($t = n \cdot e_w$).
+
+La inercia total teórica de la sección completa es:
+\begin{equation}
+    I_{total} = \frac{b \cdot h^3}{12}
+\end{equation}
+La inercia de la región correspondiente al núcleo interno (asumiendo que las paredes sólidas rodean toda la sección) es:
+\begin{equation}
+    I_{nucleo} = \frac{(b - 2t) \cdot (h - 2t)^3}{12}
+\end{equation}
+Aplicando el método de la sección transformada, el momento de inercia efectivo ($I_{eff}$) que aporta resistencia a la flexión se obtiene restando el núcleo hueco y sumando su contribución ponderada por la densidad del relleno ($m \in [0, 1]$):
+\begin{equation}
+    I_{eff} = (I_{total} - I_{nucleo}) + (m \cdot I_{nucleo})
+\end{equation}
+De igual forma, el área efectiva para cálculos de masa lineal ($\lambda = A_{eff} \cdot \rho_{PETG}$) y esfuerzo cortante se aproxima como:
+\begin{equation}
+    A_{eff} = (b \cdot h - (b-2t)(h-2t)) + m \cdot (b-2t)(h-2t)
+\end{equation}
+
+\paragraph{Esfuerzos en Tornillería de Brida (Motor-Eslabón)}
+El ensamble del hombro transmite el par del motor al eslabón mediante una brida con un patrón de agujeros para tornillos métricos (M4). Las fuerzas principales que actúan sobre estos elementos son:
+
+1. \textbf{Fuerza Axial (Desgarro - Pull-out):} Generada por el momento flector perpendicular al eje del motor. En una distribución de $N$ tornillos (e.g., $N=6$) a un radio $R_{brida}$, el tornillo superior soporta la máxima fuerza de tracción:
+\begin{equation}
+    F_t = \frac{2 \cdot M_{flex}}{N_{tornillos} \cdot R_{brida}}
+\end{equation}
+Esta fuerza tiende a arrancar el tornillo de las capas de PETG. El esfuerzo cortante de desgarro se evalúa sobre el área cilíndrica de inserción ($\pi \cdot d \cdot e_{brida}$). 
+
+2. \textbf{Fuerza Cortante (Cizalladura y Aplastamiento):} El peso total soportado genera un aplastamiento transversal sobre el polímero:
+\begin{equation}
+    \sigma_{aplastamiento} = \frac{P_{total}}{N_{tornillos} \cdot d_{tornillo} \cdot e_{brida}}
+\end{equation}
+A esta fuerza se suma vectorialmente el cortante inducido por el torque primario del motor. Dado que la adherencia intercapa (en el eje Z de impresión) del PETG suele ser el eslabón débil (limitando la resistencia al desgarro a $\approx 150-250$ N por punto de anclaje), el diseño del patrón de infill y la orientación de impresión resultan críticos para garantizar que las bridas soporten las cargas del extremo libre sin delaminación.
 
 \end{document}
