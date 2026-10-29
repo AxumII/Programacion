@@ -11,15 +11,15 @@ class StepperAnalysis:
         self.R = R                   
         self.L = L                   
         self.V = V                   
-        self.T_h_motor = T_h_motor   
+        self.T_h_motor = T_h_motor   # Torque base del motor sin caja en Nm
         self.eff = 0.96              
         self.ratio = ratio           
         self.p = 50                
         
         # Parámetros Mecánicos y Geométricos (Brazo Planar 2R)
-        self.l1_m = l1 / 1000.0  # Convertido a metros para dinámica
+        self.l1_m = l1 / 1000.0  # Convertido a metros para cálculo dinámico en Nm
         self.l2_m = l2 / 1000.0
-        self.l1_mm = l1          # En mm para graficación
+        self.l1_mm = l1          # En mm exclusivo para la graficación cinemática
         self.l2_mm = l2
         self.m1 = m1             # Masa eslabón 1 (kg)
         self.m2 = m2             # Masa eslabón 2 (kg)
@@ -47,8 +47,13 @@ class StepperAnalysis:
         k_eddy = 0.0008 
         T_loss = k_eddy * omega_mech
         
+        # Torque electromecánico puro del motor (Nm)
         T_dyn_motor = np.maximum(T_ideal - T_loss, 0)
+        
+        # Torque final a la salida del reductor (Nm)
         T_dyn_out = T_dyn_motor * self.ratio * self.eff
+        
+        # RPM reales a la salida del reductor
         rpm_out_array = rpm_motor_array / self.ratio
         P_cu = 2 * (I_act**2) * self.R
         
@@ -131,9 +136,11 @@ class StepperAnalysis:
         t2_rad = np.radians(theta2)
         r1, r2 = self.l1_m / 2, self.l2_m / 2
         
+        # Momentos de inercia de los eslabones (kg*m^2)
         I1 = (1/12) * self.m1 * self.l1_m**2
         I2 = (1/12) * self.m2 * self.l2_m**2
         
+        # Matriz de Inercia
         M11 = self.m1*r1**2 + self.m2*(self.l1_m**2 + r2**2 + 2*self.l1_m*r2*np.cos(t2_rad)) + I1 + I2
         M12 = self.m2*(r2**2 + self.l1_m*r2*np.cos(t2_rad)) + I2
         M21 = M12
@@ -142,54 +149,96 @@ class StepperAnalysis:
         M = np.array([[M11, M12], [M21, M22]])
         accel_vec = np.array([accel_1, accel_2]) 
         
+        # Torque requerido en las articulaciones en Nm
         T_link = M @ accel_vec
         
+        # Inercia de la caja referida al motor reflejada a la salida (Nm)
         T_gearbox_1 = (self.J_gb * self.ratio**2) * accel_1
         T_gearbox_2 = (self.J_gb * self.ratio**2) * accel_2
         
-        T_total = T_link + np.array([T_gearbox_1, T_gearbox_2])
-        T_motor_req = T_total / (self.ratio * self.eff)
+        # Torques Totales
+        T_total = T_link + np.array([T_gearbox_1, T_gearbox_2])  # Torque exigido a la salida (Nm)
+        T_motor_req = T_total / (self.ratio * self.eff)          # Torque exigido directamente al motor (Nm)
         
         return T_total, T_motor_req
     
 if __name__ == "__main__":    
 
+    # Base de datos de motores (T_h_motor calculado automáticamente en Nm)
     motor_database = {
-        "TS4215Y3N": {"I_ph": 1.7, "R": 1.5, "L": 0.0028, "ratio": 15, "T_h_motor": 3.9 / (15 * 0.96)},
-        "TS4230Y3N": {"I_ph": 1.7, "R": 1.5, "L": 0.0028, "ratio": 30, "T_h_motor": 7.8 / (30 * 0.96)},
-        "TS4215Y4N": {"I_ph": 1.7, "R": 1.8, "L": 0.0032, "ratio": 15, "T_h_motor": 5.6 / (15 * 0.96)},
-        "TS4230Y4N": {"I_ph": 1.7, "R": 1.8, "L": 0.0032, "ratio": 30, "T_h_motor": 11.2 / (30 * 0.96)},
-        "TS4215Y5N": {"I_ph": 2.0, "R": 1.2, "L": 0.0025, "ratio": 15, "T_h_motor": 7.9 / (15 * 0.96)},
-        "TS4230Y5N": {"I_ph": 2.0, "R": 1.2, "L": 0.0025, "ratio": 30, "T_h_motor": 15.8 / (30 * 0.96)},
+        "TS4215Y4D": {"I_ph": 1.7, "R": 1.8, "L": 0.0032, "ratio": 15, "T_h_motor": 5.6 / (15 * 0.96)},
+        "TS4230Y4D": {"I_ph": 1.7, "R": 1.8, "L": 0.0032, "ratio": 30, "T_h_motor": 11.2 / (30 * 0.96)},
+        "TS4260Y4D": {"I_ph": 1.7, "R": 1.8, "L": 0.0032, "ratio": 60, "T_h_motor": 22.4 / (60 * 0.96)},
+        "TS4215Y5D": {"I_ph": 2.0, "R": 1.2, "L": 0.0025, "ratio": 15, "T_h_motor": 7.9 / (15 * 0.96)},
+        "TS4230Y5D": {"I_ph": 2.0, "R": 1.2, "L": 0.0025, "ratio": 30, "T_h_motor": 15.8 / (30 * 0.96)},
+        "TS4260Y5D": {"I_ph": 2.0, "R": 1.2, "L": 0.0025, "ratio": 60, "T_h_motor": 31.6 / (60 * 0.96)},
     }
 
-    # Instanciamos un motor para el análisis cinemático/dinámico
-    specs = motor_database["TS4215Y3N"]
-    analisis = StepperAnalysis(
-        I_ph=specs["I_ph"], R=specs["R"], L=specs["L"], 
-        T_h_motor=specs["T_h_motor"], ratio=specs["ratio"]
-    )
-
-    # --- 1. ANÁLISIS ELÉCTRICO ---
     rpm_range = np.linspace(10, 1500, 200)
-    T_dyn_motor, T_dyn_out, rpm_out, E_emf, P_cu = analisis.electrical_analysis(rpm_range)
+
+    # --- 1A. GRÁFICAS COMPARATIVAS (MOTOR VS SALIDA TRANSMISIÓN) ---
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
+    
+    # Estilos de línea para las curvas del motor
+    line_styles = ['-', '--', ':', '-', '--', ':']
+    line_widths = [4, 2.5, 1.5, 4, 2.5, 1.5]
+    colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple', 'tab:brown']
+
+    for i, (motor_name, specs) in enumerate(motor_database.items()):
+        analisis_temp = StepperAnalysis(
+            I_ph=specs["I_ph"], R=specs["R"], L=specs["L"], 
+            T_h_motor=specs["T_h_motor"], ratio=specs["ratio"]
+        )
+        T_dyn_motor, T_dyn_out, rpm_out_array, E_emf, P_cu = analisis_temp.electrical_analysis(rpm_range)
+        
+        # Subplot 1: Torque directo del motor contra RPM internas del rotor
+        ax1.plot(rpm_range, T_dyn_motor, color=colors[i], linestyle=line_styles[i], 
+                 linewidth=line_widths[i], label=f"{motor_name}")
+        
+        # Subplot 2: Torque efectivo de salida contra RPM a la salida de la caja
+        # AQUÍ ESTÁ EL CAMBIO: Reemplazamos 'rpm_range' por 'rpm_out_array'
+        ax2.plot(rpm_out_array, T_dyn_out, color=colors[i], linestyle='-', 
+                 linewidth=2, label=f"{motor_name} (Ratio {specs['ratio']}:1)")
+
+    ax1.set_title("Torque Base del Motor (Sin Transmisión) vs RPM Motor\n*Nota: Las líneas de una misma serie (Y4 y Y5) se superponen*")
+    ax1.set_xlabel("RPM del Motor")
+    ax1.set_ylabel("Torque del Motor (Nm)")
+    ax1.grid(True)
+    ax1.legend(fontsize=9)
+
+    ax2.set_title("Torque Efectivo a la Salida vs RPM a la Salida")
+    ax2.set_xlabel("RPM a la Salida (Después del Reductor)")
+    ax2.set_ylabel("Torque de Salida (Nm)")
+    ax2.grid(True)
+    ax2.legend(fontsize=9)
+
+    plt.tight_layout()
+    plt.show()
+
+    # --- 1B. ANÁLISIS ELÉCTRICO INDIVIDUAL RESTAURADO ---
+    specs_base = motor_database["TS4260Y5D"]
+    analisis_base = StepperAnalysis(
+        I_ph=specs_base["I_ph"], R=specs_base["R"], L=specs_base["L"], 
+        T_h_motor=specs_base["T_h_motor"], ratio=specs_base["ratio"]
+    )
+    
+    T_dyn_motor_ind, T_dyn_out_ind, rpm_out_ind, E_emf_ind, P_cu_ind = analisis_base.electrical_analysis(rpm_range)
     
     plt.figure(figsize=(8, 4))
-    plt.plot(rpm_range, T_dyn_out, 'b-', linewidth=2, label="Torque de Salida Disponible")
-    plt.title("Curva de Torque Electromecánico (TS4215Y3N)")
-    plt.xlabel("RPM Motor")
+    plt.plot(rpm_out_ind, T_dyn_out_ind, 'b-', linewidth=2, label="Torque de Salida Disponible (Nm)")
+    plt.title("Curva de Torque Electromecánico Individual (TS4260Y5D)")
+    plt.xlabel("RPM a la Salida")
     plt.ylabel("Torque Salida (Nm)")
     plt.grid(True)
     plt.legend()
     plt.show()
 
     # --- 2. ANÁLISIS CINEMÁTICO ---
-    analisis.plot_workspace(t1_min=0, t1_max=180, t2_min=-180, t2_max=0)
-    # Se eliminó backlash_deg=1.2 de los argumentos porque ahora es un atributo de clase
-    analisis.plot_backlash_error(theta1_nom=45, theta2_nom=-45)
+    analisis_base.plot_workspace(t1_min=0, t1_max=180, t2_min=-180, t2_max=0)
+    analisis_base.plot_backlash_error(theta1_nom=45, theta2_nom=-45)
 
     # --- 3. ANÁLISIS DINÁMICO ---
-    T_out_req, T_motor_req = analisis.calculate_dynamic_torques(theta1=45, theta2=-45, accel_1=8.0, accel_2=8.0)
+    T_out_req, T_motor_req = analisis_base.calculate_dynamic_torques(theta1=45, theta2=-45, accel_1=8.0, accel_2=8.0)
     print("--- REQUERIMIENTOS DINÁMICOS ---")
-    print(f"Torque requerido en salida caja: Articulación 1 = {T_out_req[0]:.3f} Nm, Articulación 2 = {T_out_req[1]:.3f} Nm")
-    print(f"Torque requerido desde motor:    Motor 1 = {T_motor_req[0]:.3f} Nm, Motor 2 = {T_motor_req[1]:.3f} Nm")
+    print(f"Torque requerido en salida caja (Nm): Articulación 1 = {T_out_req[0]:.3f} Nm, Articulación 2 = {T_out_req[1]:.3f} Nm")
+    print(f"Torque requerido desde motor (Nm):    Motor 1 = {T_motor_req[0]:.3f} Nm, Motor 2 = {T_motor_req[1]:.3f} Nm")
