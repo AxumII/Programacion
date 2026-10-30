@@ -5,15 +5,15 @@
 #include <SPI.h>
 #include <SD.h>
 #include <Wire.h>
-#include "driver/mcpwm.h"
+#include <Adafruit_MPU6050.h>
+#include <Adafruit_Sensor.h>
 
 class SystemConfig {
 private:
     byte* _pinSPI;
     byte* _pinI2C;
-    byte* _pinPWM;
-    byte _pinSTBY;
-    byte _i2cAddress;
+    byte _pinSTBY; 
+    byte _i2cAddress; 
     
     bool _SDStatus;
     bool _I2CStatus;
@@ -23,7 +23,12 @@ private:
     unsigned int timeout;
 
 public:
-    SystemConfig(byte* spiPins, byte* i2cPins, byte* pwmPins, byte stbyPin, byte i2cAddress);
+    byte* motorPins; // [0] = PWMA, [1] = AIN1, [2] = AIN2
+
+    Adafruit_MPU6050 mpu;
+    Adafruit_Sensor *mpu_temp, *mpu_accel, *mpu_gyro;
+
+    SystemConfig(byte* spiPins, byte* i2cPins, byte* mPins, byte stbyPin, byte i2cAddress);
     bool start();
 };
 
