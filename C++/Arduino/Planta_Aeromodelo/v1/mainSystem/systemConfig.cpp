@@ -7,7 +7,7 @@ SystemConfig::SystemConfig(byte* spiPins, byte* i2cPins, byte* mPins, byte stbyP
     _pinSTBY = stbyPin;
     _i2cAddress = i2cAddress;
     
-    _bauds = 115200;
+    _bauds = 921600;
     timeout = 5000;
     
     _SDStatus = false;
@@ -23,7 +23,7 @@ bool SystemConfig::start() {
         yield();
     }
 
-    // --- Configuración H-Bridge y ledc (Core 3.x) ---
+    // --- Configuración H-Bridge y MCPWM ---
     pinMode(motorPins[1], OUTPUT); // AIN1
     pinMode(motorPins[2], OUTPUT); // AIN2
     
@@ -32,14 +32,25 @@ bool SystemConfig::start() {
         digitalWrite(_pinSTBY, HIGH); // Despertar el driver
     }
 
-    ledcAttach(motorPins[0], 20000, 8); // PWMA a 20kHz, resolución de 8 bits
     digitalWrite(motorPins[1], LOW);
     digitalWrite(motorPins[2], LOW);
-    ledcWrite(motorPins[0], 0);
+
+    // Inicializar el pin de PWM para MCPWM (Unidad 0, Timer 0, Operador A)
+    mcpwm_gpio_init(MCPWM_UNIT_0, MCPWM0A, motorPins[0]);
+    
+    // Configurar los parámetros del MCPWM
+    mcpwm_config_t pwm_config;
+    pwm_config.frequency = 20000;    // 20kHz
+    pwm_config.cmpr_a = 0.0;         // Duty cycle inicial 0%
+    pwm_config.cmpr_b = 0.0;
+    pwm_config.counter_mode = MCPWM_UP_COUNTER;
+    pwm_config.duty_mode = MCPWM_DUTY_MODE_0;
+    
+    mcpwm_init(MCPWM_UNIT_0, MCPWM_TIMER_0, &pwm_config);
 
     // --- Inicialización I2C y Sensores ---
     Wire.begin(_pinI2C[0], _pinI2C[1]);
-
+    Wire.setClock(400000); 
     Wire.beginTransmission(0x36);
     if (Wire.endTransmission() == 0) {
         if (_SerialStatus) Serial.println("AS5600 Encontrado.");
