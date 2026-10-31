@@ -26,7 +26,7 @@ bool Kinematic::pos2Angle(float x, float y, float z, float &th1, float &th2, flo
 
     if (std::abs(D) > 1.0) return false; 
     
-    float gamma = atan2(-sqrt(1.0 - (D * D)), D); 
+    float gamma = atan2(- sqrt(1.0 - (D * D)), D); 
     float beta = atan2(lTool * sin(theta4_rad), l3 + lTool * cos(theta4_rad));
     
     float t3 = gamma - beta;
