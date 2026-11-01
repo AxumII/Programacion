@@ -2,12 +2,18 @@
 
 plantStatus::plantStatus(SystemConfig* sysPtr){
     _sys = sysPtr; 
-
+    _Ts_ms = 10;
     currentFreq = 20000;
     
     offset_angulo = 0; offset_ax = 0; offset_ay = 0; offset_az = 0;
     offset_gx = 0; offset_gy = 0; offset_gz = 0;
 }
+
+
+void plantStatus::setSamplingTime(uint32_t Ts_ms) {
+    if (Ts_ms > 0) _Ts_ms = Ts_ms;
+}
+
 
 // ---------- Motor control ----------
 
@@ -135,6 +141,11 @@ void plantStatus::calibrateSensors() {
 }
 
 // ---------- Generador de Perfiles ----------
+void plantStatus::stopProfile() {
+    _currentProfile = PROFILE_NONE; 
+    // Aseguramos de que apague el motor por si acaso
+    applyMotor(0.0, 0, false);
+}
 
 void plantStatus::startStep(float targetDuty, int direction, uint32_t duration_ms) {
     _currentProfile = PROFILE_STEP;
@@ -147,45 +158,57 @@ void plantStatus::startStep(float targetDuty, int direction, uint32_t duration_m
     applyMotor(_profileStartDuty, _profileDirection, false);
 }
 
-void plantStatus::startRamp(float startDuty, float endDuty, int direction, uint32_t duration_ms) {
+// --- Reemplaza la función startRamp actual ---
+void plantStatus::startRamp(float startDuty, float endDuty, int direction, uint32_t duration_ms, float stepSize) {
     _currentProfile = PROFILE_RAMP;
     _profileStartDuty = startDuty;
     _profileEndDuty = endDuty;
     _profileDirection = direction;
     _profileDuration = duration_ms;
+    
+    // Evitar divisiones por cero o escalones negativos
+    _profileStepSize = (stepSize > 0.0f) ? stepSize : 1.0f; 
+    
     _profileStartTime = millis();
     
     // Iniciar en el valor base
     applyMotor(_profileStartDuty, _profileDirection, false);
 }
+
+// --- Reemplaza la función updateProfile actual ---
 void plantStatus::updateProfile() {
-    // Si no hay perfil activo, salir para no consumir ciclos
     if (_currentProfile == PROFILE_NONE) return;
 
-    uint32_t elapsed = millis() - _profileStartTime;
+    uint32_t currentMillis = millis();
+    uint32_t elapsed = currentMillis - _profileStartTime;
 
-    // Condición de finalización del perfil
+    // Condición de finalización
     if (elapsed >= _profileDuration) {
-        applyMotor(0.0, 0, false); // Apagar el motor al terminar (Coast)
+        applyMotor(0.0, 0, false); // Coast al terminar
         _currentProfile = PROFILE_NONE;
         return;
     }
 
-    // Actualización discreta si es una rampa
     if (_currentProfile == PROFILE_RAMP) {
-        // 1. Interpolación lineal del ciclo de trabajo teórico
-        float theoreticalDuty = _profileStartDuty + ((_profileEndDuty - _profileStartDuty) * ((float)elapsed / _profileDuration));
-        
-        // 2. Definir el tamaño del escalón (0.5 o 1.0)
-        float stepSize = 1.0f; 
-        
-        // 3. Cuantizar el duty para forzar los escalones
-        float steppedDuty = round(theoreticalDuty / stepSize) * stepSize;
+        // Frecuencia de muestreo (20ms = 50Hz).
+        uint32_t updateInterval_ms = _Ts_ms; 
+        static uint32_t lastProfileUpdate = 0;
 
-        // 4. Aplicar solo si el valor ha cambiado respecto al ciclo actual
-        // currentDuty se actualiza automáticamente dentro de applyMotor()
-        if (abs(currentDuty - steppedDuty) >= (stepSize * 0.9f)) {
-            applyMotor(steppedDuty, _profileDirection, false);
+        // Solo recalcula según el tiempo, no en cada ciclo del procesador
+        if (currentMillis - lastProfileUpdate >= updateInterval_ms) {
+            lastProfileUpdate = currentMillis;
+
+            // 1. Calcular el valor teórico ideal
+            float theoreticalDuty = _profileStartDuty + ((_profileEndDuty - _profileStartDuty) * ((float)elapsed / _profileDuration));
+            
+            // 2. Cuantizar/redondear para forzar los escalones según el tamaño elegido
+            float steppedDuty = round(theoreticalDuty / _profileStepSize) * _profileStepSize;
+
+            // 3. Aplicar al motor (solo si cambió respecto al actual para no saturar)
+            // Usamos fabs() (valor absoluto flotante) para evitar errores del abs() tradicional
+            if (fabs(currentDuty - steppedDuty) >= (_profileStepSize * 0.1f)) {
+                applyMotor(steppedDuty, _profileDirection, false);
+            }
         }
     }
 }

@@ -1,6 +1,6 @@
 #include "syncMenu.h"
 
-// Actualizado para recibir _controlador
+// Actualizado para recibir _controlador[cite: 23]
 SyncMenu::SyncMenu(plantStatus* plantaPtr, plantController* ctrlPtr) {
     _planta = plantaPtr;
     _controlador = ctrlPtr;
@@ -32,14 +32,19 @@ void SyncMenu::executeCommand(String input) {
         _planta->calibrateSensors();
     }
     else if (cmd == 'S' || cmd == 's') { 
-        _controlador->stop(); // Frena el PID
+        // Stop limpio, un solo llamado al hardware[cite: 23]
+        _controlador->stop(); 
+        _planta->stopProfile(); 
         _planta->applyMotor(0.0, 0, false);
     }
     else if (cmd == 'E' || cmd == 'e') { 
-        _controlador->stop(); // Frena el PID
+        // Emergencia limpio[cite: 23]
+        _controlador->stop(); 
+        _planta->stopProfile(); 
         _planta->applyMotor(0.0, 0, true);
     }
-    else if (cmd == 'P' || cmd == 'p') { // Comando PID
+    else if (cmd == 'P' || cmd == 'p') { 
+        _planta->stopProfile(); 
         int comaIdx = input.indexOf(',');
         float target = 0;
         float maxPWM = 100.0;
@@ -49,10 +54,12 @@ void SyncMenu::executeCommand(String input) {
         } else {
             target = input.substring(1).toFloat();
         }
-        _controlador->setTarget(target, maxPWM);
+        // Llamado con el tipo de controlador explícito[cite: 23]
+        _controlador->setTarget(target, maxPWM, CTRL_PID_POSITION);
     }
     else if (cmd == 'H' || cmd == 'h' || cmd == 'A' || cmd == 'a') {
-        _controlador->stop(); // Si envías comando manual, el PID se desactiva
+        _controlador->stop(); 
+        _planta->stopProfile(); 
         if (input.length() > 1) {
             float pwr = input.substring(1).toFloat();
             int dir = (cmd == 'H' || cmd == 'h') ? 1 : -1;
@@ -60,38 +67,46 @@ void SyncMenu::executeCommand(String input) {
         }
     }
     else if (cmd == 'R' || cmd == 'r') {
-        _controlador->stop(); // Desactiva el PID
+        _controlador->stop(); 
+        _planta->stopProfile(); 
         
-        // Limpiamos espacios accidentales que arruinen la lectura
-        input.replace(" ", ""); 
-
+        // Parsear el comando con 4 parámetros separados por comas
+        // Formato esperado: R[startDuty],[endDuty],[duration_ms],[stepSize]
+        // Ejemplo: R0,20,10000,5
         int c1 = input.indexOf(',');
         int c2 = input.indexOf(',', c1 + 1);
         int c3 = input.indexOf(',', c2 + 1);
 
         if (c1 != -1 && c2 != -1 && c3 != -1) {
-            // Formato original (4 parámetros): R0,70,1,4000
             float startDuty = input.substring(1, c1).toFloat();
             float endDuty   = input.substring(c1 + 1, c2).toFloat();
-            int dir         = input.substring(c2 + 1, c3).toInt();
-            uint32_t dur    = input.substring(c3 + 1).toInt();
-            
-            if (dur > 0) _planta->startRamp(startDuty, endDuty, dir, dur);
+            uint32_t duration = input.substring(c2 + 1, c3).toInt();
+            float stepSize  = input.substring(c3 + 1).toFloat();
+
+            // Dirección -1 corresponde a "Empuje" en la lógica del aeropéndulo
+            _planta->startRamp(startDuty, endDuty, -1, duration, stepSize);
+        }
+    }
+    else if (cmd == 'K' || cmd == 'k') {
+        int c1 = input.indexOf(',');
+        int c2 = input.indexOf(',', c1 + 1);
+        int c3 = input.indexOf(',', c2 + 1);
+
+        if (c1 != -1 && c2 != -1 && c3 != -1) {
+            // Formato de 4 parámetros: K angulo, K, Ti, Td (Ej: K90,2.5,0.5,0.01)[cite: 23]
+            int angulo = input.substring(1, c1).toInt();
+            float k_val  = input.substring(c1 + 1, c2).toFloat();
+            float ti_val = input.substring(c2 + 1, c3).toFloat();
+            float td_val = input.substring(c3 + 1).toFloat();
+            _controlador->setTablePID(angulo, k_val, ti_val, td_val);
         } 
         else if (c1 != -1 && c2 != -1 && c3 == -1) {
-            // Formato de 3 parámetros: R0,70,4000 (Asume giro horario: 1)
-            float startDuty = input.substring(1, c1).toFloat();
-            float endDuty   = input.substring(c1 + 1, c2).toFloat();
-            uint32_t dur    = input.substring(c2 + 1).toInt();
-            
-            if (dur > 0) _planta->startRamp(startDuty, endDuty, 1, dur);
-        }
-        else if (c1 != -1 && c2 == -1) {
-            // Formato super corto: R70,4000 (Asume inicio 0% y giro horario: 1)
-            float endDuty = input.substring(1, c1).toFloat();
-            uint32_t dur  = input.substring(c1 + 1).toInt();
-            
-            if (dur > 0) _planta->startRamp(0.0, endDuty, 1, dur);
+            // Formato de 3 parámetros: K K, Ti, Td (Ej: K2.5,0.5,0.01)[cite: 23]
+            float k_val  = input.substring(1, c1).toFloat();
+            float ti_val = input.substring(c1 + 1, c2).toFloat();
+            float td_val = input.substring(c2 + 1).toFloat();
+            // Esto escribe el mismo valor en TODOS los 10 espacios de la tabla[cite: 23]
+            _controlador->setGlobalPID(k_val, ti_val, td_val); 
         }
     }
 }

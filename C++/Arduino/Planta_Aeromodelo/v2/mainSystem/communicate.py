@@ -5,46 +5,33 @@ import time
 from datetime import datetime
 import threading
 import sys
-import os # NUEVO: Importamos os para manejar rutas
+import os
 
 # ==========================================
 # CONFIGURACIÓN DEL PUERTO SERIAL
 # ==========================================
 PUERTO = 'COM8'      # <- CAMBIA ESTO POR TU PUERTO
-BAUD_RATE = 921600   # Debe coincidir con systemConfig
+BAUD_RATE = 921600   
 
 # ==========================================
 # HILO 1: TRANSMISIÓN DE COMANDOS (SyncMenu)
 # ==========================================
 def enviar_comandos(esp32_serial):
-    print("\n" + "="*40)
-    print(" MENÚ DE CONTROL Y PID (SyncMenu)")
-    print("="*40)
-    print(" Escribe un comando y presiona Enter:")
-    print("  Pxx,yy -> PID: Ir a xx° con yy% PWM máx (Ej: P90,50 o P45)")
-    print("  R i,f,d,t -> RAMPA: de i% a f%, dir d(1/-1), en t ms (Ej: R0,60,1,3000)")
-    print("  Hxx    -> MANUAL: Giro Horario xx% (Ej: H50)")
-    print("  Axx    -> MANUAL: Giro Antihorario xx%")
-    print("  S      -> Stop Suave (Apaga PID y motor)")
-    print("  E      -> Paro de Emergencia (Freno)")
-    print("  Z      -> Calibrar Ceros de Sensores")
-    print("="*40 + "\n")
-    
+    # El menú ya no se imprime aquí para evitar choques de consola
     while True:
         try:
             comando = input()
             if comando:
-                # Enviar el comando con salto de línea (\n) tal como lo espera el ESP32
                 comando_bytes = (comando + '\n').encode('ascii')
                 esp32_serial.write(comando_bytes)
                 
-                # Borramos la línea actual y mostramos la confirmación para mantener limpia la consola
+                # Borramos la línea actual y mostramos la confirmación
                 sys.stdout.write(f"\033[A\r> Comando ejecutado: {comando.upper()} " + " "*20 + "\n")
                 sys.stdout.flush()
         except EOFError:
             break
-        except serial.SerialException:
-            break # Si se desconecta el cable, salir del hilo
+        except Exception:
+            break
 
 # ==========================================
 # HILO PRINCIPAL: RECEPCIÓN Y DATALOGGER
@@ -52,9 +39,7 @@ def enviar_comandos(esp32_serial):
 fecha_hora = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 nombre_base = f"registro_datos_{fecha_hora}.csv"
 
-# NUEVO: Obtener la ruta exacta de la carpeta donde está este script
 directorio_script = os.path.dirname(os.path.abspath(__file__))
-# Unir la ruta de la carpeta con el nombre del archivo
 nombre_archivo = os.path.join(directorio_script, nombre_base)
 
 cabeceras_csv = [
@@ -64,51 +49,53 @@ cabeceras_csv = [
 ]
 
 try:
-    # Iniciar conexión serial
     esp32 = serial.Serial(PUERTO, BAUD_RATE)
-    time.sleep(0.5) # Pequeña pausa para estabilizar la conexión
+    time.sleep(0.5) 
     print(f"Conectado a {PUERTO} a {BAUD_RATE} baudios.")
     
-    # Iniciar el hilo para leer el teclado
-    hilo_teclado = threading.Thread(target=enviar_comandos, args=(esp32,), daemon=True)
-    hilo_teclado.start()
-
-    # Abrir el archivo CSV
     with open(nombre_archivo, mode='w', newline='') as archivo_csv:
         escritor = csv.writer(archivo_csv)
         escritor.writerow(cabeceras_csv) 
         
-        # NUEVO: Imprimimos la ruta absoluta en pantalla para que sepas exactamente dónde está
+        # 1. IMPRIMIR TODO EL TEXTO DESDE EL HILO PRINCIPAL PRIMERO
         print(f"\n[!] Guardando telemetría en:\n    -> {nombre_archivo}")
         print("Presiona Ctrl+C para detener todo y guardar el archivo de forma segura.\n")
+        
+        print("="*48)
+        print("      MENÚ DE CONTROL Y PID (SyncMenu)")
+        print("="*48)
+        print(" Escribe un comando y presiona Enter:")
+        print("  K k,ti,td    -> PID Global   (Ej: K2.5,0.5,0.01)")
+        print("  K º,k,ti,td  -> PID en Ángulo(Ej: K90,3.5,0.3,0.05)")
+        print("  P xx,yy      -> PID: Ir a xx° con yy% PWM (Ej: P90,50)")
+        print("  R...         -> RAMPA: (Ej: R0,100,10000,15)")
+        print("  Hxx / Axx    -> MANUAL: Horario/Antihorario xx%")
+        print("  S / E        -> Stop Suave / Paro de Emergencia")
+        print("  Z            -> Calibrar Ceros de Sensores")
+        print("="*48 + "\n")
+        
+        # 2. INICIAR EL HILO DEL TECLADO DESPUÉS DE IMPRIMIR LA CONSOLA
+        hilo_teclado = threading.Thread(target=enviar_comandos, args=(esp32,), daemon=True)
+        hilo_teclado.start()
         
         paquetes_recibidos = 0
         tiempo_inicio = time.time()
         
         while True:
-            # 1. Buscar los bytes de sincronización (0xAA y 0xBB)
             if esp32.read(1) == b'\xAA' and esp32.read(1) == b'\xBB':
-                
-                # 2. Leer los 37 bytes restantes del struct
                 raw_data = esp32.read(37)
                 
                 if len(raw_data) == 37:
-                    # 3. Desempaquetar los datos binarios
                     datos = struct.unpack('<I8fB', raw_data)
-                    
-                    timestamp = datos[0]
-                    pwm = datos[1]
-                    angulo = datos[2]
+                    timestamp, pwm, angulo = datos[0], datos[1], datos[2]
                     ax, ay, az = datos[3], datos[4], datos[5]
                     gx, gy, gz = datos[6], datos[7], datos[8]
                     footer = datos[9]
                     
-                    # 4. Validar el byte de cierre (0xCC)
                     if footer == 0xCC:
                         escritor.writerow([timestamp, pwm, angulo, ax, ay, az, gx, gy, gz])
                         paquetes_recibidos += 1
                         
-                        # 5. Imprimir estado sin saltos de línea (\r) para no ensuciar el menú de comandos
                         if paquetes_recibidos % 200 == 0:
                             sys.stdout.write(f"\r [Grabando...] Angulo: {angulo:6.2f}° | PWM: {pwm:5.1f}% | Muestras: {paquetes_recibidos}")
                             sys.stdout.flush()
@@ -128,11 +115,14 @@ finally:
         
     tiempo_total = time.time() - tiempo_inicio if 'tiempo_inicio' in locals() else 0
     frecuencia_aprox = paquetes_recibidos / tiempo_total if tiempo_total > 0 else 0
+    
     print("\n" + "=" * 40)
     print(" RESUMEN DE CAPTURA")
     print("=" * 40)
-    # Mostramos la ruta de nuevo al finalizar
     print(f" Archivo guardado en:\n {nombre_archivo}")
     print(f" Total de muestras: {paquetes_recibidos}")
     print(f" Frecuencia promedio: {frecuencia_aprox:.2f} Hz")
     print("=" * 40)
+    
+    # 3. FORZAR CIERRE LIMPIO DEL SISTEMA PARA EVITAR ERROR DE DAEMON THREADS
+    os._exit(0)   
