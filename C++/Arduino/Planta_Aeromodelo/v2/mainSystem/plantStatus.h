@@ -14,7 +14,6 @@ private:
 
     // Variables para calibración (Zero offset)[cite: 7]
     float offset_angulo, offset_ax, offset_ay, offset_az, offset_gx, offset_gy, offset_gz;
-    float currentDuty;
     // Ajustes PWM
     uint32_t currentFreq;
 
@@ -29,6 +28,7 @@ private:
 public:
     float angulo_as5600; 
     float ax, ay, az, gx, gy, gz; 
+    float currentDuty;
 
     plantStatus(SystemConfig* sysPtr); 
     

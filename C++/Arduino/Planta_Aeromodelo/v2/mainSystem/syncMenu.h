@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 #include "plantStatus.h"
-#include "plantController.h" // NUEVO
+#include "plantController.h" // AÑADIDO
 
 struct __attribute__((packed)) SensorDataPacket {
     uint8_t header[2]; 
@@ -18,14 +18,14 @@ struct __attribute__((packed)) SensorDataPacket {
 class SyncMenu {
 private:
     plantStatus* _planta; 
-    plantController* _controlador; // NUEVO Puntero
+    plantController* _controlador; // AÑADIDO
     uint32_t _lastTxTime;
 
     void executeCommand(String input); 
 
 public:
-    // NUEVO Constructor recibe ambos punteros
-    SyncMenu(plantStatus* plantaPtr, plantController* ctrlPtr); 
+    SyncMenu(plantStatus* plantaPtr, plantController* ctrlPtr); // AÑADIDO ctrlPtr
+    
     void processSerialCommands();
     void transmitData(uint32_t frequencyHz);
 };

@@ -9,7 +9,7 @@ import sys
 # ==========================================
 # CONFIGURACIÓN DEL PUERTO SERIAL
 # ==========================================
-PUERTO = 'COM3'      # <- CAMBIA ESTO POR TU PUERTO
+PUERTO = 'COM8'      # <- CAMBIA ESTO POR TU PUERTO
 BAUD_RATE = 921600   # Debe coincidir con systemConfig
 
 # ==========================================

@@ -48,15 +48,23 @@ void plantStatus::applyMotor(float duty, int direction, bool eStop) {
 
 void plantStatus::readAS5600() {
     Wire.beginTransmission(0x36); 
-    Wire.write(0x0E); // Registro ANGLE (Ya procesado con el ZPOS si se configuró)            
+    Wire.write(0x0C); // CAMBIO IMPORTANTE: Leemos RAW_ANGLE en lugar de ANGLE para ignorar configuraciones internas pasadas
     Wire.endTransmission(false);
     Wire.requestFrom((uint16_t)0x36, (uint8_t)2, true);
     
     if (Wire.available() == 2) {
         uint16_t angleData = Wire.read() << 8;
         angleData |= Wire.read();
-        // Calculamos ángulo y aplicamos offset de software por si falló la escritura a ZPOS
-        angulo_as5600 = ((angleData * 360.0f) / 4096.0f) - offset_angulo;
+        
+        // 1. Calculamos el ángulo bruto
+        float angulo_bruto = (angleData * 360.0f) / 4096.0f;
+        
+        // 2. Aplicamos el offset
+        angulo_as5600 = angulo_bruto - offset_angulo;
+        
+        // 3. Forzamos un comportamiento circular estricto entre 0 y 360 grados
+        if (angulo_as5600 < 0.0f) angulo_as5600 += 360.0f;
+        if (angulo_as5600 >= 360.0f) angulo_as5600 -= 360.0f;
     }
 }
 
@@ -90,7 +98,7 @@ void plantStatus::calibrateSensors() {
     int num_samples = 100;
     
     for (int i = 0; i < num_samples; i++) {
-        // Para calibrar el AS5600 leemos el RAW_ANGLE (0x0C)
+        // Leemos el RAW_ANGLE para el AS5600
         Wire.beginTransmission(0x36); 
         Wire.write(0x0C);             
         Wire.endTransmission(false);
@@ -119,24 +127,11 @@ void plantStatus::calibrateSensors() {
     offset_ax /= num_samples; offset_ay /= num_samples; offset_az /= num_samples;
     offset_gx /= num_samples; offset_gy /= num_samples; offset_gz /= num_samples;
     
-    // Configuración de Zero interno del AS5600 (Registros ZPOS 0x01 y 0x02)
+    // Calibración por software limpia:
     uint16_t avg_raw_angle = sum_raw_angle / num_samples;
+    offset_angulo = (avg_raw_angle * 360.0f) / 4096.0f;
     
-    Wire.beginTransmission(0x36);
-    Wire.write(0x01); // Registro High de ZPOS
-    Wire.write((avg_raw_angle >> 8) & 0x0F);
-    Wire.write(avg_raw_angle & 0xFF); // La librería Wire autoincrementa al registro 0x02 en la misma ráfaga
-    byte error = Wire.endTransmission();
-
-    if(error == 0) {
-        Serial.println("Offset interno (ZPOS) del AS5600 configurado con exito.");
-        offset_angulo = 0.0f; // No se necesita offset por software
-    } else {
-        Serial.println("Fallo al escribir ZPOS. Aplicando offset por software (fuerza bruta).");
-        offset_angulo = (avg_raw_angle * 360.0f) / 4096.0f;
-    }
-    
-    Serial.println("Calibracion finalizada.");
+    Serial.println("Calibracion por software finalizada.");
 }
 
 // ---------- Generador de Perfiles ----------
