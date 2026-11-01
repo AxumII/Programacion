@@ -59,6 +59,41 @@ void SyncMenu::executeCommand(String input) {
             _planta->applyMotor(pwr, dir, false);
         }
     }
+    else if (cmd == 'R' || cmd == 'r') {
+        _controlador->stop(); // Desactiva el PID
+        
+        // Limpiamos espacios accidentales que arruinen la lectura
+        input.replace(" ", ""); 
+
+        int c1 = input.indexOf(',');
+        int c2 = input.indexOf(',', c1 + 1);
+        int c3 = input.indexOf(',', c2 + 1);
+
+        if (c1 != -1 && c2 != -1 && c3 != -1) {
+            // Formato original (4 parámetros): R0,70,1,4000
+            float startDuty = input.substring(1, c1).toFloat();
+            float endDuty   = input.substring(c1 + 1, c2).toFloat();
+            int dir         = input.substring(c2 + 1, c3).toInt();
+            uint32_t dur    = input.substring(c3 + 1).toInt();
+            
+            if (dur > 0) _planta->startRamp(startDuty, endDuty, dir, dur);
+        } 
+        else if (c1 != -1 && c2 != -1 && c3 == -1) {
+            // Formato de 3 parámetros: R0,70,4000 (Asume giro horario: 1)
+            float startDuty = input.substring(1, c1).toFloat();
+            float endDuty   = input.substring(c1 + 1, c2).toFloat();
+            uint32_t dur    = input.substring(c2 + 1).toInt();
+            
+            if (dur > 0) _planta->startRamp(startDuty, endDuty, 1, dur);
+        }
+        else if (c1 != -1 && c2 == -1) {
+            // Formato super corto: R70,4000 (Asume inicio 0% y giro horario: 1)
+            float endDuty = input.substring(1, c1).toFloat();
+            uint32_t dur  = input.substring(c1 + 1).toInt();
+            
+            if (dur > 0) _planta->startRamp(0.0, endDuty, 1, dur);
+        }
+    }
 }
 
 void SyncMenu::transmitData(uint32_t frequencyHz) {

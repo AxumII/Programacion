@@ -5,6 +5,7 @@ import time
 from datetime import datetime
 import threading
 import sys
+import os # NUEVO: Importamos os para manejar rutas
 
 # ==========================================
 # CONFIGURACIÓN DEL PUERTO SERIAL
@@ -21,6 +22,7 @@ def enviar_comandos(esp32_serial):
     print("="*40)
     print(" Escribe un comando y presiona Enter:")
     print("  Pxx,yy -> PID: Ir a xx° con yy% PWM máx (Ej: P90,50 o P45)")
+    print("  R i,f,d,t -> RAMPA: de i% a f%, dir d(1/-1), en t ms (Ej: R0,60,1,3000)")
     print("  Hxx    -> MANUAL: Giro Horario xx% (Ej: H50)")
     print("  Axx    -> MANUAL: Giro Antihorario xx%")
     print("  S      -> Stop Suave (Apaga PID y motor)")
@@ -48,7 +50,12 @@ def enviar_comandos(esp32_serial):
 # HILO PRINCIPAL: RECEPCIÓN Y DATALOGGER
 # ==========================================
 fecha_hora = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-nombre_archivo = f"registro_datos_{fecha_hora}.csv"
+nombre_base = f"registro_datos_{fecha_hora}.csv"
+
+# NUEVO: Obtener la ruta exacta de la carpeta donde está este script
+directorio_script = os.path.dirname(os.path.abspath(__file__))
+# Unir la ruta de la carpeta con el nombre del archivo
+nombre_archivo = os.path.join(directorio_script, nombre_base)
 
 cabeceras_csv = [
     "Timestamp_us", "PWM_Porcentaje", "Angulo_Grados", 
@@ -71,7 +78,8 @@ try:
         escritor = csv.writer(archivo_csv)
         escritor.writerow(cabeceras_csv) 
         
-        print(f"Guardando telemetría en: {nombre_archivo}")
+        # NUEVO: Imprimimos la ruta absoluta en pantalla para que sepas exactamente dónde está
+        print(f"\n[!] Guardando telemetría en:\n    -> {nombre_archivo}")
         print("Presiona Ctrl+C para detener todo y guardar el archivo de forma segura.\n")
         
         paquetes_recibidos = 0
@@ -123,7 +131,8 @@ finally:
     print("\n" + "=" * 40)
     print(" RESUMEN DE CAPTURA")
     print("=" * 40)
-    print(f" Archivo guardado: {nombre_archivo}")
+    # Mostramos la ruta de nuevo al finalizar
+    print(f" Archivo guardado en:\n {nombre_archivo}")
     print(f" Total de muestras: {paquetes_recibidos}")
     print(f" Frecuencia promedio: {frecuencia_aprox:.2f} Hz")
     print("=" * 40)
