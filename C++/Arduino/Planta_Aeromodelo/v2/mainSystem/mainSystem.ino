@@ -49,6 +49,7 @@ void setup() {
 }
 
 void loop() {
+
   planta.updateSensors();
   
   // Se ejecuta vinculado estricamente a _Ts_ms
