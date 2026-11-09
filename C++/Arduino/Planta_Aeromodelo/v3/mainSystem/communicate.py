@@ -7,7 +7,7 @@ import threading
 import sys
 import os
 
-PUERTO = 'COM8'      
+PUERTO = 'COM7'      
 BAUD_RATE = 921600   
 
 def enviar_comandos(esp32_serial):

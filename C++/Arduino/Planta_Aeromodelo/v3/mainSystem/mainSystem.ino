@@ -51,7 +51,9 @@ void setup() {
   controlador.setTablePID(60,  75.0, 32.0, 32.0); 
   controlador.setTablePID(70,  70.0, 35.0, 35.0); 
   controlador.setTablePID(80,  65.0, 40.0, 38.0); // Kd reducido para que no oscile 2 minutos
-  controlador.setTablePID(90,  60.0, 45.0, 40.0); // Ki alto y Kd moderado para converger rápido en horizontal
+  controlador.setTablePID(90,  60.0, 45.0, 40.0);// Ki alto y Kd moderado para converger rápido en horizontal
+
+
 }
 
 void loop() {

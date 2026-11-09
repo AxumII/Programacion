@@ -18,7 +18,7 @@ plantController::plantController(plantStatus* plantaPtr) {
     _m2 = 0.0120f;
     _l1 = 0.1590f;
     _l2 = 0.0680f;
-    _b = 0.000675f;
+    _b =  0.000675f;
     _mgl = 0.0267f;
 
     // Pendientes predefinidas y valores LUT
