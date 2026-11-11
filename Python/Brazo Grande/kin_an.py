@@ -333,7 +333,7 @@ def evaluar_barrido_multi_material(robot_template, materiales=['PLA', 'PETG', 'A
     plt.show()
 
 if __name__ == "__main__":
-    L_ejemplo = 0.3    
+    L_ejemplo = 0.2    
     
     # --- PARÁMETROS GEOMÉTRICOS MODIFICABLES A GUSTO ---
     b_val = 0.040  # 30 mm
@@ -347,11 +347,11 @@ if __name__ == "__main__":
     # J4 (Muñeca) -> TS4230Y4D: 11.2 Nm | Masa: 450g
     
     robot_def_ejemplo = [
-        {'axis': 'z', 'offset': [0.00475, 0.0, 0.132], 'm_servo': 0.520, 'm_link': calc_link_mass('PLA', 0.150, b_val, h_val), 'com_link': [0, 0, 0.150/2], 't_rated': 15.8, 'b': b_val, 'h': h_val},
-        {'axis': 'y', 'offset': [L_ejemplo, -0.027, 0.0], 'm_servo': 0.520, 'm_link': calc_link_mass('PLA', L_ejemplo, b_val, h_val), 'com_link': [L_ejemplo/2, 0, 0], 't_rated': 31.6, 'b': b_val, 'h': h_val},
-        {'axis': 'y', 'offset': [0.5*L_ejemplo, -0.030, 0.0], 'm_servo': 0.520, 'm_link': calc_link_mass('PLA', 0.5*L_ejemplo, b_val, h_val), 'com_link': [0.5*L_ejemplo/2, 0, 0], 't_rated': 15.8, 'b': b_val, 'h': h_val},
-        {'axis': 'y', 'offset': [0.3*L_ejemplo, -0.003, 0.0], 'm_servo': 0.450, 'm_link': calc_link_mass('PLA', 0.3*L_ejemplo, b_val, h_val), 'com_link': [0.3*L_ejemplo/2, 0, 0], 't_rated': 11.2, 'b': b_val, 'h': h_val},
-        {'axis': 'x', 'offset': [0.2*L_ejemplo, 0.0, 0.0], 'm_servo': 0.450, 'm_link': calc_link_mass('PLA', 0.2*L_ejemplo, b_val, h_val), 'com_link': [0.2*L_ejemplo/2, 0, 0], 't_rated': 11.2, 'b': b_val, 'h': h_val}
+        {'axis': 'z', 'offset': [0.00475, 0.0, 0.132], 'm_servo': 0.520, 'm_link': calc_link_mass('PLA', 0.750, b_val, h_val), 'com_link': [0, 0, 0.150/2], 't_rated': 15.8*.35, 'b': b_val, 'h': h_val},
+        {'axis': 'y', 'offset': [L_ejemplo, -0.027, 0.0], 'm_servo': 0.520, 'm_link': calc_link_mass('PLA',0.7, b_val, h_val), 'com_link': [L_ejemplo/2, 0, 0], 't_rated': 31.6*.35, 'b': b_val, 'h': h_val},
+        {'axis': 'y', 'offset': [0.5*L_ejemplo, -0.030, 0.0], 'm_servo': 0.520, 'm_link': calc_link_mass('PLA', 0.5, b_val, h_val), 'com_link': [0.5*L_ejemplo/2, 0, 0], 't_rated': 15.8*.35, 'b': b_val, 'h': h_val},
+        {'axis': 'y', 'offset': [0.3*L_ejemplo, -0.003, 0.0], 'm_servo': 0.520, 'm_link': calc_link_mass('PLA', 0.3, b_val, h_val), 'com_link': [0.3*L_ejemplo/2, 0, 0], 't_rated': 15.8*.35, 'b': b_val, 'h': h_val},
+        {'axis': 'x', 'offset': [0.1*L_ejemplo, 0.0, 0.0], 'm_servo': 0.0, 'm_link': calc_link_mass('PLA', 0.1, b_val, h_val), 'com_link': [0.2*L_ejemplo/2, 0, 0], 't_rated': 15.8*.35, 'b': b_val, 'h': h_val}
     ]
     
     arm_test = RobotDOF_3D(joints=robot_def_ejemplo, alpha_target=5.0, m_load=0.350, m_tool=0.150, material='PLA')
